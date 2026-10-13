@@ -24,7 +24,7 @@ El template en `references/templates/` es un prototipo React 18 con Babel en el 
   - Acceso (iniciar sesión / crear cuenta): `/acceso`
   - Salón de la Fama: `/salon`
 - Componentes compartidos: barra de navegación (con panel móvil), footer y tarjeta de juego.
-- Archivo `app/data.ts` con los datos ficticios (juegos, categorías, jugadores y generador de puntuaciones con semilla). Es la capa que más adelante se reemplaza por una base de datos.
+- Carpeta `app/data/` con los datos ficticios, separados por dominio: `games.ts` (juegos y categorías), `scores.ts` (jugadores, puntuaciones y generador con semilla) e `index.ts` que re-exporta todo. Es la capa que más adelante se reemplaza por una base de datos.
 - Sesión simulada en cliente: iniciar sesión, cerrar sesión y jugar como invitado.
 - Reproductor copiado del template como placeholder: HUD, marco CRT, puntaje simulado, pausa, FIN y modal de guardar puntuación.
 - Diseño responsive (breakpoints del `globals.css`: 840px nav, 900px detalle).
@@ -52,7 +52,11 @@ El template en `references/templates/` es un prototipo React 18 con Babel en el 
 
 ## Modelo de datos
 
-Los tipos y los datos viven en `app/data.ts`.
+Los tipos y los datos viven en `app/data/`:
+
+- `app/data/games.ts`: `Categoria`, `ColorBoton`, `Juego`, `GAMES`, `CATS` y `getGame`.
+- `app/data/scores.ts`: `PuntuacionRanking`, `PuntuacionGuardada`, `Usuario`, `PLAYERS` y `seededScores`.
+- `app/data/index.ts`: re-exporta todo lo anterior (`export * from "./games"` y `export * from "./scores"`). Los componentes importan desde `@/app/data`.
 
 ```ts
 export type Categoria = "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
@@ -89,7 +93,7 @@ export interface PuntuacionGuardada {
 }
 ```
 
-Exports de `app/data.ts`:
+Exports de `app/data/` (vía `index.ts`):
 
 - `GAMES: Juego[]`: los 8 juegos del template (`bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria`, `duelo-pixel`).
 - `CATS: ["TODOS", ...Categoria[]]`
@@ -116,7 +120,7 @@ Convenciones:
 
 Antes de escribir código de Next.js hay que leer la guía relevante en `node_modules/next/dist/docs/` (exigido por `AGENTS.md`).
 
-1. Crear `app/data.ts` con los tipos, `GAMES`, `CATS`, `PLAYERS`, `seededScores` y `getGame`. Verificación: `npm run build` compila sin errores de tipos.
+1. Crear `app/data/games.ts` (tipos de juego, `GAMES`, `CATS`, `getGame`), `app/data/scores.ts` (tipos de puntuación y usuario, `PLAYERS`, `seededScores`) y `app/data/index.ts` que re-exporta ambos. Verificación: `npm run build` compila sin errores de tipos.
 2. Crear `app/components/auth-provider.tsx` (client): contexto con `user`, `login`, `logout` y `saveScore`. Lee `av_user` en `useEffect` para evitar errores de hidratación. Se monta en `app/layout.tsx`.
 3. Crear `app/components/nav.tsx` (client) y `app/components/footer.tsx`. Usan `next/link` y `usePathname` para el estado activo, y el panel móvil con hamburguesa. Se montan en `app/layout.tsx` dentro de `.av-root`, con `<main className="av-main">`. Verificación: se ven en `/` con enlaces a `/` y `/salon`.
 4. Crear `app/components/game-card.tsx` (client, con tilt 3D vía `ref` y `onMouseMove`/`onMouseLeave`) y `app/components/library.tsx` (client: búsqueda y chips de categoría). Reemplazar `app/page.tsx` por la Biblioteca. Verificación: filtros por texto y categoría, estado "NO HAY RESULTADOS", y el tilt se ve al pasar el mouse sobre una tarjeta.
@@ -158,7 +162,7 @@ Antes de escribir código de Next.js hay que leer la guía relevante en `node_mo
 - [ ] El marco CRT del reproductor muestra scanlines, el LED "SEÑAL OK" y la barra inferior con el nombre del juego.
 - [ ] En todas las rutas se ve el fondo con la rejilla en perspectiva animada, las scanlines y el ruido, sin bloquear clics (`pointer-events: none`).
 - [ ] Con `prefers-reduced-motion: reduce` activado, el tilt, la rejilla, los enemigos, la nave y el parpadeo del hero quedan estáticos.
-- [ ] Los datos ficticios solo se importan desde `app/data.ts`; ningún componente define juegos o puntuaciones propios.
+- [ ] Los datos ficticios solo se importan desde `app/data/` (`@/app/data`); ningún componente define juegos o puntuaciones propios.
 - [ ] No queda contenido del scaffold de Create Next App en `app/page.tsx`.
 
 ---
@@ -169,7 +173,7 @@ Antes de escribir código de Next.js hay que leer la guía relevante en `node_mo
 - **Sí:** reutilizar los estilos que ya están migrados en `app/globals.css` (clases `av-*`, `btn`, `card`, `crt`, etc.). Se puede revisar o ajustar ese archivo si algo falta.
 - **Sí:** Tailwind v4 para todo lo que no esté cubierto por `globals.css` (layout y espaciados nuevos). Mantiene el lenguaje visual del template sin reescribir 950 líneas de CSS.
 - **No:** reescribir los estilos del template como utilidades Tailwind. Riesgo de divergir del diseño y mucho trabajo sin valor funcional.
-- **Sí:** un único `app/data.ts` como fuente de datos ficticios. Es el punto exacto que se sustituirá por la base de datos.
+- **Sí:** la carpeta `app/data/` (`games.ts`, `scores.ts` e `index.ts` de re-exportación) como única fuente de datos ficticios, separada por dominio. Es el punto exacto que se sustituirá por la base de datos.
 - **Sí:** componentes de servidor por defecto; `"use client"` solo donde hay estado, efectos o `localStorage` (nav, auth, biblioteca, reproductor, salón).
 - **Sí:** sesión simulada con `localStorage` (`av_user`) y puntuaciones en `av_scores`, igual que el template. No requiere backend y es descartable.
 - **Sí:** el reproductor se copia del template como placeholder. Su zona de arena se sustituirá por cada juego real en specs futuros.
