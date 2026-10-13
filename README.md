@@ -16,3 +16,12 @@ npx skills@latest add Klerith/fernando-skills
 ```
 
 ## Hola Mundo
+
+## Comandos
+
+```bash
+npm run dev     # next dev
+npm run build   # next build
+npm start       # next start (después de compilar)
+npm run lint    # eslint (flat config: eslint.config.mjs, eslint-config-next)
+```
