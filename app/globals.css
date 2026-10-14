@@ -188,6 +188,11 @@ a { color: inherit; text-decoration: none; }
   .av-nav .links { display: none; }
   .av-nav .coin-counter { display: none; }
   .av-nav .hamburger { display: inline-flex; }
+  .av-nav { gap: 10px; }
+  .av-nav .logo { gap: 8px; }
+  .av-nav .logo-text { font-size: 10px; letter-spacing: 0.08em; }
+  .av-nav .auth-btn { margin-left: 0; padding: 10px 12px; white-space: nowrap; }
+  .av-nav .hamburger { padding: 10px 14px; }
 }
 
 .av-mobile-panel {
@@ -311,6 +316,7 @@ a { color: inherit; text-decoration: none; }
 .av-search:focus-within { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.35); }
 .av-search input {
   flex: 1; background: transparent; border: 0; outline: 0;
+  padding: 1px 2px;
   color: var(--ink); font-size: 13px; letter-spacing: 0.04em;
 }
 .av-search input::placeholder { color: var(--ink-faint); }
@@ -961,3 +967,16 @@ a { color: inherit; text-decoration: none; }
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 @keyframes spinpix { to { transform: rotate(360deg); } }
+
+/* ===== reduced motion: sin tilt, rejilla, enemigos, nave, parpadeos ===== */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card:hover { transform: none !important; }
+  .av-bg::before,
+  .game-arena .grid-floor,
+  .game-arena .enemy,
+  .game-arena .player-ship,
+  .flicker,
+  .btn.pulse,
+  .av-hero .sub .blink { animation: none; }
+}
