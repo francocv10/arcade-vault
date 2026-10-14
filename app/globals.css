@@ -188,6 +188,11 @@ a { color: inherit; text-decoration: none; }
   .av-nav .links { display: none; }
   .av-nav .coin-counter { display: none; }
   .av-nav .hamburger { display: inline-flex; }
+  .av-nav { gap: 10px; }
+  .av-nav .logo { gap: 8px; }
+  .av-nav .logo-text { font-size: 10px; letter-spacing: 0.08em; }
+  .av-nav .auth-btn { margin-left: 0; padding: 10px 12px; white-space: nowrap; }
+  .av-nav .hamburger { padding: 10px 14px; }
 }
 
 .av-mobile-panel {
