@@ -961,3 +961,16 @@ a { color: inherit; text-decoration: none; }
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 @keyframes spinpix { to { transform: rotate(360deg); } }
+
+/* ===== reduced motion: sin tilt, rejilla, enemigos, nave, parpadeos ===== */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card:hover { transform: none !important; }
+  .av-bg::before,
+  .game-arena .grid-floor,
+  .game-arena .enemy,
+  .game-arena .player-ship,
+  .flicker,
+  .btn.pulse,
+  .av-hero .sub .blink { animation: none; }
+}
