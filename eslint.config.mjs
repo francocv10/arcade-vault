@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prototipo del template (React/Babel en el navegador), solo de referencia.
+    "references/**",
   ]),
 ]);
 
