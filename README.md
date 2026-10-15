@@ -2,9 +2,18 @@
 
 Es una plataforma para jugar online y competir por la mayor cantidad de puntos.
 
+## Pantallas
+
+- `/home`: página de inicio (`/` redirige aquí).
+- `/biblioteca`: catálogo de juegos.
+- `/juegos/[id]` y `/juegos/[id]/jugar`: detalle y reproductor de cada juego.
+- `/salon`: Salón de la Fama.
+- `/acceso`: inicio de sesión / registro.
+- `/about`: "Sobre nosotros" con formulario de contacto que envía un correo real mediante [Resend](https://resend.com).
+
 ## Usa Spec Driven Design
 
-Basado en /spec y /spec-impl
+Basado en /spec y /spec-impl. Las specs están en `specs/`.
 
 Siguiendo las buenas practicas recomendadas aquí:
 https://github.com/Klerith/fernando-skills
@@ -15,7 +24,15 @@ https://github.com/Klerith/fernando-skills
 npx skills@latest add Klerith/fernando-skills
 ```
 
-## Hola Mundo
+## Configuración
+
+Copia `.env.example` a `.env.local` y rellena las variables del formulario de contacto:
+
+```bash
+RESEND_API_KEY=
+CONTACT_TO_EMAIL=
+CONTACT_FROM_EMAIL=
+```
 
 ## Comandos
 
