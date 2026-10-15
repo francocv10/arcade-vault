@@ -1,6 +1,6 @@
 # SPEC 03 — Página "Sobre nosotros" con formulario de contacto (Resend)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01, SPEC 02
 > **Date:** 2026-10-14
 > **Objective:** Implementar en `/about` la pantalla "Acerca de" + "Contacto" del template `references/templates/home-about/` con un formulario que envía un correo real mediante Resend.
