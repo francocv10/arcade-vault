@@ -1,6 +1,6 @@
 # SPEC 02 — Home page (landing) de Arcade Vault
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01
 > **Date:** 2026-10-14
 > **Objective:** Implementar en `app/home` la landing del template `references/templates/home-about/` (sin la pantalla "Acerca de"), con sus animaciones, y mover la Biblioteca a `/biblioteca`.
