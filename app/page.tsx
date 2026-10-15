@@ -1,5 +1,5 @@
-import { Library } from "./components/library";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return <Library />;
+export default function RootPage() {
+  redirect("/home");
 }

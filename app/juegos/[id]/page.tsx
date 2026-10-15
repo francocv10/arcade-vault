@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { GAMES, getGame, seededScores } from "@/app/data";
 
 export function generateStaticParams() {
@@ -16,8 +17,18 @@ export async function generateMetadata(
   return { title: `${game.title} · Arcade Vault`, description: game.short };
 }
 
-export default async function GameDetail(props: PageProps<"/juegos/[id]">) {
-  const { id } = await props.params;
+export default function GameDetailPage(props: PageProps<"/juegos/[id]">) {
+  return (
+    <Suspense fallback={<div className="av-detail" aria-busy="true" />}>
+      <GameDetail params={props.params} />
+    </Suspense>
+  );
+}
+
+async function GameDetail({
+  params,
+}: Pick<PageProps<"/juegos/[id]">, "params">) {
+  const { id } = await params;
   const game = getGame(id);
   if (!game) notFound();
 
@@ -66,7 +77,7 @@ export default async function GameDetail(props: PageProps<"/juegos/[id]">) {
             <Link href={`/juegos/${game.id}/jugar`} className="btn xl pulse">
               ▶ JUGAR AHORA
             </Link>
-            <Link href="/" className="btn ghost lg">
+            <Link href="/biblioteca" className="btn ghost lg">
               VOLVER AL VAULT
             </Link>
           </div>

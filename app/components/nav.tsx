@@ -10,7 +10,9 @@ export function Nav() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
-  const isLibrary = pathname === "/" || pathname.startsWith("/juegos");
+  const isHome = pathname.startsWith("/home");
+  const isLibrary =
+    pathname.startsWith("/biblioteca") || pathname.startsWith("/juegos");
   const isHall = pathname.startsWith("/salon");
   const isAuth = pathname.startsWith("/acceso");
   const close = () => setOpen(false);
@@ -18,14 +20,17 @@ export function Nav() {
   return (
     <>
       <nav className="av-nav">
-        <Link href="/" className="logo">
+        <Link href="/home" className="logo">
           <div className="logo-mark"></div>
           <div className="logo-text neon-cyan">
             ARCADE <span className="neon-magenta">VAULT</span>
           </div>
         </Link>
         <div className="links">
-          <Link href="/" className={isLibrary ? "active" : ""}>
+          <Link href="/home" className={isHome ? "active" : ""}>
+            Inicio
+          </Link>
+          <Link href="/biblioteca" className={isLibrary ? "active" : ""}>
             Biblioteca
           </Link>
           <Link href="/salon" className={isHall ? "active" : ""}>
@@ -63,7 +68,14 @@ export function Nav() {
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ
         </div>
-        <Link href="/" className={isLibrary ? "active" : ""} onClick={close}>
+        <Link href="/home" className={isHome ? "active" : ""} onClick={close}>
+          Inicio
+        </Link>
+        <Link
+          href="/biblioteca"
+          className={isLibrary ? "active" : ""}
+          onClick={close}
+        >
           Biblioteca
         </Link>
         <Link href="/salon" className={isHall ? "active" : ""} onClick={close}>
