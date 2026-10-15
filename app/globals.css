@@ -28,7 +28,8 @@
   --bronze: #d97a3a;
   --line: rgba(0, 245, 255, 0.18);
   --line-2: rgba(255, 255, 255, 0.06);
-  --pixel: var(--font-press-start), "Press Start 2P", system-ui, monospace;
+  /* Sin var(--font-press-start): arrastra el fallback de next/font (Arial a size-adjust 224 %), que agranda "→" y otros glifos que la fuente no trae. */
+  --pixel: "Press Start 2P", system-ui, monospace;
   --mono: var(--font-jetbrains), var(--font-courier-prime), "Courier New", monospace;
 }
 

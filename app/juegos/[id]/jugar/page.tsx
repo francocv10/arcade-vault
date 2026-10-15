@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { GAMES, getGame } from "@/app/data";
 import { GamePlayer } from "@/app/components/game-player";
 
@@ -15,8 +16,18 @@ export async function generateMetadata(
   return { title: game ? `Jugando ${game.title} · Arcade Vault` : "Arcade Vault" };
 }
 
-export default async function PlayPage(props: PageProps<"/juegos/[id]/jugar">) {
-  const { id } = await props.params;
+export default function PlayPage(props: PageProps<"/juegos/[id]/jugar">) {
+  return (
+    <Suspense fallback={null}>
+      <Player params={props.params} />
+    </Suspense>
+  );
+}
+
+async function Player({
+  params,
+}: Pick<PageProps<"/juegos/[id]/jugar">, "params">) {
+  const { id } = await params;
   const game = getGame(id);
   if (!game) notFound();
 
