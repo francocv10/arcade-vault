@@ -1290,6 +1290,14 @@ a { color: inherit; text-decoration: none; }
 .term-body .success { margin-top: 12px; color: var(--green); text-shadow: 0 0 6px rgba(0,255,136,0.45); font-weight: 700; white-space: pre-wrap; }
 .term-body .caret { animation: blink 1s steps(1) infinite; }
 
+/* contact form: errores, honeypot y estado deshabilitado */
+.contact-form .field-error { margin: 0; font-family: var(--mono); font-size: 12px; color: var(--magenta); text-shadow: 0 0 6px rgba(255,0,110,0.4); }
+.contact-form [aria-invalid="true"] { border-color: var(--magenta); }
+.contact-form .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.contact-form .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.terminal-error { background: #000; border: 1px solid var(--magenta); box-shadow: 0 0 18px rgba(255,0,110,0.25); font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--magenta); padding: 12px 14px; margin-bottom: 14px; }
+.terminal-error .err-tag { color: var(--cyan); margin-right: 4px; }
+
 /* ===== reduced motion: sin tilt, rejilla, enemigos, nave, parpadeos ===== */
 @media (prefers-reduced-motion: reduce) {
   .card,
