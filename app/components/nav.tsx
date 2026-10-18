@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "./auth-provider";
+import { useDialog } from "./use-dialog";
 
 export function Nav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
 
   const isHome = pathname.startsWith("/home");
   const isLibrary =
@@ -17,10 +19,15 @@ export function Nav() {
   const isAbout = pathname.startsWith("/about");
   const isAuth = pathname.startsWith("/acceso");
   const close = () => setOpen(false);
+  const panelRef = useDialog<HTMLDivElement>(open, {
+    onEscape: close,
+    // Safari no da el foco a un botón al hacer clic: el foco se devuelve al hamburguesa de forma explícita.
+    returnFocus: () => hamburgerRef.current,
+  });
 
   return (
     <>
-      <nav className="av-nav">
+      <nav className="av-nav" aria-label="Principal">
         <Link href="/home" className="logo">
           <div className="logo-mark"></div>
           <div className="logo-text neon-cyan">
@@ -56,9 +63,12 @@ export function Nav() {
           </Link>
         )}
         <button
+          ref={hamburgerRef}
           className="btn ghost hamburger"
           onClick={() => setOpen(true)}
           aria-label="Menú"
+          aria-expanded={open}
+          aria-controls="menu-movil"
         >
           ≡
         </button>
@@ -67,10 +77,24 @@ export function Nav() {
       <div
         className={"av-mobile-backdrop" + (open ? " open" : "")}
         onClick={close}
+        aria-hidden="true"
       ></div>
-      <aside className={"av-mobile-panel" + (open ? " open" : "")}>
-        <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
-          MENÚ
+      <div
+        id="menu-movil"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú"
+        inert={!open}
+        className={"av-mobile-panel" + (open ? " open" : "")}
+      >
+        <div className="panel-head">
+          <div className="pixel neon-cyan" style={{ fontSize: 11 }}>
+            MENÚ
+          </div>
+          <button type="button" className="btn ghost" onClick={close}>
+            CERRAR
+          </button>
         </div>
         <Link href="/home" className={isHome ? "active" : ""} onClick={close}>
           Inicio
@@ -98,7 +122,7 @@ export function Nav() {
         >
           CRÉDITOS · 03
         </div>
-      </aside>
+      </div>
     </>
   );
 }

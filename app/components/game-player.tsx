@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useAuth } from "./auth-provider";
+import { useDialog } from "./use-dialog";
 
 const LIVES = 3;
 
@@ -14,9 +15,22 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
   const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const finRef = useRef<HTMLButtonElement>(null);
+  const restartRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  // Escape no cierra el modal: sin él no queda un estado coherente (partida terminada, sin HUD).
+  const modalRef = useDialog<HTMLDivElement>(over, {
+    initialFocus: "input",
+    returnFocus: () => finRef.current,
+  });
 
   const name = editedName ?? user?.name ?? "INVITADO";
   const level = 1 + Math.floor(score / 2500);
+
+  // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
+  useEffect(() => {
+    if (saved) restartRef.current?.focus();
+  }, [saved]);
 
   useEffect(() => {
     if (over || paused) return;
@@ -59,7 +73,7 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button className="btn magenta" onClick={() => setOver(true)}>
+          <button ref={finRef} className="btn magenta" onClick={() => setOver(true)}>
             FIN
           </button>
           <Link href={`/juegos/${gameId}`} className="btn ghost">
@@ -110,13 +124,20 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
 
       {over && (
         <div className="modal-bd">
-          <div className="modal">
-            <h2>FIN DEL JUEGO</h2>
+          <div
+            ref={modalRef}
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+          >
+            <h2 id={titleId}>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input
+                  aria-label="Iniciales"
                   value={name}
                   onChange={(e) =>
                     setEditedName(e.target.value.toUpperCase().slice(0, 10))
@@ -134,10 +155,10 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
                 </button>
               </div>
             ) : (
-              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+              <div className="toast-saved" role="status">▸ PUNTUACIÓN GUARDADA_</div>
             )}
             <div className="actions">
-              <button className="btn" onClick={restart}>
+              <button ref={restartRef} className="btn" onClick={restart}>
                 JUGAR DE NUEVO
               </button>
               <Link href="/biblioteca" className="btn magenta">

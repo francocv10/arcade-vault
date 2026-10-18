@@ -11,6 +11,7 @@ Specs existentes:
 - `01-mvp-pantallas-visuales.md`: pantallas base (biblioteca, salón de la fama, acceso, juegos).
 - `02-home-page.md`: página de inicio.
 - `03-about-page-contacto-resend.md`: `/about` con formulario de contacto que envía correo real vía Resend (estado: Implementado).
+- `04-correcciones-graves-revision-playwright.md`: corrige los 4 errores graves de la revisión con Playwright (fallo de red al enviar el contacto, barra en ≤ 373 px, foco visible en `.btn`, accesibilidad del menú móvil y del modal de fin de juego) (estado: Implementado).
 
 Las plantillas visuales de referencia están en `references/templates/`.
 
@@ -31,16 +32,18 @@ Usa siempre /frontend-design para diseñar interfaces de usuarios.
 ## Estructura de `app/`
 
 - Rutas: `/` (redirige a `/home`), `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about`, `/juegos/[id]` y `/juegos/[id]/jugar`.
-- `app/components/`: componentes de UI compartidos (nav, footer, formularios, tarjetas, iconos pixel).
+- `app/error.tsx`: pantalla "PARTIDA INTERRUMPIDA" para excepciones de render (usa `retry`, no `reset`; `global-error.tsx` no existe).
+- `app/components/`: componentes de UI compartidos (nav, footer, formularios, tarjetas, iconos pixel). `use-dialog.ts` es el hook de diálogo modal (foco atrapado, scroll bloqueado, foco devuelto, Escape opcional) que usan el menú móvil y el modal de fin de juego.
 - `app/data/`: datos estáticos (`games.ts`, `home.ts`, `scores.ts`, reexportados desde `index.ts`).
 - `app/about/`: `page.tsx`, `contact-schema.ts` (validación) y `actions.ts` (Server Action `enviarContacto`).
 
 ## Formulario de contacto (Resend)
 
-- `enviarContacto` en `app/about/actions.ts` valida con `validarContacto`, descarta bots con un campo honeypot (`website`) y envía el correo con Resend.
+- `enviarContacto` en `app/about/actions.ts` valida con `validarContacto`, descarta bots con un campo honeypot (`website`) y envía el correo con Resend. `ContactForm` llama a la acción dentro de un `try/catch` (`enviar`): si la petición falla (red caída, 500) muestra el aviso `[ERR]` y conserva lo escrito en lugar de tumbar la página.
 - Variables de entorno requeridas (plantilla en `.env.example`, valores reales en `.env.local`, que no se versiona): `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL`. Si falta alguna, la acción devuelve un error genérico y lo registra en consola.
 
 ## Desarrollo
 
-- Si en `npm run dev` la UI aparece sin estilos (p. ej. SVG gigantes, texto sin centrar) pero `globals.css` está bien, el bundle de CSS de Turbopack quedó obsoleto: detén el servidor, borra `.next/dev` y vuelve a arrancarlo.
+- Si en `npm run dev` la UI aparece sin estilos (p. ej. SVG gigantes, texto sin centrar) pero `globals.css` está bien, el bundle de CSS de Turbopack quedó obsoleto: detén el servidor, borra `.next/dev` y vuelve a arrancarlo. Lo mismo si una regla recién añadida a `globals.css` no se aplica (comprueba que está en el chunk CSS servido).
+- Los `.btn` usan `clip-path` (esquinas cortadas): el `outline` y el `box-shadow` exterior se recortan, por eso el foco visible se dibuja con `::after` en `.btn:focus-visible`.
 - Los screenshots de Playwright se guardan en `.playwright-screenshots/`.
