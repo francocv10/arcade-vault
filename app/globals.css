@@ -196,6 +196,21 @@ a { color: inherit; text-decoration: none; }
   .av-nav .hamburger { padding: 10px 14px; }
 }
 
+/* móviles estrechos: el botón de sesión encoge y parte el texto para que el hamburguesa siempre quepa */
+@media (max-width: 420px) {
+  .av-nav .logo,
+  .av-nav .hamburger { flex-shrink: 0; }
+  .av-nav .logo-text { width: min-content; }
+  .av-nav .auth-btn {
+    min-width: 0;
+    padding: 8px 10px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.35;
+  }
+}
+
 /* barra completa en anchos intermedios: sin saltos de línea y más compacta para que quepa "Sobre nosotros" */
 @media (min-width: 1200px) and (max-width: 1439px) {
   .av-nav { gap: 16px; padding: 14px 20px; }
@@ -222,6 +237,8 @@ a { color: inherit; text-decoration: none; }
   display: flex; flex-direction: column; gap: 8px;
 }
 .av-mobile-panel.open { transform: translateX(0); }
+.av-mobile-panel .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.av-mobile-panel .panel-head .btn { padding: 8px 12px; font-size: 9px; }
 .av-mobile-panel a {
   padding: 14px 12px;
   font-family: var(--pixel);
@@ -266,6 +283,16 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 0 14px rgba(0,245,255,0.55), inset 0 0 8px rgba(0,245,255,0.35);
 }
 .btn:active { transform: translateY(1px) scale(0.98); }
+/* El clip-path del botón recorta el outline: el anillo de foco se recorta como un marco de 2 px que sigue las esquinas cortadas. */
+.btn:focus-visible { outline: none; }
+.btn:focus-visible::after {
+  content: ""; position: absolute; inset: 0;
+  background: var(--ink);
+  pointer-events: none;
+  clip-path: polygon(evenodd,
+    8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px, 8px 0,
+    8.83px 2px, calc(100% - 2px) 2px, calc(100% - 2px) calc(100% - 8.83px), calc(100% - 8.83px) calc(100% - 2px), 2px calc(100% - 2px), 2px 8.83px, 8.83px 2px);
+}
 
 .btn.magenta { border-color: var(--magenta); }
 .btn.magenta:hover { color: var(--magenta); box-shadow: 0 0 14px rgba(255,0,110,0.55), inset 0 0 8px rgba(255,0,110,0.35); }
@@ -1310,6 +1337,21 @@ a { color: inherit; text-decoration: none; }
 .contact-form .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .terminal-error { background: #000; border: 1px solid var(--magenta); box-shadow: 0 0 18px rgba(255,0,110,0.25); font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--magenta); padding: 12px 14px; margin-bottom: 14px; }
 .terminal-error .err-tag { color: var(--cyan); margin-right: 4px; }
+
+/* ===== pantalla de error (app/error.tsx) ===== */
+.av-error { max-width: 640px; margin: 0 auto; padding: 96px 24px 120px; text-align: center; }
+.av-error h1 {
+  margin: 0 0 24px;
+  font-family: var(--pixel);
+  font-size: clamp(18px, 4.4vw, 32px);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--magenta);
+  text-shadow: 0 0 6px rgba(255,0,110,0.65), 0 0 18px rgba(255,0,110,0.45);
+}
+.av-error p { max-width: 46ch; margin: 0 auto 36px; color: var(--ink-dim); line-height: 1.7; }
+.av-error .actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.av-error .digest { margin-top: 36px; font-size: 11px; letter-spacing: 0.1em; color: var(--ink-dim); }
 
 /* ===== reduced motion: sin tilt, rejilla, enemigos, nave, parpadeos ===== */
 @media (prefers-reduced-motion: reduce) {

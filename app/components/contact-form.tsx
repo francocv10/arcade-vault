@@ -5,9 +5,36 @@ import { enviarContacto } from "@/app/about/actions";
 import type { EstadoContacto } from "@/app/about/contact-schema";
 
 const ESTADO_INICIAL: EstadoContacto = { estado: "inicial" };
+const ERROR_ENVIO =
+  "[ERR] No se pudo enviar el mensaje. Revisa tu conexión e inténtalo de nuevo.";
+
+function texto(valor: FormDataEntryValue | null): string {
+  return typeof valor === "string" ? valor : "";
+}
+
+// Si la llamada al servidor lanza (red caída, fallo 500) el error nunca llega a `enviarContacto`, que solo
+// devuelve los errores que conoce. Sin este try/catch sube al error boundary y se lleva toda la página.
+async function enviar(
+  previo: EstadoContacto,
+  formData: FormData,
+): Promise<EstadoContacto> {
+  try {
+    return await enviarContacto(previo, formData);
+  } catch {
+    return {
+      estado: "error",
+      mensajeError: ERROR_ENVIO,
+      valores: {
+        nombre: texto(formData.get("nombre")),
+        correo: texto(formData.get("correo")),
+        mensaje: texto(formData.get("mensaje")),
+      },
+    };
+  }
+}
 
 export function ContactForm() {
-  const [estado, accion, enviando] = useActionState(enviarContacto, ESTADO_INICIAL);
+  const [estado, accion, enviando] = useActionState(enviar, ESTADO_INICIAL);
   // Estados ya "consumidos": el shake terminó o el usuario cerró el terminal de éxito.
   const [sacudido, setSacudido] = useState<EstadoContacto | null>(null);
   const [cerrado, setCerrado] = useState<EstadoContacto | null>(null);

@@ -1,13 +1,24 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-.env.local
+#references
+references
 
+#skills
+skills-lock.json
 
+#archivos playwright
 .playwright-mcp/*
 !.playwright-mcp/.gitkeep
 
 .playwright-screenshots/*
 !.playwright-screenshots/.gitkeep
+
+#Archivos IA
+.agents/
+.claude/
+.env.local
+AGENTS.md
+CLAUDE.md
 
 # dependencies
 /node_modules
