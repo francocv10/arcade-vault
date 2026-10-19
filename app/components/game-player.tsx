@@ -1,15 +1,18 @@
 "use client";
-
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
 import { AsteroidsCanvas } from "./asteroids-canvas";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
-
 const LIVES = 3;
-
-export function GamePlayer({ gameId, title }: { gameId: string; title: string }) {
+export function GamePlayer({
+  gameId,
+  title,
+}: {
+  gameId: string;
+  title: string;
+}) {
   const { user, saveScore } = useAuth();
   const esAsteroides = gameId === "asteroides";
   const [fakeScore, setScore] = useState(0);
@@ -24,48 +27,49 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
   const finRef = useRef<HTMLButtonElement>(null);
   const restartRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+  // En Asteroides el modal también se abre solo al perder la última vida.
+  const gameOver = over || (esAsteroides && snap?.status === "gameover");
   // Escape no cierra el modal: sin él no queda un estado coherente (partida terminada, sin HUD).
-  const modalRef = useDialog<HTMLDivElement>(over, {
+  const modalRef = useDialog<HTMLDivElement>(gameOver, {
     initialFocus: "input",
     returnFocus: () => finRef.current,
   });
-
   const name = editedName ?? user?.name ?? "INVITADO";
   const score = esAsteroides ? (snap?.score ?? 0) : fakeScore;
   const lives = esAsteroides ? (snap?.lives ?? LIVES) : LIVES;
   const level = esAsteroides
     ? (snap?.level ?? 1)
     : 1 + Math.floor(score / 2500);
-
   // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
   useEffect(() => {
     if (saved) restartRef.current?.focus();
   }, [saved]);
-
   useEffect(() => {
-    if (esAsteroides || over || paused) return;
+    if (esAsteroides || gameOver || paused) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [esAsteroides, over, paused]);
-
+  }, [esAsteroides, gameOver, paused]);
   const restart = () => {
     setScore(0);
+    // Descarta el snapshot "gameover" para que el modal no reaparezca antes del primero nuevo.
+    setSnap(null);
     setPaused(false);
     setOver(false);
     setSaved(false);
     setRestartKey((k) => k + 1);
   };
-
   return (
     <div className="av-player fade-in">
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
             <div className="l">Jugador</div>
-            <div className="v" style={{ color: "var(--ink)" }}>{name}</div>
+            <div className="v" style={{ color: "var(--ink)" }}>
+              {name}
+            </div>
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
@@ -84,7 +88,11 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button ref={finRef} className="btn magenta" onClick={() => setOver(true)}>
+          <button
+            ref={finRef}
+            className="btn magenta"
+            onClick={() => setOver(true)}
+          >
             FIN
           </button>
           <Link href={`/juegos/${gameId}`} className="btn ghost">
@@ -92,13 +100,12 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
           </Link>
         </div>
       </div>
-
       <div className="crt">
         <div className="crt-screen">
           {esAsteroides ? (
             <AsteroidsCanvas
               onChange={setSnap}
-              paused={paused || over}
+              paused={paused || gameOver}
               restartKey={restartKey}
             />
           ) : (
@@ -140,8 +147,7 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
           <span>CARGA · 1MB</span>
         </div>
       </div>
-
-      {over && (
+      {gameOver && (
         <div className="modal-bd">
           <div
             ref={modalRef}
@@ -174,7 +180,9 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
                 </button>
               </div>
             ) : (
-              <div className="toast-saved" role="status">▸ PUNTUACIÓN GUARDADA_</div>
+              <div className="toast-saved" role="status">
+                ▸ PUNTUACIÓN GUARDADA_
+              </div>
             )}
             <div className="actions">
               <button ref={restartRef} className="btn" onClick={restart}>
