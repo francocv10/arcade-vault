@@ -13,7 +13,7 @@ Specs existentes:
 - `03-about-page-contacto-resend.md`: `/about` con formulario de contacto que envía correo real vía Resend (estado: Implementado).
 - `04-correcciones-graves-revision-playwright.md`: corrige los 4 errores graves de la revisión con Playwright (fallo de red al enviar el contacto, barra en ≤ 373 px, foco visible en `.btn`, accesibilidad del menú móvil y del modal de fin de juego) (estado: Implementado).
 - `05-integracion-supabase.md`: integra Supabase (paquetes, variables de entorno y clientes de navegador y de servidor) sin cambiar la UI ni el comportamiento de sesión y puntuaciones, que siguen en `localStorage` (estado: Implementado).
-- `06-juego-asteroides.md`: porta Asteroids a un motor de canvas en TypeScript, lo publica como el juego `asteroides` y lo conecta a `GamePlayer`, que recibe del canvas los puntos, las vidas y el nivel (estado: Aprobado).
+- `06-juego-asteroides.md`: porta Asteroids a un motor de canvas en TypeScript, lo publica como el juego `asteroides` y lo conecta a `GamePlayer`, que recibe del canvas los puntos, las vidas y el nivel (estado: Implementado).
 
 Las plantillas visuales de referencia están en `references/templates/`.
 

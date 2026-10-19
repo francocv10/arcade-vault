@@ -1,6 +1,6 @@
 # SPEC 06 — Juego ASTEROIDES jugable en la plataforma
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 01 (catálogo, ficha y reproductor), SPEC 04 (`useDialog` y modal de fin de juego)
 > **Date:** 2026-10-19
 > **Objective:** Portar el juego Asteroids de `references/started-games/02-asteroids/` a un módulo TypeScript con canvas, publicarlo como el juego nuevo `asteroides` y conectarlo al reproductor existente, que recibe del canvas los puntos, las vidas y el nivel.
@@ -112,43 +112,43 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint` y
 
 **Global**
 
-- [ ] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores en la consola del navegador en `/juegos/asteroides/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/asteroides`.
-- [ ] La carpeta `references/started-games/02-asteroids/` no se modifica (`git status`).
+- [x] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] No hay errores en la consola del navegador en `/juegos/asteroides/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/asteroides`.
+- [x] La carpeta `references/started-games/02-asteroids/` no se modifica (`git status`).
 
 **Ficha y catálogo**
 
-- [ ] `/biblioteca` lista ASTEROIDES con categoría SHOOTER, portada propia y botón cyan, y `rocas` sigue existiendo con su texto actual.
-- [ ] `/juegos/asteroides` muestra la ficha y su botón JUGAR lleva a `/juegos/asteroides/jugar`.
-- [ ] `/home` muestra las mismas 6 tarjetas de juegos que antes.
-- [ ] Las pestañas de `/salon` incluyen ASTEROIDES y no rompen las demás.
+- [x] `/biblioteca` lista ASTEROIDES con categoría SHOOTER, portada propia y botón cyan, y `rocas` sigue existiendo con su texto actual.
+- [x] `/juegos/asteroides` muestra la ficha y su botón JUGAR lleva a `/juegos/asteroides/jugar`.
+- [x] `/home` muestra las mismas 6 tarjetas de juegos que antes.
+- [x] Las pestañas de `/salon` incluyen ASTEROIDES y no rompen las demás.
 
 **Jugabilidad**
 
-- [ ] Al cargar `/juegos/asteroides/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con la nave en el centro, 4 asteroides grandes y el HUD del canvas con `SCORE  0`, `NIVEL 1` y 3 iconos de vida.
-- [ ] `←` y `→` rotan la nave, `↑` la acelera con inercia y la nave que sale por un borde reaparece por el opuesto.
-- [ ] `Espacio` dispara una bala por pulsación (mantenerlo pulsado no repite) con 0,2 s de enfriamiento.
-- [ ] Destruir un asteroide grande suma 20 puntos, uno mediano 50 y uno pequeño 100; el grande da dos medianos, el mediano dos pequeños y el pequeño ninguno.
-- [ ] Al chocar con un asteroide la nave se destruye, se pierde una vida y reaparece a los 2 s con invencibilidad parpadeante durante 3 s.
-- [ ] Al destruir todos los asteroides sube el nivel y aparecen `3 + nivel` asteroides grandes.
-- [ ] Recoger el power-up `3x` dispara tres balas en abanico y el HUD muestra la cuenta atrás de 5 s.
-- [ ] Al perder la tercera vida el canvas dibuja «GAME OVER» y «PUNTAJE: N — ESPACIO PARA REINICIAR»; `Espacio` reinicia con 0 puntos, 3 vidas y nivel 1.
-- [ ] Las flechas y `Espacio` no desplazan la página mientras se juega.
-- [ ] El canvas es visualmente igual al original: fondo `#000`, trazos blancos, texto `monospace`.
+- [x] Al cargar `/juegos/asteroides/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con la nave en el centro, 4 asteroides grandes y el HUD del canvas con `SCORE  0`, `NIVEL 1` y 3 iconos de vida.
+- [x] `←` y `→` rotan la nave, `↑` la acelera con inercia y la nave que sale por un borde reaparece por el opuesto.
+- [x] `Espacio` dispara una bala por pulsación (mantenerlo pulsado no repite) con 0,2 s de enfriamiento.
+- [x] Destruir un asteroide grande suma 20 puntos, uno mediano 50 y uno pequeño 100; el grande da dos medianos, el mediano dos pequeños y el pequeño ninguno.
+- [x] Al chocar con un asteroide la nave se destruye, se pierde una vida y reaparece a los 2 s con invencibilidad parpadeante durante 3 s.
+- [x] Al destruir todos los asteroides sube el nivel y aparecen `3 + nivel` asteroides grandes.
+- [x] Recoger el power-up `3x` dispara tres balas en abanico y el HUD muestra la cuenta atrás de 5 s.
+- [x] Al perder la tercera vida el canvas dibuja «GAME OVER» y «PUNTAJE: N — ESPACIO PARA REINICIAR»; `Espacio` reinicia con 0 puntos, 3 vidas y nivel 1.
+- [x] Las flechas y `Espacio` no desplazan la página mientras se juega.
+- [x] El canvas es visualmente igual al original: fondo `#000`, trazos blancos, texto `monospace`.
 
 **Integración con React**
 
-- [ ] La barra del reproductor muestra PUNTUACIÓN, VIDAS y NIVEL iguales a los del HUD del canvas en todo momento, y VIDAS baja de 3 a 0 al perder vidas.
-- [ ] PAUSA congela asteroides, balas y power-ups, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin saltos bruscos de posición.
-- [ ] Con el foco en el botón PAUSA, pulsar `Espacio` dispara y no activa el botón.
-- [ ] FIN pausa el juego y abre el modal «FIN DEL JUEGO» con la puntuación real del canvas.
-- [ ] Con el modal abierto, escribir espacios y flechas en el campo de iniciales no mueve la nave ni dispara.
-- [ ] GUARDAR PUNTUACIÓN guarda en `localStorage` una entrada con `game: "asteroides"`, la puntuación y el nombre, y muestra «PUNTUACIÓN GUARDADA».
-- [ ] JUGAR DE NUEVO cierra el modal y reinicia el juego con 0 puntos, 3 vidas y nivel 1.
-- [ ] Al llegar a GAME OVER el modal no se abre solo; sí se abre al pulsar FIN, con la puntuación final.
-- [ ] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
-- [ ] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
-- [ ] `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar.
+- [x] La barra del reproductor muestra PUNTUACIÓN, VIDAS y NIVEL iguales a los del HUD del canvas en todo momento, y VIDAS baja de 3 a 0 al perder vidas.
+- [x] PAUSA congela asteroides, balas y power-ups, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin saltos bruscos de posición.
+- [x] Con el foco en el botón PAUSA, pulsar `Espacio` dispara y no activa el botón.
+- [x] FIN pausa el juego y abre el modal «FIN DEL JUEGO» con la puntuación real del canvas.
+- [x] Con el modal abierto, escribir espacios y flechas en el campo de iniciales no mueve la nave ni dispara.
+- [x] GUARDAR PUNTUACIÓN guarda en `localStorage` una entrada con `game: "asteroides"`, la puntuación y el nombre, y muestra «PUNTUACIÓN GUARDADA».
+- [x] JUGAR DE NUEVO cierra el modal y reinicia el juego con 0 puntos, 3 vidas y nivel 1.
+- [x] Al llegar a GAME OVER el modal no se abre solo; sí se abre al pulsar FIN, con la puntuación final.
+- [x] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
+- [x] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
+- [x] `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar.
 
 ---
 
