@@ -104,6 +104,17 @@ export const GAMES: Juego[] = [
     best: 24,
     plays: "4.2K",
   },
+  {
+    id: "asteroides",
+    title: "ASTEROIDES",
+    short: "Parte rocas en un espacio sin bordes.",
+    long: "Tu nave triangular flota en un campo de asteroides sin límites. Rota, propulsa y dispara para partir las rocas grandes en medianas y las medianas en pequeñas. Recoge el power-up 3x para disparar en abanico.",
+    cat: "SHOOTER",
+    cover: "cover-asteroides",
+    color: "cyan",
+    best: 0,
+    plays: "0",
+  },
 ];
 
 export const CATS: ["TODOS", ...Categoria[]] = [

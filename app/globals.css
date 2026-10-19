@@ -546,6 +546,30 @@ a { color: inherit; text-decoration: none; }
   text-shadow: 0 0 8px var(--yellow);
 }
 
+.cover-asteroides { background: radial-gradient(circle at 50% 50%, #04101c, #000 75%); }
+.cover-asteroides::after {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 32%, transparent 0 30px, rgba(255,255,255,0.85) 31px 33px, transparent 34px),
+    radial-gradient(circle at 80% 66%, transparent 0 38px, rgba(255,255,255,0.85) 39px 41px, transparent 42px),
+    radial-gradient(circle at 66% 20%, transparent 0 14px, rgba(255,255,255,0.85) 15px 17px, transparent 18px),
+    radial-gradient(circle at 30% 80%, transparent 0 10px, rgba(255,255,255,0.85) 11px 13px, transparent 14px),
+    radial-gradient(circle at 62% 46%, var(--cyan) 0 2px, transparent 3px),
+    radial-gradient(circle at 57% 49%, var(--cyan) 0 2px, transparent 3px),
+    radial-gradient(circle at 52% 52%, var(--cyan) 0 2px, transparent 3px);
+  filter: drop-shadow(0 0 6px rgba(0,245,255,0.5));
+}
+.cover-asteroides::before {
+  content: "";
+  position: absolute; left: calc(46% - 14px); top: calc(54% - 16px);
+  width: 28px; height: 32px;
+  background: var(--cyan);
+  clip-path: polygon(50% 0, 100% 100%, 50% 80%, 0 100%);
+  transform: rotate(52deg);
+  filter: drop-shadow(0 0 8px var(--cyan));
+}
+
 .cover-rana { background: linear-gradient(180deg,#001f2a,#0a0a18); }
 .cover-rana::after {
   content: "";
