@@ -13,6 +13,7 @@ Specs existentes:
 - `03-about-page-contacto-resend.md`: `/about` con formulario de contacto que envía correo real vía Resend (estado: Implementado).
 - `04-correcciones-graves-revision-playwright.md`: corrige los 4 errores graves de la revisión con Playwright (fallo de red al enviar el contacto, barra en ≤ 373 px, foco visible en `.btn`, accesibilidad del menú móvil y del modal de fin de juego) (estado: Implementado).
 - `05-integracion-supabase.md`: integra Supabase (paquetes, variables de entorno y clientes de navegador y de servidor) sin cambiar la UI ni el comportamiento de sesión y puntuaciones, que siguen en `localStorage` (estado: Implementado).
+- `06-juego-asteroides.md`: porta Asteroids a un motor de canvas en TypeScript, lo publica como el juego `asteroides` y lo conecta a `GamePlayer`, que recibe del canvas los puntos, las vidas y el nivel (estado: Aprobado).
 
 Las plantillas visuales de referencia están en `references/templates/`.
 
@@ -37,6 +38,7 @@ Usa siempre /frontend-design para diseñar interfaces de usuarios.
 - `app/components/`: componentes de UI compartidos (nav, footer, formularios, tarjetas, iconos pixel). `use-dialog.ts` es el hook de diálogo modal (foco atrapado, scroll bloqueado, foco devuelto, Escape opcional) que usan el menú móvil y el modal de fin de juego.
 - `app/data/`: datos estáticos (`games.ts`, `home.ts`, `scores.ts`, reexportados desde `index.ts`).
 - `app/about/`: `page.tsx`, `contact-schema.ts` (validación) y `actions.ts` (Server Action `enviarContacto`).
+- `app/games/asteroids/`: motor de Asteroids, el primer juego real. `entities.ts` (nave, balas, asteroides, power-up y partículas, sin acceder a `document`), `game.ts` (`createAsteroidsGame(canvas, onChange)`: teclado, bucle `requestAnimationFrame`, colisiones, HUD y GAME OVER dibujados en el canvas, y `pause`/`resume`/`restart`/`destroy`) y `types.ts` (contrato con React). `onChange` recibe un snapshot (`score`, `lives`, `level`, `status`) solo cuando cambia algún valor, nunca por fotograma. `app/components/asteroids-canvas.tsx` monta el canvas de 800×600 (escalado por CSS para llenar `.crt-screen`) y lo destruye al desmontar; `GamePlayer` lo usa solo cuando `gameId === "asteroides"` y los otros 7 juegos siguen con la maqueta del `setInterval`. El motor escucha el teclado en `window`, ignora `input`/`textarea`/`select` y la pausa, y hace `preventDefault` de flechas y Espacio solo mientras juega.
 - `app/lib/supabase/`: fábricas de cliente de Supabase. `client.ts` (`createClient()`, cliente de navegador con `createBrowserClient`) y `server.ts` (`await createClient()`, cliente de servidor con `createServerClient` y las cookies de `next/headers`, para Server Components, Server Actions y Route Handlers). `env.ts` valida las variables y lanza un error que nombra la que falta.
 
 ## Supabase
