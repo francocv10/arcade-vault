@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
+import { AsteroidsCanvas } from "./asteroids-canvas";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 
@@ -9,7 +11,11 @@ const LIVES = 3;
 
 export function GamePlayer({ gameId, title }: { gameId: string; title: string }) {
   const { user, saveScore } = useAuth();
-  const [score, setScore] = useState(0);
+  const esAsteroides = gameId === "asteroides";
+  const [fakeScore, setScore] = useState(0);
+  // Snapshot que envía el motor de canvas (solo en los juegos reales).
+  const [snap, setSnap] = useState<SnapshotAsteroides | null>(null);
+  const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
@@ -25,7 +31,11 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
   });
 
   const name = editedName ?? user?.name ?? "INVITADO";
-  const level = 1 + Math.floor(score / 2500);
+  const score = esAsteroides ? (snap?.score ?? 0) : fakeScore;
+  const lives = esAsteroides ? (snap?.lives ?? LIVES) : LIVES;
+  const level = esAsteroides
+    ? (snap?.level ?? 1)
+    : 1 + Math.floor(score / 2500);
 
   // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
   useEffect(() => {
@@ -33,19 +43,20 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
   }, [saved]);
 
   useEffect(() => {
-    if (over || paused) return;
+    if (esAsteroides || over || paused) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [over, paused]);
+  }, [esAsteroides, over, paused]);
 
   const restart = () => {
     setScore(0);
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setRestartKey((k) => k + 1);
   };
 
   return (
@@ -62,7 +73,7 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
           </div>
           <div className="hud-stat lives">
             <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(LIVES).trim() || "—"}</div>
+            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
           </div>
           <div className="hud-stat level">
             <div className="l">Nivel</div>
@@ -84,13 +95,21 @@ export function GamePlayer({ gameId, title }: { gameId: string; title: string })
 
       <div className="crt">
         <div className="crt-screen">
-          <div className="game-arena">
-            <div className="grid-floor"></div>
-            <div className="enemy e1"></div>
-            <div className="enemy e2"></div>
-            <div className="enemy e3"></div>
-            <div className="player-ship"></div>
-          </div>
+          {esAsteroides ? (
+            <AsteroidsCanvas
+              onChange={setSnap}
+              paused={paused || over}
+              restartKey={restartKey}
+            />
+          ) : (
+            <div className="game-arena">
+              <div className="grid-floor"></div>
+              <div className="enemy e1"></div>
+              <div className="enemy e2"></div>
+              <div className="enemy e3"></div>
+              <div className="player-ship"></div>
+            </div>
+          )}
           {paused && (
             <div
               className="crt-content"

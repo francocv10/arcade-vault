@@ -748,6 +748,15 @@ a { color: inherit; text-decoration: none; }
   background: var(--green); box-shadow: 0 0 6px var(--green);
 }
 
+/* canvas de un juego real: llena el .crt-screen y queda bajo las capas del marco */
+.asteroids-canvas {
+  position: absolute; inset: 0;
+  display: block;
+  width: 100%; height: 100%;
+}
+.crt-screen:has(.asteroids-canvas)::before { z-index: 1; }
+.crt-screen:has(.asteroids-canvas)::after { z-index: 1; }
+
 /* fake in-screen game */
 .game-arena {
   position: absolute; inset: 0;
