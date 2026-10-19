@@ -12,6 +12,7 @@ Specs existentes:
 - `02-home-page.md`: página de inicio.
 - `03-about-page-contacto-resend.md`: `/about` con formulario de contacto que envía correo real vía Resend (estado: Implementado).
 - `04-correcciones-graves-revision-playwright.md`: corrige los 4 errores graves de la revisión con Playwright (fallo de red al enviar el contacto, barra en ≤ 373 px, foco visible en `.btn`, accesibilidad del menú móvil y del modal de fin de juego) (estado: Implementado).
+- `05-integracion-supabase.md`: integra Supabase (paquetes, variables de entorno y clientes de navegador y de servidor) sin cambiar la UI ni el comportamiento de sesión y puntuaciones, que siguen en `localStorage` (estado: Implementado).
 
 Las plantillas visuales de referencia están en `references/templates/`.
 
@@ -36,6 +37,14 @@ Usa siempre /frontend-design para diseñar interfaces de usuarios.
 - `app/components/`: componentes de UI compartidos (nav, footer, formularios, tarjetas, iconos pixel). `use-dialog.ts` es el hook de diálogo modal (foco atrapado, scroll bloqueado, foco devuelto, Escape opcional) que usan el menú móvil y el modal de fin de juego.
 - `app/data/`: datos estáticos (`games.ts`, `home.ts`, `scores.ts`, reexportados desde `index.ts`).
 - `app/about/`: `page.tsx`, `contact-schema.ts` (validación) y `actions.ts` (Server Action `enviarContacto`).
+- `app/lib/supabase/`: fábricas de cliente de Supabase. `client.ts` (`createClient()`, cliente de navegador con `createBrowserClient`) y `server.ts` (`await createClient()`, cliente de servidor con `createServerClient` y las cookies de `next/headers`, para Server Components, Server Actions y Route Handlers). `env.ts` valida las variables y lanza un error que nombra la que falta.
+
+## Supabase
+
+- Proyecto `zlsnmrbgsdxzvpoxlghx`, con su MCP configurado en `.mcp.json`. Por ahora solo está integrada la conexión: no hay tablas, ni auth real, ni `proxy.ts`; `/acceso`, `AuthProvider` y las puntuaciones siguen usando `localStorage` y `app/data/`.
+- Variables de entorno públicas (plantilla en `.env.example`, valores reales en `.env.local`): `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (clave `sb_publishable_...`, no la `anon` legacy). `SUPABASE_DB_PASSWORD` es solo para la CLI y la app no la usa. La clave `service_role` y la contraseña de la base de datos nunca llevan prefijo `NEXT_PUBLIC_`.
+- Cada `process.env.NEXT_PUBLIC_*` se lee por su nombre literal en `env.ts`: Next solo lo sustituye en el bundle del navegador así, no con `process.env[nombre]`.
+- Con `cacheComponents: true`, el cliente de servidor lee `cookies()` y exige un límite `<Suspense>` si se usa en una página; en un Route Handler no hay problema.
 
 ## Formulario de contacto (Resend)
 
