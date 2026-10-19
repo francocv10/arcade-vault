@@ -1,6 +1,6 @@
 # SPEC 05 — Integración de Supabase en la aplicación
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 03 (convención de variables de entorno y `.env.example`)
 > **Date:** 2026-10-19
 > **Objective:** Dejar Supabase integrado en la app Next.js (paquetes, variables de entorno y clientes de navegador y de servidor con la clave pública) sin cambiar ninguna pantalla ni el comportamiento actual de sesión y puntuaciones.
@@ -79,17 +79,17 @@ Antes de escribir código de Next.js hay que leer en `node_modules/next/dist/doc
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] `package.json` incluye `@supabase/supabase-js` y `@supabase/ssr`.
-- [ ] Existen `app/lib/supabase/client.ts` y `app/lib/supabase/server.ts`, cada uno exporta `createClient`.
-- [ ] `.env.example` está versionado y lista `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sin valores; `.env.local` no está versionado.
-- [ ] El cliente de servidor, desde una ruta temporal, consigue respuesta de la API de Supabase del proyecto (no error de red ni de clave inválida).
-- [ ] El cliente de navegador consigue respuesta de la misma API desde el navegador.
-- [ ] Sin `NEXT_PUBLIC_SUPABASE_URL` o sin `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, el error indica cuál falta.
-- [ ] En `.next/static` no aparece la clave `service_role`, la contraseña de la base de datos ni la clave `anon` legacy; sí puede aparecer la clave publishable.
-- [ ] La ruta temporal de comprobación ya no existe en el repositorio.
-- [ ] `/acceso`, el menú, el reproductor y el Salón de la Fama se comportan igual que antes: sesión y puntuaciones siguen en `localStorage`, y no hay diferencias en `AuthForm`, `AuthProvider`, `nav.tsx` ni en los estilos (`git diff` limitado a `package.json`, lockfile, `.env.example`, `CLAUDE.md`, `app/lib/supabase/` y el spec).
-- [ ] No hay errores nuevos en la consola del navegador en `/home`, `/biblioteca`, `/salon`, `/acceso` y `/about`.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] `package.json` incluye `@supabase/supabase-js` y `@supabase/ssr`.
+- [x] Existen `app/lib/supabase/client.ts` y `app/lib/supabase/server.ts`, cada uno exporta `createClient`.
+- [x] `.env.example` está versionado y lista `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sin valores; `.env.local` no está versionado.
+- [x] El cliente de servidor, desde una ruta temporal, consigue respuesta de la API de Supabase del proyecto (no error de red ni de clave inválida).
+- [x] El cliente de navegador consigue respuesta de la misma API desde el navegador.
+- [x] Sin `NEXT_PUBLIC_SUPABASE_URL` o sin `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, el error indica cuál falta.
+- [x] En `.next/static` no aparece la clave `service_role`, la contraseña de la base de datos ni la clave `anon` legacy; sí puede aparecer la clave publishable.
+- [x] La ruta temporal de comprobación ya no existe en el repositorio.
+- [x] `/acceso`, el menú, el reproductor y el Salón de la Fama se comportan igual que antes: sesión y puntuaciones siguen en `localStorage`, y no hay diferencias en `AuthForm`, `AuthProvider`, `nav.tsx` ni en los estilos (`git diff` limitado a `package.json`, lockfile, `.env.example`, `CLAUDE.md`, `app/lib/supabase/` y el spec).
+- [x] No hay errores nuevos en la consola del navegador en `/home`, `/biblioteca`, `/salon`, `/acceso` y `/about`.
 
 ---
 
