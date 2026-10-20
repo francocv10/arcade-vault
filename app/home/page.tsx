@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  GAMES,
-  HOME_STATS,
-  RECENT_ACTIVITY,
-  TOP_TODAY,
-} from "@/app/data";
+import { Suspense } from "react";
+import { GAMES, HOME_STATS } from "@/app/data";
+import { EmptyBoard } from "@/app/components/empty-board";
 import { HomeSilhouettes } from "@/app/components/home-silhouettes";
 import {
   HomeFeatureIcon,
@@ -13,6 +10,10 @@ import {
 } from "@/app/components/home-feature-icon";
 import { MiniCard } from "@/app/components/mini-card";
 import { RevealObserver } from "@/app/components/reveal-observer";
+import {
+  obtenerActividadReciente,
+  obtenerTopDelDia,
+} from "@/app/lib/leaderboard/queries";
 
 export const metadata: Metadata = {
   title: "Inicio · Arcade Vault",
@@ -178,20 +179,9 @@ export default function HomePage() {
             <div className="ac-head">
               <div className="ac-title pixel">▸ ÚLTIMAS PUNTUACIONES</div>
             </div>
-            <div className="ticker">
-              {RECENT_ACTIVITY.map((r, i) => (
-                <div
-                  key={r.p}
-                  className="tick-row"
-                  style={{ animationDelay: i * 60 + "ms" }}
-                >
-                  <span className={"tk-p neon-" + r.c}>{r.p}</span>
-                  <span className="tk-mid">▸ {r.g}</span>
-                  <span className="tk-s">+{r.s.toLocaleString("es-ES")}</span>
-                  <span className="tk-t">{r.t}</span>
-                </div>
-              ))}
-            </div>
+            <Suspense fallback={<div className="ticker" aria-busy="true" />}>
+              <UltimasPuntuaciones />
+            </Suspense>
           </div>
 
           <div className="activity-card">
@@ -203,33 +193,9 @@ export default function HomePage() {
                 VER SALÓN →
               </Link>
             </div>
-            <div className="top-list">
-              {TOP_TODAY.map((r, i) => (
-                <div
-                  key={r.p}
-                  className={
-                    "top-row" +
-                    (i === 0
-                      ? " top1"
-                      : i === 1
-                        ? " top2"
-                        : i === 2
-                          ? " top3"
-                          : "")
-                  }
-                >
-                  <span className="tp-rk">#{String(r.r).padStart(2, "0")}</span>
-                  <span className="tp-bar">
-                    <span
-                      className="tp-fill"
-                      style={{ width: 100 - i * 16 + "%" }}
-                    ></span>
-                  </span>
-                  <span className="tp-p">{r.p}</span>
-                  <span className="tp-s">{r.s.toLocaleString("es-ES")}</span>
-                </div>
-              ))}
-            </div>
+            <Suspense fallback={<div className="top-list" aria-busy="true" />}>
+              <TopJugadoresHoy />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -291,6 +257,54 @@ export default function HomePage() {
           Gratis. Sin registro obligatorio. Empieza en segundos.
         </div>
       </section>
+    </div>
+  );
+}
+
+// Las dos tarjetas de «ACTIVIDAD EN VIVO» leen de la base de datos (solo Asteroides
+// tiene ranking real) dentro de su propio Suspense: el resto del Home no espera.
+async function UltimasPuntuaciones() {
+  const actividad = await obtenerActividadReciente(7);
+  if (actividad.length === 0) return <EmptyBoard gameId="asteroides" />;
+  return (
+    <div className="ticker">
+      {actividad.map((r, i) => (
+        <div
+          key={i}
+          className="tick-row"
+          style={{ animationDelay: i * 60 + "ms" }}
+        >
+          <span className={"tk-p neon-" + r.c}>{r.p}</span>
+          <span className="tk-mid">▸ {r.g}</span>
+          <span className="tk-s">+{r.s.toLocaleString("es-ES")}</span>
+          <span className="tk-t">{r.t}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function TopJugadoresHoy() {
+  const top = await obtenerTopDelDia(5);
+  if (top.length === 0) return <EmptyBoard gameId="asteroides" />;
+  return (
+    <div className="top-list">
+      {top.map((r, i) => (
+        <div
+          key={r.p}
+          className={
+            "top-row" +
+            (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
+          }
+        >
+          <span className="tp-rk">#{String(r.r).padStart(2, "0")}</span>
+          <span className="tp-bar">
+            <span className="tp-fill" style={{ width: 100 - i * 16 + "%" }}></span>
+          </span>
+          <span className="tp-p">{r.p}</span>
+          <span className="tp-s">{r.s.toLocaleString("es-ES")}</span>
+        </div>
+      ))}
     </div>
   );
 }

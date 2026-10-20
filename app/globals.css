@@ -1657,6 +1657,44 @@ a {
   margin-top: 6px;
   letter-spacing: 0.12em;
 }
+/* Estado vacío de los rankings reales (app/components/empty-board.tsx) */
+.empty-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 20px;
+  border: 1px dashed var(--line);
+  background: var(--bg-2);
+  text-align: center;
+}
+.empty-board .eb-title {
+  max-width: 28ch;
+  font-family: var(--pixel);
+  font-size: 11px;
+  line-height: 1.9;
+  letter-spacing: 0.08em;
+  color: var(--yellow);
+  text-shadow: 0 0 8px rgba(245, 255, 0, 0.5);
+}
+.empty-board .eb-caret {
+  margin-left: 2px;
+  animation: eb-blink 1s steps(1) infinite;
+}
+@keyframes eb-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .empty-board .eb-caret {
+    animation: none;
+  }
+}
+.leaderboard .empty-board,
+.activity-card .empty-board {
+  border: 0;
+}
 .hall-table {
   border: 1px solid var(--line);
   background: var(--bg-2);
