@@ -3,9 +3,12 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
 import { AsteroidsCanvas } from "./asteroids-canvas";
+import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 const LIVES = 3;
+const ERROR_GUARDADO =
+  "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
 export function GamePlayer({
   gameId,
   title,
@@ -24,7 +27,12 @@ export function GamePlayer({
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
   const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // Solo Asteroides guarda en Supabase; el resto de juegos sigue en localStorage.
+  const [saving, setSaving] = useState(false);
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
+  const saveRef = useRef<HTMLButtonElement>(null);
+  const enviandoRef = useRef(false);
   const restartRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   // En Asteroides el modal también se abre solo al perder la última vida.
@@ -44,6 +52,10 @@ export function GamePlayer({
   useEffect(() => {
     if (saved) restartRef.current?.focus();
   }, [saved]);
+  // Deshabilitar el botón durante el envío le quita el foco: se devuelve si falla.
+  useEffect(() => {
+    if (errorGuardado) saveRef.current?.focus();
+  }, [errorGuardado]);
   useEffect(() => {
     if (esAsteroides || gameOver || paused) return;
     const t = setInterval(
@@ -59,7 +71,31 @@ export function GamePlayer({
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setErrorGuardado(null);
     setRestartKey((k) => k + 1);
+  };
+  const guardar = async () => {
+    if (!esAsteroides) {
+      saveScore({ game: gameId, score, name });
+      setSaved(true);
+      return;
+    }
+    // El ref bloquea al instante: `saving` no se actualiza hasta el siguiente render.
+    if (enviandoRef.current) return;
+    enviandoRef.current = true;
+    setSaving(true);
+    setErrorGuardado(null);
+    try {
+      const res = await guardarPuntuacion({ game: gameId, name, score });
+      if (res.ok) setSaved(true);
+      else setErrorGuardado(res.error ?? ERROR_GUARDADO);
+    } catch {
+      // Red caída o 500: se conserva el modal y lo escrito.
+      setErrorGuardado(ERROR_GUARDADO);
+    } finally {
+      enviandoRef.current = false;
+      setSaving(false);
+    }
   };
   return (
     <div className="av-player fade-in">
@@ -170,18 +206,22 @@ export function GamePlayer({
                   placeholder="TUS INICIALES"
                 />
                 <button
+                  ref={saveRef}
                   className="btn yellow"
-                  onClick={() => {
-                    saveScore({ game: gameId, score, name });
-                    setSaved(true);
-                  }}
+                  disabled={saving}
+                  onClick={guardar}
                 >
-                  GUARDAR PUNTUACIÓN
+                  {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
                 </button>
               </div>
             ) : (
               <div className="toast-saved" role="status">
                 ▸ PUNTUACIÓN GUARDADA_
+              </div>
+            )}
+            {errorGuardado && !saved && (
+              <div className="terminal-error" role="alert">
+                <span className="err-tag">&gt;</span> {errorGuardado}
               </div>
             )}
             <div className="actions">
