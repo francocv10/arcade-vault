@@ -154,39 +154,39 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 
 **Base de datos**
 
-- [ ] `games` existe con exactamente una fila: `asteroides` / `ASTEROIDES` / `SHOOTER`.
-- [ ] `scores` existe con `user_id uuid null` referenciando `auth.users`, y RLS activa en `games` y `scores`.
-- [ ] Con la clave publishable (rol `anon`) se puede leer `games`, `scores` y `leaderboard`, insertar en `scores` con `user_id` nulo, y no se puede hacer `UPDATE` ni `DELETE` en ninguna tabla ni `INSERT` en `games`.
-- [ ] Una inserción con `score = -1`, `score = 1000001`, `player_name` vacío o de 11 caracteres, o `game_id` inexistente es rechazada por la base de datos.
-- [ ] Una inserción con `user_id` de otro usuario es rechazada por RLS.
-- [ ] `get_advisors` de seguridad no reporta incidencias nuevas sobre estas tablas y la vista.
-- [ ] `leaderboard` devuelve una sola fila por jugador y juego (la de mayor puntuación, sin distinguir mayúsculas).
+- [x] `games` existe con exactamente una fila: `asteroides` / `ASTEROIDES` / `SHOOTER`.
+- [x] `scores` existe con `user_id uuid null` referenciando `auth.users`, y RLS activa en `games` y `scores`.
+- [x] Con la clave publishable (rol `anon`) se puede leer `games`, `scores` y `leaderboard`, insertar en `scores` con `user_id` nulo, y no se puede hacer `UPDATE` ni `DELETE` en ninguna tabla ni `INSERT` en `games`.
+- [x] Una inserción con `score = -1`, `score = 1000001`, `player_name` vacío o de 11 caracteres, o `game_id` inexistente es rechazada por la base de datos.
+- [x] Una inserción con `user_id` de otro usuario es rechazada por RLS.
+- [x] `get_advisors` de seguridad no reporta incidencias nuevas sobre estas tablas y la vista.
+- [x] `leaderboard` devuelve una sola fila por jugador y juego (la de mayor puntuación, sin distinguir mayúsculas).
 
 **Guardado**
 
-- [ ] En `/juegos/asteroides/jugar`, FIN → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'asteroides'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
-- [ ] Guardar sin haber iniciado sesión (modo invitado, nombre `INVITADO`) funciona igual.
-- [ ] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; la página no se rompe.
-- [ ] El botón no permite doble envío mientras la petición está en curso.
-- [ ] En `/juegos/bloque-buster/jugar` (y los otros 6) GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
+- [x] En `/juegos/asteroides/jugar`, FIN → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'asteroides'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
+- [x] Guardar sin haber iniciado sesión (modo invitado, nombre `INVITADO`) funciona igual.
+- [x] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; la página no se rompe.
+- [x] El botón no permite doble envío mientras la petición está en curso.
+- [x] En `/juegos/bloque-buster/jugar` (y los otros 6) GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
 
 **Lectura**
 
-- [ ] Con `scores` vacía, `/salon` (pestaña ASTEROIDES), `/juegos/asteroides` y las dos tarjetas del Home muestran el estado vacío, sin datos inventados.
-- [ ] Tras guardar una puntuación, aparece en la ficha, el Salón (como 1.º con 1 sola fila) y las dos tarjetas del Home, sin reiniciar el servidor.
-- [ ] El podio del Salón, con 3 o más jugadores, muestra a los tres mejores en orden; con menos de 3, muestra los puestos disponibles y deja los demás vacíos sin errores.
-- [ ] Un mismo nombre con dos puntuaciones aparece una sola vez en el ranking, con la mayor.
-- [ ] «TOP JUGADORES · HOY» solo cuenta puntuaciones de las últimas 24 horas; «ÚLTIMAS PUNTUACIONES» muestra las más recientes con «hace N min/h».
-- [ ] «TU MEJOR MARCA» para ASTEROIDES muestra la mejor marca del nombre del usuario en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
-- [ ] Las pestañas de los otros 7 juegos y sus fichas conservan el ranking falso de siempre.
+- [x] Con `scores` vacía, `/salon` (pestaña ASTEROIDES), `/juegos/asteroides` y las dos tarjetas del Home muestran el estado vacío, sin datos inventados.
+- [x] Tras guardar una puntuación, aparece en la ficha, el Salón (como 1.º con 1 sola fila) y las dos tarjetas del Home, sin reiniciar el servidor.
+- [x] El podio del Salón, con 3 o más jugadores, muestra a los tres mejores en orden; con menos de 3, muestra los puestos disponibles y deja los demás vacíos sin errores.
+- [x] Un mismo nombre con dos puntuaciones aparece una sola vez en el ranking, con la mayor.
+- [x] «TOP JUGADORES · HOY» solo cuenta puntuaciones de las últimas 24 horas; «ÚLTIMAS PUNTUACIONES» muestra las más recientes con «hace N min/h».
+- [x] «TU MEJOR MARCA» para ASTEROIDES muestra la mejor marca del nombre del usuario en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
+- [x] Las pestañas de los otros 7 juegos y sus fichas conservan el ranking falso de siempre.
 
 **Global**
 
-- [ ] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores nuevos en la consola del navegador en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about`, `/juegos/asteroides` y `/juegos/asteroides/jugar`.
-- [ ] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
-- [ ] `/acceso`, `AuthForm`, `AuthProvider` y el catálogo `app/data/games.ts` no cambian (`git diff`).
-- [ ] El Home carga el resto de secciones sin esperar a la consulta de actividad.
+- [x] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] No hay errores nuevos en la consola del navegador en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about`, `/juegos/asteroides` y `/juegos/asteroides/jugar`.
+- [x] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
+- [x] `/acceso`, `AuthForm`, `AuthProvider` y el catálogo `app/data/games.ts` no cambian (`git diff`).
+- [x] El Home carga el resto de secciones sin esperar a la consulta de actividad.
 
 ---
 
