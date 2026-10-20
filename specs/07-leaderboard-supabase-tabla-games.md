@@ -1,6 +1,6 @@
 # SPEC 07 — Leaderboard real en Supabase y tabla `games`
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 05 (clientes de Supabase), SPEC 06 (juego `asteroides` y su modal de fin de juego)
 > **Date:** 2026-10-19
 > **Objective:** Crear en Supabase las tablas `games` (solo con `asteroides`) y `scores` (con `user_id` opcional) y conectar a ellas el guardado de puntuaciones de Asteroides y los rankings de `/salon`, `/juegos/asteroides` y `/home`, sin exigir autenticación al jugador.
