@@ -14,7 +14,7 @@ Specs existentes:
 - `04-correcciones-graves-revision-playwright.md`: corrige los 4 errores graves de la revisión con Playwright (fallo de red al enviar el contacto, barra en ≤ 373 px, foco visible en `.btn`, accesibilidad del menú móvil y del modal de fin de juego) (estado: Implementado).
 - `05-integracion-supabase.md`: integra Supabase (paquetes, variables de entorno y clientes de navegador y de servidor) sin cambiar la UI ni el comportamiento de sesión y puntuaciones, que siguen en `localStorage` (estado: Implementado).
 - `06-juego-asteroides.md`: porta Asteroids a un motor de canvas en TypeScript, lo publica como el juego `asteroides` y lo conecta a `GamePlayer`, que recibe del canvas los puntos, las vidas y el nivel (estado: Implementado).
-- `07-leaderboard-supabase-tabla-games.md`: crea en Supabase las tablas `games` (solo `asteroides`) y `scores` y la vista `leaderboard`, y conecta a ellas el guardado de puntuaciones de Asteroides y los rankings de `/salon`, `/juegos/asteroides` y `/home`, sin exigir autenticación (estado: Aprobado).
+- `07-leaderboard-supabase-tabla-games.md`: crea en Supabase las tablas `games` (solo `asteroides`) y `scores` y la vista `leaderboard`, y conecta a ellas el guardado de puntuaciones de Asteroides y los rankings de `/salon`, `/juegos/asteroides` y `/home`, sin exigir autenticación (estado: Implementado).
 
 Las plantillas visuales de referencia están en `references/templates/`.
 
