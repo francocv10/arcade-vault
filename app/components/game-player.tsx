@@ -2,11 +2,15 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
+import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { AsteroidsCanvas } from "./asteroids-canvas";
+import { TetrisCanvas } from "./tetris-canvas";
 import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 const LIVES = 3;
+const TETRIS_LIVES = 1;
+const CLAVE_TEMA_TETRIS = "av-tetris-theme";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
 export function GamePlayer({
@@ -18,16 +22,23 @@ export function GamePlayer({
 }) {
   const { user, saveScore } = useAuth();
   const esAsteroides = gameId === "asteroides";
+  const esTetris = gameId === "tetris";
+  // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
+  const esReal = esAsteroides || esTetris;
   const [fakeScore, setScore] = useState(0);
   // Snapshot que envía el motor de canvas (solo en los juegos reales).
-  const [snap, setSnap] = useState<SnapshotAsteroides | null>(null);
+  const [snap, setSnap] = useState<SnapshotAsteroides | SnapshotTetris | null>(
+    null,
+  );
+  // Tema del canvas de Tetris: arranca oscuro y se lee de localStorage tras hidratar.
+  const [tema, setTema] = useState<TemaTetris>("dark");
   const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
   const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  // Solo Asteroides guarda en Supabase; el resto de juegos sigue en localStorage.
+  // Asteroides y Tetris guardan en Supabase; el resto de juegos sigue en localStorage.
   const [saving, setSaving] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
@@ -35,19 +46,39 @@ export function GamePlayer({
   const enviandoRef = useRef(false);
   const restartRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
-  // En Asteroides el modal también se abre solo al perder la última vida.
-  const gameOver = over || (esAsteroides && snap?.status === "gameover");
+  // En los juegos reales el modal también se abre solo al terminar la partida.
+  const gameOver = over || (esReal && snap?.status === "gameover");
   // Escape no cierra el modal: sin él no queda un estado coherente (partida terminada, sin HUD).
   const modalRef = useDialog<HTMLDivElement>(gameOver, {
     initialFocus: "input",
     returnFocus: () => finRef.current,
   });
   const name = editedName ?? user?.name ?? "INVITADO";
-  const score = esAsteroides ? (snap?.score ?? 0) : fakeScore;
-  const lives = esAsteroides ? (snap?.lives ?? LIVES) : LIVES;
-  const level = esAsteroides
-    ? (snap?.level ?? 1)
-    : 1 + Math.floor(score / 2500);
+  const score = esReal ? (snap?.score ?? 0) : fakeScore;
+  const lives = esReal
+    ? (snap?.lives ?? (esTetris ? TETRIS_LIVES : LIVES))
+    : LIVES;
+  const level = esReal ? (snap?.level ?? 1) : 1 + Math.floor(score / 2500);
+  // Lee el tema guardado tras hidratar; con localStorage bloqueado o un valor raro queda oscuro.
+  useEffect(() => {
+    if (!esTetris) return;
+    try {
+      if (localStorage.getItem(CLAVE_TEMA_TETRIS) === "light")
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+        setTema("light");
+    } catch {
+      // Sin localStorage el juego funciona en oscuro, sin persistir.
+    }
+  }, [esTetris]);
+  const cambiarTema = () => {
+    const nuevo: TemaTetris = tema === "dark" ? "light" : "dark";
+    setTema(nuevo);
+    try {
+      localStorage.setItem(CLAVE_TEMA_TETRIS, nuevo);
+    } catch {
+      // Sin localStorage el tema no se recuerda.
+    }
+  };
   // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
   useEffect(() => {
     if (saved) restartRef.current?.focus();
@@ -57,13 +88,13 @@ export function GamePlayer({
     if (errorGuardado) saveRef.current?.focus();
   }, [errorGuardado]);
   useEffect(() => {
-    if (esAsteroides || gameOver || paused) return;
+    if (esReal || gameOver || paused) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [esAsteroides, gameOver, paused]);
+  }, [esReal, gameOver, paused]);
   const restart = () => {
     setScore(0);
     // Descarta el snapshot "gameover" para que el modal no reaparezca antes del primero nuevo.
@@ -75,7 +106,7 @@ export function GamePlayer({
     setRestartKey((k) => k + 1);
   };
   const guardar = async () => {
-    if (!esAsteroides) {
+    if (!esReal) {
       saveScore({ game: gameId, score, name });
       setSaved(true);
       return;
@@ -124,6 +155,11 @@ export function GamePlayer({
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
+          {esTetris && (
+            <button className="btn cyan" onClick={cambiarTema}>
+              TEMA
+            </button>
+          )}
           <button
             ref={finRef}
             className="btn magenta"
@@ -143,6 +179,13 @@ export function GamePlayer({
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+            />
+          ) : esTetris ? (
+            <TetrisCanvas
+              onChange={setSnap}
+              paused={paused || gameOver}
+              restartKey={restartKey}
+              theme={tema}
             />
           ) : (
             <div className="game-arena">
