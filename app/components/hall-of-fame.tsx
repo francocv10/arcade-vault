@@ -14,16 +14,18 @@ type MejorMarca = { rank: number; score: number; date: string };
 export function HallOfFame({
   asteroides,
   tetris,
+  arkanoid,
 }: {
   asteroides: PuntuacionRanking[];
   tetris: PuntuacionRanking[];
+  arkanoid: PuntuacionRanking[];
 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState(GAMES[0].id);
   // Juegos con ranking real en Supabase; las demás pestañas siguen con datos falsos.
   const reales = useMemo<Record<string, PuntuacionRanking[]>>(
-    () => ({ asteroides, tetris }),
-    [asteroides, tetris],
+    () => ({ asteroides, tetris, arkanoid }),
+    [asteroides, tetris, arkanoid],
   );
   const esReal = tab in reales;
   const rows = useMemo(
