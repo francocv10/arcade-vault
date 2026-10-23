@@ -123,6 +123,17 @@ export const GAMES: Juego[] = [
     best: 0,
     plays: "0",
   },
+  {
+    id: "arkanoid",
+    title: "ARKANOID",
+    short: "Rompe los 5 muros sin que caiga la pelota.",
+    long: "Mueve la paleta con el ratón o las flechas y rebota la pelota para destruir muros de bloques de colores. Cada nivel cambia el patrón y acelera la pelota. Tienes 3 vidas: si la pelota cae por debajo de la paleta, pierdes una. Limpia los 5 niveles para ganar.",
+    cat: "ARCADE",
+    cover: "cover-arkanoid",
+    color: "yellow",
+    best: 0,
+    plays: "0",
+  },
 ];
 export const CATS: ["TODOS", ...Categoria[]] = [
   "TODOS",
