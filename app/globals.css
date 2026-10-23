@@ -1008,6 +1008,51 @@ a {
   background-repeat: no-repeat;
   filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.6));
 }
+/* Arkanoid: pirámide de bloques (el patrón del nivel 2), paleta cian y una
+   pelota amarilla con estela. Distinta de las franjas de .cover-bricks. */
+.cover-arkanoid {
+  background: radial-gradient(circle at 50% 100%, #1a1030, #07070f 80%);
+}
+.cover-arkanoid::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  width: 170px;
+  height: 64px;
+  margin-left: -85px;
+  background:
+    repeating-linear-gradient(90deg, #ff006e 0 30px, transparent 30px 34px) 51px
+      0 / 68px 12px no-repeat,
+    repeating-linear-gradient(90deg, #ff7700 0 30px, transparent 30px 34px) 34px
+      16px / 102px 12px no-repeat,
+    repeating-linear-gradient(90deg, #f5ff00 0 30px, transparent 30px 34px) 17px
+      32px / 136px 12px no-repeat,
+    repeating-linear-gradient(90deg, #00ff88 0 30px, transparent 30px 34px) 0
+      48px / 170px 12px no-repeat;
+  filter: drop-shadow(0 0 6px rgba(245, 255, 0, 0.35));
+  image-rendering: pixelated;
+}
+.cover-arkanoid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(var(--cyan), var(--cyan)) 50% calc(100% - 14px) / 56px 8px
+      no-repeat,
+    radial-gradient(circle at 62% 70%, #fff 0 4px, transparent 5px),
+    radial-gradient(
+      circle at 58% 76%,
+      rgba(245, 255, 0, 0.6) 0 3px,
+      transparent 4px
+    ),
+    radial-gradient(
+      circle at 54.5% 82%,
+      rgba(245, 255, 0, 0.3) 0 2px,
+      transparent 3px
+    );
+  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.6));
+}
 .cover-rana {
   background: linear-gradient(180deg, #001f2a, #0a0a18);
 }
