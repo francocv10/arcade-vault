@@ -16,7 +16,7 @@ Specs existentes:
 - `06-juego-asteroides.md`: porta Asteroids a un motor de canvas en TypeScript, lo publica como el juego `asteroides` y lo conecta a `GamePlayer`, que recibe del canvas los puntos, las vidas y el nivel (estado: Implementado).
 - `07-leaderboard-supabase-tabla-games.md`: crea en Supabase las tablas `games` (solo `asteroides`) y `scores` y la vista `leaderboard`, y conecta a ellas el guardado de puntuaciones de Asteroides y los rankings de `/salon`, `/juegos/asteroides` y `/home`, sin exigir autenticación (estado: Implementado).
 
-Las plantillas visuales de referencia están en `references/templates/`.
+Las plantillas visuales de referencia están en `references/templates/`. Los juegos de partida (con o sin código) están en `references/started-games/`; `/new-game` genera la spec de un juego nuevo con motor de canvas y ranking real en Supabase siguiendo el patrón de las specs 06 y 07 (solo escribe la spec; se implementa con `/spec-impl`).
 
 No hay un test runner configurado.
 
