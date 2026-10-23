@@ -1,6 +1,6 @@
 # SPEC 08 — Juego TETRIS jugable en la plataforma con ranking real
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06 (patrón de motor de canvas y reproductor), SPEC 07 (tablas `games` y `scores`, vista `leaderboard` y rankings reales)
 > **Date:** 2026-10-23
 > **Objective:** Portar Tetris de `references/started-games/03-tetris/` a un motor de canvas en TypeScript, publicarlo como el juego `tetris` (1 vida y tema claro/oscuro solo dentro del canvas), conectarlo al reproductor y guardar y mostrar sus puntuaciones en Supabase.
