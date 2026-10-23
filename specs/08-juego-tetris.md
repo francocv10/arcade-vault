@@ -9,7 +9,7 @@
 
 ## Por qué existe este spec
 
-Hoy solo `asteroides` es un juego real. La carpeta `references/started-games/03-tetris/` trae un Tetris completo en JavaScript vanilla (`index.html`, `style.css`, `game.js`): tablero de 10×20, 8 piezas (las 7 estándar más la «N», una tuerca hueca de 3×3 en gris, aunque el `README.md` diga 7), pieza fantasma, vista previa de la siguiente pieza, puntuación clásica, niveles cada 10 líneas y un botón de tema claro/oscuro. Este spec lo lleva a la plataforma siguiendo el patrón de SPEC 06 y SPEC 07: un motor de canvas en TypeScript que avisa a React por callback y un ranking real en Supabase.
+Hoy solo `asteroides` es un juego real. La carpeta `references/started-games/03-tetris/` trae un Tetris completo en JavaScript vanilla (`index.html`, `style.css`, `game.js`): tablero de 10×20, 7 piezas (las estándar; el código original trae además una «N», una tuerca hueca de 3×3 en gris, que se descarta por decisión del usuario), pieza fantasma, vista previa de la siguiente pieza, puntuación clásica, niveles cada 10 líneas y un botón de tema claro/oscuro. Este spec lo lleva a la plataforma siguiendo el patrón de SPEC 06 y SPEC 07: un motor de canvas en TypeScript que avisa a React por callback y un ranking real en Supabase.
 
 Tiene tres particularidades frente a Asteroides:
 
@@ -26,7 +26,7 @@ El catálogo ya tiene `caida` («CAÍDA», PUZZLE), una maqueta ficticia con por
 **In:**
 
 - Entrada nueva `tetris` **al final** de `GAMES` en `app/data/games.ts` (así `GAMES.slice(0, 6)` del Home no cambia) y portada CSS nueva `.cover-tetris` en `app/globals.css`, diseñada con `/frontend-design` y distinta de `.cover-tetro`.
-- Motor del juego en `app/games/tetris/`, portado de `game.js` sin cambiar la jugabilidad: tablero 10×20, 8 piezas, rotación horaria con _wall kicks_, caída por gravedad, _soft drop_, _hard drop_, pieza fantasma, vista previa de la siguiente pieza, puntuación por líneas, niveles y fin de partida cuando una pieza nueva colisiona al aparecer.
+- Motor del juego en `app/games/tetris/`, portado de `game.js` sin cambiar la jugabilidad: tablero 10×20, 7 piezas, rotación horaria con _wall kicks_, caída por gravedad, _soft drop_, _hard drop_, pieza fantasma, vista previa de la siguiente pieza, puntuación por líneas, niveles y fin de partida cuando una pieza nueva colisiona al aparecer.
 - Aspecto idéntico al original: paleta de 8 colores, bloques con brillo superior, rejilla tenue y colores de los temas oscuro y claro de `style.css`, todo dibujado en el canvas.
 - Lienzo lógico de 800×600: tablero de 300×600 y, a su derecha, el panel dibujado en canvas con SCORE, LINES, LEVEL, NEXT (caja de 120×120) y la lista de controles. Sin el título «TETRIS» (la plataforma ya lo muestra) y sin la línea «P pausa».
 - Pantalla de GAME OVER dibujada en el canvas («GAME OVER» y «Puntuación: N»), sin botón de reinicio propio: el modal de React se abre solo y ofrece JUGAR DE NUEVO.
@@ -63,8 +63,8 @@ Ficha del catálogo (mismo tipo `Juego` de SPEC 01):
 {
   id: "tetris",
   title: "TETRIS",
-  short: "Encaja ocho piezas, tuerca incluida, sin tocar el techo.",
-  long: "Ocho piezas caen sobre un tablero de 10×20, entre ellas una tuerca hueca de 3×3. Muévelas, rótalas y déjalas caer para completar líneas; cada 10 líneas sube el nivel y la caída se acelera. Solo tienes una vida: si una pieza nueva no cabe al aparecer, la partida termina.",
+  short: "Encaja siete piezas sin tocar el techo.",
+  long: "Siete piezas caen sobre un tablero de 10×20. Muévelas, rótalas y déjalas caer para completar líneas; cada 10 líneas sube el nivel y la caída se acelera. Solo tienes una vida: si una pieza nueva no cabe al aparecer, la partida termina.",
   cat: "PUZZLE",
   cover: "cover-tetris",
   color: "magenta",
@@ -103,7 +103,7 @@ export function createTetrisGame(
 Estado interno del motor (no se expone; mismos nombres que `game.js`):
 
 ```ts
-// board: ROWS × COLS, 0 = vacía, 1..8 = índice de color de la pieza
+// board: ROWS × COLS, 0 = vacía, 1..7 = índice de color de la pieza
 // current / next: { type: number; shape: number[][]; x: number; y: number }
 // score, lines, level, dropInterval (ms), dropAccum (ms), paused, gameOver
 ```
@@ -119,7 +119,7 @@ Convenciones:
 
 - `onChange` se llama al arrancar y solo cuando cambia algún valor del snapshot, nunca por fotograma. Las pulsaciones que suman puntos (`↓`, `Espacio`) y los bloqueos de pieza sí lo disparan, porque cambian `score`, `level` o `status`.
 - Constantes del original sin modificar: `COLS = 10`, `ROWS = 20`, `BLOCK = 30`, `LINE_SCORES = [0, 100, 300, 500, 800]`, `dropInterval` inicial de 1000 ms, wall kicks `[0, -1, 1, -2, 2]`, pieza fantasma con `globalAlpha = 0.2`, brillo del bloque `rgba(255,255,255,0.12)` en sus 4 px superiores.
-- Colores de piezas por índice: `1` I `#4dd0e1`, `2` O `#ffd54f`, `3` T `#ba68c8`, `4` S `#81c784`, `5` Z `#e57373`, `6` J `#90caf9`, `7` L `#ffb74d`, `8` N (tuerca) `#9e9e9e`. La pieza nueva se elige con la misma probabilidad entre los 8 tipos y aparece en `y = 0`, con `x = floor(COLS / 2) - floor(ancho / 2)` (I en 3, el resto en 4).
+- Colores de piezas por índice: `1` I `#4dd0e1`, `2` O `#ffd54f`, `3` T `#ba68c8`, `4` S `#81c784`, `5` Z `#e57373`, `6` J `#90caf9`, `7` L `#ffb74d`. La pieza nueva se elige con la misma probabilidad entre los 7 tipos y aparece en `y = 0`, con `x = floor(COLS / 2) - floor(ancho / 2)` (I en 3, el resto en 4).
 - Reglas de puntuación: _soft drop_ +1 por fila; _hard drop_ +2 por fila recorrida; al limpiar `n` líneas, `score += LINE_SCORES[n] × level` con el nivel anterior a la subida; después `level = floor(lines / 10) + 1` y `dropInterval = max(100, 1000 − (level − 1) × 90)`.
 - Una pieza apoyada se fija al instante, tanto por gravedad como con `↓` (el original no tiene retardo de bloqueo).
 - Paletas por tema (variables de `style.css` convertidas a constantes del motor): oscuro con fondo `#0f0f17`, tablero `#1a1a25`, borde `#2a2a3a`, etiquetas `#555570`, rejilla `#22222e`, valores `#7aa2f7`; claro con fondo `#f0f0f8`, tablero `#e4e4f0`, borde `#b0b0c8`, etiquetas `#6060a0`, rejilla `#c8c8dc`, textos de controles `#404060`. Las piezas conservan sus colores en ambos temas.
@@ -139,9 +139,9 @@ Composición del lienzo de 800×600 (valores fijos para el motor):
 
 Antes de escribir código de Next.js, leer en `node_modules/next/dist/docs/01-app/` la guía de Client Components (`"use client"`) y, para los rankings, las de Cache Components y Server Actions, según `AGENTS.md`. Para la portada y el botón TEMA se usa `/frontend-design`, respetando la estética arcade/neón de la plataforma; el contenido del canvas no se rediseña. Cada paso deja el sistema funcional. El alta en la base de datos va antes de la integración en el reproductor para que el guardado funcione en cuanto el juego sea jugable.
 
-1. **Ficha del juego.** Entrada `tetris` al final de `GAMES` y portada `.cover-tetris` (fondo oscuro con piezas cayendo, entre ellas la tuerca, en el estilo de `.cover-asteroides`). Verificación: `/biblioteca`, `/salon`, `/juegos/tetris` y `/juegos/tetris/jugar` cargan sin errores (el reproductor sigue siendo la maqueta); `/home` no cambia; `caida` sigue con su ficha y portada.
+1. **Ficha del juego.** Entrada `tetris` al final de `GAMES` y portada `.cover-tetris` (fondo oscuro con una pila de piezas y una T cayendo, en el estilo de `.cover-asteroides`). Verificación: `/biblioteca`, `/salon`, `/juegos/tetris` y `/juegos/tetris/jugar` cargan sin errores (el reproductor sigue siendo la maqueta); `/home` no cambia; `caida` sigue con su ficha y portada.
 2. **Alta en la base de datos.** Aplicar con `apply_migration` el `insert` en `games` y añadir `"tetris"` a `JUEGOS_CON_RANKING` en `app/lib/leaderboard/schema.ts` (incluido su comentario). Verificación: `execute_sql` muestra las filas `asteroides` y `tetris` en `games`; `get_advisors` (security) sin incidencias nuevas; `npx tsc --noEmit` y `npm run lint` sin errores.
-3. **Piezas y tablero.** Módulos de `app/games/tetris/` con la lógica pura, sin acceder a `document` ni a `window` (nombres propuestos): `pieces.ts` (matrices de las 8 piezas, colores, `rotateCW`) y `board.ts` (crear tablero, `collide`, fijar pieza, limpiar líneas, posición de la pieza fantasma). Reciben el tablero por parámetro en lugar de usar globales. Verificación: `npx tsc --noEmit` y `npm run lint`.
+3. **Piezas y tablero.** Módulos de `app/games/tetris/` con la lógica pura, sin acceder a `document` ni a `window` (nombres propuestos): `pieces.ts` (matrices de las 7 piezas, colores, `rotateCW`) y `board.ts` (crear tablero, `collide`, fijar pieza, limpiar líneas, posición de la pieza fantasma). Reciben el tablero por parámetro en lugar de usar globales. Verificación: `npx tsc --noEmit` y `npm run lint`.
 4. **Motor y dibujo.** `app/games/tetris/types.ts`, `app/games/tetris/draw.ts` (paletas de los dos temas, tablero, rejilla, fantasma, panel, NEXT y GAME OVER) y `app/games/tetris/game.ts` con `createTetrisGame`: entrada de teclado, bucle `requestAnimationFrame`, gravedad, puntuación, niveles, fin de partida, `pause`/`resume`/`restart`/`setTheme`/`destroy` y `onChange`. Verificación: `npx tsc --noEmit` y `npm run lint`.
 5. **Componente de canvas.** `app/components/tetris-canvas.tsx` con `<canvas width={800} height={600}>`, clase `.tetris-canvas`, `role="img"` y `aria-label`, y las props `onChange`, `paused`, `restartKey` y `theme`. Verificación: montado en una ruta de prueba temporal, el juego se ve y se juega; la ruta se elimina antes del paso siguiente.
 6. **Integración en el reproductor.** En `app/components/game-player.tsx`, cuando `gameId === "tetris"`: renderizar `TetrisCanvas`, no arrancar el `setInterval` de puntos falsos, alimentar JUGADOR/PUNTUACIÓN/VIDAS/NIVEL con el snapshot (VIDAS inicial 1), abrir el modal al llegar a `gameover`, usar `guardarPuntuacion` en `guardar` con la misma protección contra doble envío, y añadir el botón TEMA a `hud-actions` con el tema leído de `av-tetris-theme` tras hidratar. El tipo del snapshot pasa a ser la unión de los dos snapshots. En `app/globals.css`: `.tetris-canvas` llena el `.crt-screen` (posición absoluta, `inset: 0`, 100 % de ancho y alto) y los pseudo-elementos de líneas de escaneo y viñeta quedan por encima (`z-index: 1`), igual que con `.asteroids-canvas`. Verificación: partida completa en `/juegos/tetris/jugar` hasta GAME OVER y guardado; Asteroides y los otros 7 juegos se comportan igual que antes.
@@ -176,7 +176,7 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 - [ ] `↓` baja la pieza una fila y suma 1 punto; con la pieza apoyada la fija al instante sin sumar.
 - [ ] `Espacio` deja caer la pieza hasta la posición de la pieza fantasma, suma 2 puntos por fila recorrida y fija la pieza al instante.
 - [ ] La pieza fantasma se dibuja en la posición de aterrizaje con opacidad 0,2.
-- [ ] Aparecen los 8 tipos de pieza, incluida la tuerca gris `#9e9e9e` de 3×3 hueca en el centro, y la pieza que aparece es la que mostraba NEXT.
+- [ ] Aparecen los 7 tipos de pieza (I, O, T, S, Z, J y L) y la pieza que aparece es la que mostraba NEXT.
 - [ ] Limpiar 1, 2, 3 y 4 líneas a la vez suma 100, 300, 500 y 800 puntos multiplicados por el nivel vigente antes de subir de nivel.
 - [ ] El nivel es `floor(LINES / 10) + 1`: sube a 2 al llegar a 10 líneas y el intervalo de caída pasa a 910 ms; desde el nivel 11 es de 100 ms.
 - [ ] Cuando una pieza nueva colisiona al aparecer, el canvas deja de avanzar y dibuja «GAME OVER» y «Puntuación: N» con la puntuación final.
@@ -235,7 +235,7 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 - **Sí:** 1 vida: `lives: 1` en juego y `lives: 0` en `gameover`, de modo que la barra muestra `♥` y luego `—` con el código actual de `GamePlayer` (`"♥ ".repeat(lives).trim() || "—"`). Decisión del usuario. **No:** mostrar LÍNEAS en lugar de VIDAS ni cambiar etiquetas del HUD según el juego.
 - **Sí:** el modal de fin de juego se abre solo al llegar a `gameover`, como en Asteroides. El GAME OVER del canvas no ofrece reinicio propio porque el modal siempre aparece.
 - **Sí:** quitar la tecla `P`; la pausa es solo el botón PAUSA de React. Decisión del usuario. Una sola fuente de verdad y sin estado `paused` en el contrato. **No:** overlay de pausa propio en el canvas.
-- **Sí:** 8 piezas, con la tuerca «N». El código manda sobre el `README.md` del original, que dice 7. Decisión del usuario.
+- **Sí:** 7 piezas estándar. **No:** la tuerca «N» que trae el `game.js` original (el `README.md` ya decía 7). Decisión del usuario, tomada al verificar los criterios; sustituye a la decisión inicial de portar las 8.
 - **Sí:** botón de tema claro/oscuro en la barra del reproductor, solo en `tetris`, que llama a `setTheme` del motor. Decisión del usuario. El tema solo cambia la paleta del canvas; el marco CRT y la plataforma siguen oscuros. Es un botón de React y no uno dibujado en el canvas para que sea accesible con teclado y consistente con PAUSA y FIN. **No:** tema claro para la plataforma ni para otros juegos.
 - **Sí:** tema persistido en `localStorage` con la clave `av-tetris-theme` (el original usaba `tetris-theme`; se añade el prefijo de la plataforma), leído tras hidratar y con `try/catch`. Decisión del usuario.
 - **Sí:** sin sonido ni assets: el original no los tiene, no se crea `public/`.

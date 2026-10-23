@@ -7,7 +7,7 @@ export const BLOCK = 30;
 export const LINE_SCORES = [0, 100, 300, 500, 800];
 // Desplazamientos que prueba la rotación, en este orden.
 export const WALL_KICKS = [0, -1, 1, -2, 2];
-// ROWS × COLS: 0 = vacía, 1..8 = índice de color de la pieza.
+// ROWS × COLS: 0 = vacía, 1..7 = índice de color de la pieza.
 export type Tablero = number[][];
 export function createBoard(): Tablero {
   return Array.from({ length: ROWS }, () => new Array<number>(COLS).fill(0));

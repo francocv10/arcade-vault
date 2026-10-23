@@ -954,7 +954,7 @@ a {
   filter: drop-shadow(0 0 8px var(--cyan));
 }
 /* Tetris: tablero de 10 columnas (celdas de 14px) con pila de piezas y la
-   tuerca hueca cayendo. Los colores son los de las piezas del juego. */
+   una T cayendo. Los colores son los de las piezas del juego. */
 .cover-tetris {
   background:
     repeating-linear-gradient(
@@ -1000,10 +1000,12 @@ a {
   left: 50%;
   top: 14%;
   width: 42px;
-  height: 42px;
-  margin-left: -7px;
-  box-sizing: border-box;
-  border: 14px solid #9e9e9e;
+  height: 28px;
+  margin-left: -14px;
+  background:
+    linear-gradient(#ba68c8, #ba68c8) 14px 0 / 14px 14px,
+    linear-gradient(#ba68c8, #ba68c8) 0 14px / 42px 14px;
+  background-repeat: no-repeat;
   filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.6));
 }
 .cover-rana {
@@ -1217,6 +1219,7 @@ a {
 }
 .hud-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 .crt {

@@ -2,12 +2,12 @@
 // Lógica pura: no accede a `document` ni a `window`.
 export type Forma = number[][];
 export interface Pieza {
-  type: number; // 1..8, índice en COLORS y valor de sus celdas
+  type: number; // 1..7, índice en COLORS y valor de sus celdas
   shape: Forma;
   x: number;
   y: number;
 }
-// Colores por índice de pieza: 1 I, 2 O, 3 T, 4 S, 5 Z, 6 J, 7 L, 8 N (tuerca).
+// Colores por índice de pieza: 1 I, 2 O, 3 T, 4 S, 5 Z, 6 J, 7 L.
 export const COLORS: readonly (string | null)[] = [
   null,
   "#4dd0e1",
@@ -17,7 +17,6 @@ export const COLORS: readonly (string | null)[] = [
   "#e57373",
   "#90caf9",
   "#ffb74d",
-  "#9e9e9e",
 ];
 export const PIECES: readonly (Forma | null)[] = [
   null,
@@ -56,11 +55,6 @@ export const PIECES: readonly (Forma | null)[] = [
     [7, 7, 7],
     [0, 0, 0],
   ], // L
-  //[
-   // [8, 8, 8],
-   // [8, 0, 8],
-   // [8, 8, 8],
-  //], // N (tuerca)
 ];
 export const PIECE_TYPES = PIECES.length - 1;
 // Rotación horaria: transponer e invertir cada fila.
@@ -74,7 +68,7 @@ export function rotateCW(shape: Forma): Forma {
     for (let c = 0; c < cols; c++) result[c][rows - 1 - r] = shape[r][c];
   return result;
 }
-// Pieza nueva con la misma probabilidad entre los 8 tipos, centrada en `cols`.
+// Pieza nueva con la misma probabilidad entre los 7 tipos, centrada en `cols`.
 export function randomPiece(cols: number): Pieza {
   const type = Math.floor(Math.random() * PIECE_TYPES) + 1;
   const shape = PIECES[type]!.map((row) => [...row]);

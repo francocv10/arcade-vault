@@ -115,8 +115,8 @@ export const GAMES: Juego[] = [
   {
     id: "tetris",
     title: "TETRIS",
-    short: "Encaja ocho piezas, tuerca incluida, sin tocar el techo.",
-    long: "Ocho piezas caen sobre un tablero de 10×20, entre ellas una tuerca hueca de 3×3. Muévelas, rótalas y déjalas caer para completar líneas; cada 10 líneas sube el nivel y la caída se acelera. Solo tienes una vida: si una pieza nueva no cabe al aparecer, la partida termina.",
+    short: "Encaja siete piezas sin tocar el techo.",
+    long: "Siete piezas caen sobre un tablero de 10×20. Muévelas, rótalas y déjalas caer para completar líneas; cada 10 líneas sube el nivel y la caída se acelera. Solo tienes una vida: si una pieza nueva no cabe al aparecer, la partida termina.",
     cat: "PUZZLE",
     cover: "cover-tetris",
     color: "magenta",
