@@ -1,7 +1,7 @@
 // Validación del envío de una puntuación. Los límites replican los CHECK de
 // `public.scores`: la base de datos es la última barrera.
 export interface EnvioPuntuacion {
-  game: string; // debe existir en `games`; hoy solo "asteroides"
+  game: string; // debe existir en `games`; hoy "asteroides" y "tetris"
   name: string; // 1..10 caracteres tras trim, en mayúsculas
   score: number; // entero 0..1_000_000
 }

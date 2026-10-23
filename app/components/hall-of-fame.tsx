@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -11,50 +10,59 @@ import {
 import { obtenerMejorMarca } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { EmptyBoard } from "./empty-board";
-
-// Único juego con ranking real en Supabase; las demás pestañas siguen con datos falsos.
-const JUEGO_REAL = "asteroides";
-
 type MejorMarca = { rank: number; score: number; date: string };
-
 export function HallOfFame({
   asteroides,
+  tetris,
 }: {
   asteroides: PuntuacionRanking[];
+  tetris: PuntuacionRanking[];
 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState(GAMES[0].id);
-  const esReal = tab === JUEGO_REAL;
+  // Juegos con ranking real en Supabase; las demás pestañas siguen con datos falsos.
+  const reales = useMemo<Record<string, PuntuacionRanking[]>>(
+    () => ({ asteroides, tetris }),
+    [asteroides, tetris],
+  );
+  const esReal = tab in reales;
   const rows = useMemo(
-    () => (esReal ? asteroides : seededScores(tab.length * 23 + 7, 12)),
-    [tab, esReal, asteroides],
+    () => reales[tab] ?? seededScores(tab.length * 23 + 7, 12),
+    [tab, reales],
   );
   const game = getGame(tab) ?? GAMES[0];
   const nombreUsuario = user?.name ?? null;
-
-  // «TU MEJOR MARCA» de Asteroides: se pide a la base por el nombre de la sesión local.
+  // «TU MEJOR MARCA» de un juego real: se pide a la base por el nombre de la sesión local.
   const [marca, setMarca] = useState<{
+    juego: string;
     nombre: string;
     datos: MejorMarca | null;
   } | null>(null);
   useEffect(() => {
     if (!esReal || !nombreUsuario) return;
     let activo = true;
-    obtenerMejorMarca(JUEGO_REAL, nombreUsuario)
-      .then((datos) => activo && setMarca({ nombre: nombreUsuario, datos }))
-      .catch(() => activo && setMarca({ nombre: nombreUsuario, datos: null }));
+    obtenerMejorMarca(tab, nombreUsuario)
+      .then(
+        (datos) =>
+          activo && setMarca({ juego: tab, nombre: nombreUsuario, datos }),
+      )
+      .catch(
+        () =>
+          activo &&
+          setMarca({ juego: tab, nombre: nombreUsuario, datos: null }),
+      );
     return () => {
       activo = false;
     };
-  }, [esReal, nombreUsuario]);
+  }, [esReal, tab, nombreUsuario]);
   const mejorMarca: MejorMarca | null =
-    esReal && marca?.nombre === nombreUsuario ? marca.datos : null;
-
+    esReal && marca?.juego === tab && marca.nombre === nombreUsuario
+      ? marca.datos
+      : null;
   const youRank = user ? Math.floor(8 + (tab.length % 4)) : null;
   const youScore = user ? rows[5]?.score - 2400 : null;
   const [r1, r2, r3] = rows;
   const puntos = (n: number) => n.toLocaleString("es-ES");
-
   return (
     <div className="av-hall fade-in">
       <div className="hall-head">
@@ -63,7 +71,6 @@ export function HallOfFame({
           LOS NOMBRES QUE NUNCA SE BORRAN DE LA PANTALLA
         </p>
       </div>
-
       <div className="hall-tabs">
         {GAMES.map((g) => (
           <button
@@ -75,7 +82,6 @@ export function HallOfFame({
           </button>
         ))}
       </div>
-
       {rows.length === 0 ? (
         <EmptyBoard gameId={tab} />
       ) : (
@@ -114,7 +120,6 @@ export function HallOfFame({
               <div className="date">{r3?.date ?? ""}</div>
             </div>
           </div>
-
           <div className="hall-table">
             <div className="th">
               <div>RANGO</div>
@@ -127,7 +132,13 @@ export function HallOfFame({
                 key={r.name + i}
                 className={
                   "tr" +
-                  (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
+                  (i === 0
+                    ? " top1"
+                    : i === 1
+                      ? " top2"
+                      : i === 2
+                        ? " top3"
+                        : "")
                 }
                 style={{ animationDelay: `${i * 50}ms` }}
               >
@@ -168,7 +179,6 @@ export function HallOfFame({
           </div>
         </>
       )}
-
       <div style={{ textAlign: "center", marginTop: 32 }}>
         <Link href="/biblioteca" className="btn lg">
           VOLVER A LA BIBLIOTECA
