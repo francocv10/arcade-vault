@@ -1,7 +1,7 @@
 // Validación del envío de una puntuación. Los límites replican los CHECK de
 // `public.scores`: la base de datos es la última barrera.
 export interface EnvioPuntuacion {
-  game: string; // debe existir en `games`; hoy solo "asteroides"
+  game: string; // debe existir en `games`; hoy "asteroides" y "tetris"
   name: string; // 1..10 caracteres tras trim, en mayúsculas
   score: number; // entero 0..1_000_000
 }
@@ -10,7 +10,7 @@ export const LIMITES_PUNTUACION = {
   puntosMax: 1_000_000,
 } as const;
 // Juegos que ya existen en la tabla `games`.
-export const JUEGOS_CON_RANKING: readonly string[] = ["asteroides"];
+export const JUEGOS_CON_RANKING: readonly string[] = ["asteroides", "tetris"];
 export type ResultadoEnvio =
   { ok: true; envio: EnvioPuntuacion } | { ok: false; error: string };
 // Mismo recuento que `char_length` de Postgres: caracteres, no unidades UTF-16.

@@ -1,8 +1,6 @@
 // Juegos ficticios de Arcade Vault. Esta capa se sustituirá por una base de datos.
-
 export type Categoria = "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
 export type ColorBoton = "cyan" | "magenta" | "yellow" | "green";
-
 export interface Juego {
   id: string;
   title: string;
@@ -14,7 +12,6 @@ export interface Juego {
   best: number;
   plays: string;
 }
-
 export const GAMES: Juego[] = [
   {
     id: "bloque-buster",
@@ -115,8 +112,18 @@ export const GAMES: Juego[] = [
     best: 0,
     plays: "0",
   },
+  {
+    id: "tetris",
+    title: "TETRIS",
+    short: "Encaja siete piezas sin tocar el techo.",
+    long: "Siete piezas caen sobre un tablero de 10×20. Muévelas, rótalas y déjalas caer para completar líneas; cada 10 líneas sube el nivel y la caída se acelera. Solo tienes una vida: si una pieza nueva no cabe al aparecer, la partida termina.",
+    cat: "PUZZLE",
+    cover: "cover-tetris",
+    color: "magenta",
+    best: 0,
+    plays: "0",
+  },
 ];
-
 export const CATS: ["TODOS", ...Categoria[]] = [
   "TODOS",
   "ARCADE",
@@ -124,7 +131,6 @@ export const CATS: ["TODOS", ...Categoria[]] = [
   "SHOOTER",
   "VERSUS",
 ];
-
 export function getGame(id: string): Juego | undefined {
   return GAMES.find((g) => g.id === id);
 }

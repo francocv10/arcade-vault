@@ -10,11 +10,9 @@ import {
   type PuntuacionRanking,
 } from "@/app/data";
 import { obtenerRanking } from "@/app/lib/leaderboard/queries";
-
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
-
 export async function generateMetadata(
   props: PageProps<"/juegos/[id]">,
 ): Promise<Metadata> {
@@ -23,7 +21,6 @@ export async function generateMetadata(
   if (!game) return { title: "Juego no encontrado · Arcade Vault" };
   return { title: `${game.title} · Arcade Vault`, description: game.short };
 }
-
 export default function GameDetailPage(props: PageProps<"/juegos/[id]">) {
   return (
     <Suspense fallback={<div className="av-detail" aria-busy="true" />}>
@@ -31,14 +28,12 @@ export default function GameDetailPage(props: PageProps<"/juegos/[id]">) {
     </Suspense>
   );
 }
-
 async function GameDetail({
   params,
 }: Pick<PageProps<"/juegos/[id]">, "params">) {
   const { id } = await params;
   const game = getGame(id);
   if (!game) notFound();
-
   return (
     <div className="av-detail fade-in">
       <div>
@@ -63,7 +58,10 @@ async function GameDetail({
               <div className="l">Mejor global</div>
               <div
                 className="v"
-                style={{ color: "var(--magenta)", textShadow: "0 0 6px rgba(255,0,110,0.5)" }}
+                style={{
+                  color: "var(--magenta)",
+                  textShadow: "0 0 6px rgba(255,0,110,0.5)",
+                }}
               >
                 {game.best.toLocaleString("es-ES")}
               </div>
@@ -72,7 +70,10 @@ async function GameDetail({
               <div className="l">Dificultad</div>
               <div
                 className="v"
-                style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}
+                style={{
+                  color: "var(--yellow)",
+                  textShadow: "0 0 6px rgba(245,255,0,0.5)",
+                }}
               >
                 ★ ★ ★ ☆ ☆
               </div>
@@ -88,12 +89,13 @@ async function GameDetail({
           </div>
         </div>
       </div>
-
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
-          {game.id === "asteroides" ? (
-            <Suspense fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}>
+          {game.id === "asteroides" || game.id === "tetris" ? (
+            <Suspense
+              fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
+            >
               <RankingReal gameId={game.id} />
             </Suspense>
           ) : (
@@ -104,14 +106,12 @@ async function GameDetail({
     </div>
   );
 }
-
 // Top 10 real (Supabase) con estado vacío; los demás juegos usan datos falsos.
 async function RankingReal({ gameId }: { gameId: string }) {
   const scores = await obtenerRanking(gameId, 10);
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;
   return <FilasRanking scores={scores} />;
 }
-
 function FilasRanking({ scores }: { scores: PuntuacionRanking[] }) {
   return (
     <>
@@ -119,13 +119,20 @@ function FilasRanking({ scores }: { scores: PuntuacionRanking[] }) {
         <div
           key={r.rank}
           className={
-            "lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
+            "lb-row" +
+            (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
           }
         >
           <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
           <div className="pl">
             {r.name}
-            <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--ink-faint)",
+                letterSpacing: "0.1em",
+              }}
+            >
               {r.date}
             </div>
           </div>
