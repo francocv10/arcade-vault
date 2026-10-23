@@ -156,68 +156,68 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 
 **Global**
 
-- [ ] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores en la consola del navegador en `/juegos/tetris/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/tetris`.
-- [ ] La carpeta `references/started-games/03-tetris/` no se modifica (`git status`).
+- [x] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] No hay errores en la consola del navegador en `/juegos/tetris/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/tetris`.
+- [x] La carpeta `references/started-games/03-tetris/` no se modifica (`git status`).
 
 **Ficha y catálogo**
 
-- [ ] `/biblioteca` lista TETRIS con categoría PUZZLE, portada `.cover-tetris` propia y botón magenta, y `caida` sigue existiendo con su texto y portada actuales.
-- [ ] `/juegos/tetris` muestra la ficha y su botón JUGAR lleva a `/juegos/tetris/jugar`.
-- [ ] `/home` muestra las mismas 6 tarjetas de juegos que antes.
-- [ ] Las pestañas de `/salon` incluyen TETRIS y no rompen las demás.
+- [x] `/biblioteca` lista TETRIS con categoría PUZZLE, portada `.cover-tetris` propia y botón magenta, y `caida` sigue existiendo con su texto y portada actuales.
+- [x] `/juegos/tetris` muestra la ficha y su botón JUGAR lleva a `/juegos/tetris/jugar`.
+- [x] `/home` muestra las mismas 6 tarjetas de juegos que antes.
+- [x] Las pestañas de `/salon` incluyen TETRIS y no rompen las demás.
 
 **Jugabilidad**
 
-- [ ] Al cargar `/juegos/tetris/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con el tablero de 10×20 vacío y con rejilla, una pieza en la fila 0, y el panel con `SCORE 0`, `LINES 0`, `LEVEL 1`, la pieza de NEXT y la lista de controles sin la línea de pausa.
-- [ ] En nivel 1 la pieza actual baja una fila cada 1000 ms.
-- [ ] `←` y `→` mueven la pieza una columna por pulsación y no la sacan del tablero ni la meten en bloques fijados.
-- [ ] `↑` y `X` giran la pieza en sentido horario; si no cabe, prueban los desplazamientos 0, −1, +1, −2 y +2 en ese orden y, si ninguno cabe, no giran.
-- [ ] `↓` baja la pieza una fila y suma 1 punto; con la pieza apoyada la fija al instante sin sumar.
-- [ ] `Espacio` deja caer la pieza hasta la posición de la pieza fantasma, suma 2 puntos por fila recorrida y fija la pieza al instante.
-- [ ] La pieza fantasma se dibuja en la posición de aterrizaje con opacidad 0,2.
-- [ ] Aparecen los 7 tipos de pieza (I, O, T, S, Z, J y L) y la pieza que aparece es la que mostraba NEXT.
-- [ ] Limpiar 1, 2, 3 y 4 líneas a la vez suma 100, 300, 500 y 800 puntos multiplicados por el nivel vigente antes de subir de nivel.
-- [ ] El nivel es `floor(LINES / 10) + 1`: sube a 2 al llegar a 10 líneas y el intervalo de caída pasa a 910 ms; desde el nivel 11 es de 100 ms.
-- [ ] Cuando una pieza nueva colisiona al aparecer, el canvas deja de avanzar y dibuja «GAME OVER» y «Puntuación: N» con la puntuación final.
-- [ ] La tecla `P` no hace nada.
-- [ ] Las flechas y `Espacio` no desplazan la página mientras se juega.
+- [x] Al cargar `/juegos/tetris/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con el tablero de 10×20 vacío y con rejilla, una pieza en la fila 0, y el panel con `SCORE 0`, `LINES 0`, `LEVEL 1`, la pieza de NEXT y la lista de controles sin la línea de pausa.
+- [x] En nivel 1 la pieza actual baja una fila cada 1000 ms.
+- [x] `←` y `→` mueven la pieza una columna por pulsación y no la sacan del tablero ni la meten en bloques fijados.
+- [x] `↑` y `X` giran la pieza en sentido horario; si no cabe, prueban los desplazamientos 0, −1, +1, −2 y +2 en ese orden y, si ninguno cabe, no giran.
+- [x] `↓` baja la pieza una fila y suma 1 punto; con la pieza apoyada la fija al instante sin sumar.
+- [x] `Espacio` deja caer la pieza hasta la posición de la pieza fantasma, suma 2 puntos por fila recorrida y fija la pieza al instante.
+- [x] La pieza fantasma se dibuja en la posición de aterrizaje con opacidad 0,2.
+- [x] Aparecen los 7 tipos de pieza (I, O, T, S, Z, J y L) y la pieza que aparece es la que mostraba NEXT.
+- [x] Limpiar 1, 2, 3 y 4 líneas a la vez suma 100, 300, 500 y 800 puntos multiplicados por el nivel vigente antes de subir de nivel.
+- [x] El nivel es `floor(LINES / 10) + 1`: sube a 2 al llegar a 10 líneas y el intervalo de caída pasa a 910 ms; desde el nivel 11 es de 100 ms.
+- [x] Cuando una pieza nueva colisiona al aparecer, el canvas deja de avanzar y dibuja «GAME OVER» y «Puntuación: N» con la puntuación final.
+- [x] La tecla `P` no hace nada.
+- [x] Las flechas y `Espacio` no desplazan la página mientras se juega.
 
 **Tema claro/oscuro**
 
-- [ ] La barra del reproductor muestra un botón TEMA solo en `/juegos/tetris/jugar`; no aparece en `/juegos/asteroides/jugar` ni en `/juegos/caida/jugar`.
-- [ ] Al pulsar TEMA, el fondo, el tablero, la rejilla y los textos del canvas pasan a la paleta clara (fondo `#f0f0f8`) y, al pulsar de nuevo, vuelven a la oscura (fondo `#0f0f17`); los colores de las piezas no cambian.
-- [ ] Al cambiar de tema no se alteran el marco CRT (bisel, líneas de escaneo, viñeta y barra inferior), la barra del reproductor ni ninguna otra parte de la plataforma.
-- [ ] Cambiar de tema con el juego en pausa redibuja el canvas de inmediato.
-- [ ] Tras elegir el tema claro y recargar la página, el juego arranca en claro; `localStorage["av-tetris-theme"]` vale `"light"`.
-- [ ] Con `localStorage` bloqueado o con un valor distinto de `"light"` y `"dark"`, el juego arranca en oscuro y no hay errores en consola.
+- [x] La barra del reproductor muestra un botón TEMA solo en `/juegos/tetris/jugar`; no aparece en `/juegos/asteroides/jugar` ni en `/juegos/caida/jugar`.
+- [x] Al pulsar TEMA, el fondo, el tablero, la rejilla y los textos del canvas pasan a la paleta clara (fondo `#f0f0f8`) y, al pulsar de nuevo, vuelven a la oscura (fondo `#0f0f17`); los colores de las piezas no cambian.
+- [x] Al cambiar de tema no se alteran el marco CRT (bisel, líneas de escaneo, viñeta y barra inferior), la barra del reproductor ni ninguna otra parte de la plataforma.
+- [x] Cambiar de tema con el juego en pausa redibuja el canvas de inmediato.
+- [x] Tras elegir el tema claro y recargar la página, el juego arranca en claro; `localStorage["av-tetris-theme"]` vale `"light"`.
+- [x] Con `localStorage` bloqueado o con un valor distinto de `"light"` y `"dark"`, el juego arranca en oscuro y no hay errores en consola.
 
 **Integración con React**
 
-- [ ] La barra del reproductor muestra PUNTUACIÓN y NIVEL iguales a los del panel del canvas en todo momento, y VIDAS muestra `♥` mientras se juega y `—` en cuanto la partida termina.
-- [ ] PAUSA congela la caída y las teclas, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la pieza salte de posición.
-- [ ] Con el foco en el botón PAUSA o en TEMA, pulsar `Espacio` hace _hard drop_ y no activa el botón.
-- [ ] Al llegar a GAME OVER el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
-- [ ] Con el modal abierto, escribir espacios y flechas en el campo de iniciales no mueve ni deja caer la pieza.
-- [ ] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, 0 líneas, nivel 1 y VIDAS `♥`, conservando el tema elegido.
-- [ ] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
-- [ ] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
-- [ ] `/juegos/asteroides/jugar` conserva su jugabilidad y sus 3 vidas, y `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
+- [x] La barra del reproductor muestra PUNTUACIÓN y NIVEL iguales a los del panel del canvas en todo momento, y VIDAS muestra `♥` mientras se juega y `—` en cuanto la partida termina.
+- [x] PAUSA congela la caída y las teclas, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la pieza salte de posición.
+- [x] Con el foco en el botón PAUSA o en TEMA, pulsar `Espacio` hace _hard drop_ y no activa el botón.
+- [x] Al llegar a GAME OVER el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
+- [x] Con el modal abierto, escribir espacios y flechas en el campo de iniciales no mueve ni deja caer la pieza.
+- [x] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, 0 líneas, nivel 1 y VIDAS `♥`, conservando el tema elegido.
+- [x] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
+- [x] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
+- [x] `/juegos/asteroides/jugar` conserva su jugabilidad y sus 3 vidas, y `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
 
 **Base de datos y ranking**
 
-- [ ] `games` contiene la fila `tetris` / `TETRIS` / `PUZZLE` y la fila `asteroides` sigue intacta.
-- [ ] FIN o GAME OVER → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'tetris'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
-- [ ] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
-- [ ] En `/juegos/bloque-buster/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
-- [ ] Con `scores` vacía para `tetris`, `/salon` (pestaña TETRIS) y `/juegos/tetris` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/tetris/jugar`.
-- [ ] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título TETRIS y el color magenta.
-- [ ] Un mismo nombre con dos puntuaciones de Tetris aparece una sola vez en su ranking, con la mayor, y no se mezcla con el ranking de Asteroides.
-- [ ] «TU MEJOR MARCA» de la pestaña TETRIS muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
-- [ ] Las pestañas de ASTEROIDES y de los otros 7 juegos conservan el comportamiento que tenían.
-- [ ] `get_advisors` de seguridad no reporta incidencias nuevas.
-- [ ] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
-- [ ] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
+- [x] `games` contiene la fila `tetris` / `TETRIS` / `PUZZLE` y la fila `asteroides` sigue intacta.
+- [x] FIN o GAME OVER → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'tetris'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
+- [x] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
+- [x] En `/juegos/bloque-buster/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
+- [x] Con `scores` vacía para `tetris`, `/salon` (pestaña TETRIS) y `/juegos/tetris` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/tetris/jugar`.
+- [x] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título TETRIS y el color magenta.
+- [x] Un mismo nombre con dos puntuaciones de Tetris aparece una sola vez en su ranking, con la mayor, y no se mezcla con el ranking de Asteroides.
+- [x] «TU MEJOR MARCA» de la pestaña TETRIS muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
+- [x] Las pestañas de ASTEROIDES y de los otros 7 juegos conservan el comportamiento que tenían.
+- [x] `get_advisors` de seguridad no reporta incidencias nuevas.
+- [x] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
+- [x] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
 
 ---
 
