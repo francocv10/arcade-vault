@@ -1,6 +1,6 @@
 # SPEC 09 — Juego ARKANOID jugable en la plataforma con ranking real
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06 (patrón de motor de canvas y reproductor), SPEC 07 (tablas `games` y `scores`, vista `leaderboard` y rankings reales), SPEC 08 (segundo juego real: snapshot y canvas por `gameId`, prop por juego en `HallOfFame`)
 > **Date:** 2026-10-23
 > **Objective:** Portar Arkanoid de `references/started-games/04-arkanoid/` a un motor de canvas en TypeScript con sus sprites y sonidos, publicarlo como el juego `arkanoid`, conectarlo al reproductor y guardar y mostrar sus puntuaciones en Supabase.
@@ -156,60 +156,60 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 
 **Global**
 
-- [ ] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores en la consola del navegador en `/juegos/arkanoid/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/arkanoid`.
-- [ ] La carpeta `references/started-games/04-arkanoid/` no se modifica (`git status`).
+- [x] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] No hay errores en la consola del navegador en `/juegos/arkanoid/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/arkanoid`.
+- [x] La carpeta `references/started-games/04-arkanoid/` no se modifica (`git status`).
 
 **Ficha y catálogo**
 
-- [ ] `/biblioteca` lista ARKANOID con categoría ARCADE, portada `.cover-arkanoid` propia y botón amarillo, y `bloque-buster` sigue existiendo con su texto y portada actuales.
-- [ ] `/juegos/arkanoid` muestra la ficha y su botón JUGAR lleva a `/juegos/arkanoid/jugar`.
-- [ ] `/home` muestra las mismas 6 tarjetas de juegos que antes.
-- [ ] Las pestañas de `/salon` incluyen ARKANOID y no rompen las demás.
+- [x] `/biblioteca` lista ARKANOID con categoría ARCADE, portada `.cover-arkanoid` propia y botón amarillo, y `bloque-buster` sigue existiendo con su texto y portada actuales.
+- [x] `/juegos/arkanoid` muestra la ficha y su botón JUGAR lleva a `/juegos/arkanoid/jugar`.
+- [x] `/home` muestra las mismas 6 tarjetas de juegos que antes.
+- [x] Las pestañas de `/salon` incluyen ARKANOID y no rompen las demás.
 
 **Jugabilidad**
 
-- [ ] Al cargar `/juegos/arkanoid/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con 60 bloques en 6 filas de 10 (con origen en `x = 80`, `y = 80`), la paleta centrada en `y = 560`, la pelota sobre ella y el HUD con `Score: 0`, `Nivel: 1` y 3 bolas.
-- [ ] Los sprites y la animación de explosión se ven con el aspecto del original (sin imagen rota ni rectángulos vacíos).
-- [ ] La pelota sale sola al empezar con velocidad `(200, −300)` px/s en el nivel 1.
-- [ ] Mantener `←` o `→` mueve la paleta a 400 px/s sin salirse de los bordes del lienzo.
-- [ ] Mover el ratón sobre el canvas centra la paleta bajo el puntero, a cualquier tamaño de pantalla, y no la saca de los bordes.
-- [ ] La pelota rebota en las paredes izquierda, derecha y superior; en la paleta solo si baja, siempre hacia arriba y sin cambiar su ángulo horizontal.
-- [ ] Romper un bloque suma exactamente 10 puntos, invierte la velocidad vertical, lo hace desaparecer y muestra su explosión de 4 fotogramas durante 150 ms.
-- [ ] Al limpiar el nivel 1 (60 bloques) aparece el nivel 2 (pirámide de 40 bloques), con la velocidad de la pelota ×1,10 (`(220, −330)`), el HUD muestra `Nivel: 2` y la puntuación se conserva; los niveles 3, 4 y 5 tienen 30, 39 y 39 bloques y velocidades ×1,21, ×1,33 y ×1,46.
-- [ ] Si la pelota cae por debajo del lienzo, se pierde una vida (el HUD pasa de 3 a 2 bolas), la pelota vuelve a la paleta con la velocidad del nivel actual y los bloques rotos siguen rotos.
-- [ ] Al perder la tercera vida, el canvas deja de avanzar y dibuja «GAME OVER» sobre un velo negro semitransparente, con la puntuación final conservada.
-- [ ] Al limpiar los 208 bloques de los 5 niveles sin perder ninguna pelota, la puntuación es exactamente 2.080 y el canvas dibuja «¡Completaste el juego!» completo, sin recortar por los lados.
-- [ ] Al rebotar en pared o paleta suena `ball-bounce.mp3`, y al romper un bloque suena `break-sound.mp3`; en pausa no suena nada.
-- [ ] `P`, `Escape` y los clics sobre el canvas no hacen nada.
-- [ ] Las flechas no desplazan la página mientras se juega.
+- [x] Al cargar `/juegos/arkanoid/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con 60 bloques en 6 filas de 10 (con origen en `x = 80`, `y = 80`), la paleta centrada en `y = 560`, la pelota sobre ella y el HUD con `Score: 0`, `Nivel: 1` y 3 bolas.
+- [x] Los sprites y la animación de explosión se ven con el aspecto del original (sin imagen rota ni rectángulos vacíos).
+- [x] La pelota sale sola al empezar con velocidad `(200, −300)` px/s en el nivel 1.
+- [x] Mantener `←` o `→` mueve la paleta a 400 px/s sin salirse de los bordes del lienzo.
+- [x] Mover el ratón sobre el canvas centra la paleta bajo el puntero, a cualquier tamaño de pantalla, y no la saca de los bordes.
+- [x] La pelota rebota en las paredes izquierda, derecha y superior; en la paleta solo si baja, siempre hacia arriba y sin cambiar su ángulo horizontal.
+- [x] Romper un bloque suma exactamente 10 puntos, invierte la velocidad vertical, lo hace desaparecer y muestra su explosión de 4 fotogramas durante 150 ms.
+- [x] Al limpiar el nivel 1 (60 bloques) aparece el nivel 2 (pirámide de 40 bloques), con la velocidad de la pelota ×1,10 (`(220, −330)`), el HUD muestra `Nivel: 2` y la puntuación se conserva; los niveles 3, 4 y 5 tienen 30, 39 y 39 bloques y velocidades ×1,21, ×1,33 y ×1,46.
+- [x] Si la pelota cae por debajo del lienzo, se pierde una vida (el HUD pasa de 3 a 2 bolas), la pelota vuelve a la paleta con la velocidad del nivel actual y los bloques rotos siguen rotos.
+- [x] Al perder la tercera vida, el canvas deja de avanzar y dibuja «GAME OVER» sobre un velo negro semitransparente, con la puntuación final conservada.
+- [x] Al limpiar los 208 bloques de los 5 niveles sin perder ninguna pelota, la puntuación es exactamente 2.080 y el canvas dibuja «¡Completaste el juego!» completo, sin recortar por los lados.
+- [x] Al rebotar en pared o paleta suena `ball-bounce.mp3`, y al romper un bloque suena `break-sound.mp3`; en pausa no suena nada.
+- [x] `P`, `Escape` y los clics sobre el canvas no hacen nada.
+- [x] Las flechas no desplazan la página mientras se juega.
 
 **Integración con React**
 
-- [ ] La barra del reproductor muestra PUNTUACIÓN, VIDAS y NIVEL iguales a los del HUD del canvas en todo momento; VIDAS muestra `♥ ♥ ♥`, luego `♥ ♥`, `♥` y `—` al perder la última.
-- [ ] PAUSA congela la pelota, la paleta y las explosiones, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la pelota salte de posición. El canvas no dibuja overlay de pausa ni selector de nivel.
-- [ ] Con el foco en el botón PAUSA, `←` y `→` mueven la paleta y no activan ningún botón.
-- [ ] Al llegar a GAME OVER o a la victoria el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
-- [ ] Con el modal abierto, escribir en el campo de iniciales (incluidas las flechas) no mueve la paleta.
-- [ ] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, nivel 1, 3 vidas y los 60 bloques del nivel 1.
-- [ ] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni de ratón, ni `requestAnimationFrame` activos, y no suena nada (las flechas vuelven a desplazar la página).
-- [ ] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
-- [ ] `/juegos/asteroides/jugar` y `/juegos/tetris/jugar` conservan su jugabilidad, y `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
+- [x] La barra del reproductor muestra PUNTUACIÓN, VIDAS y NIVEL iguales a los del HUD del canvas en todo momento; VIDAS muestra `♥ ♥ ♥`, luego `♥ ♥`, `♥` y `—` al perder la última.
+- [x] PAUSA congela la pelota, la paleta y las explosiones, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la pelota salte de posición. El canvas no dibuja overlay de pausa ni selector de nivel.
+- [x] Con el foco en el botón PAUSA, `←` y `→` mueven la paleta y no activan ningún botón.
+- [x] Al llegar a GAME OVER o a la victoria el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
+- [x] Con el modal abierto, escribir en el campo de iniciales (incluidas las flechas) no mueve la paleta.
+- [x] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, nivel 1, 3 vidas y los 60 bloques del nivel 1.
+- [x] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni de ratón, ni `requestAnimationFrame` activos, y no suena nada (las flechas vuelven a desplazar la página).
+- [x] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
+- [x] `/juegos/asteroides/jugar` y `/juegos/tetris/jugar` conservan su jugabilidad, y `/juegos/bloque-buster/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
 
 **Base de datos y ranking**
 
-- [ ] `games` contiene la fila `arkanoid` / `ARKANOID` / `ARCADE` y las filas `asteroides` y `tetris` siguen intactas.
-- [ ] FIN, GAME OVER o victoria → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'arkanoid'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
-- [ ] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
-- [ ] En `/juegos/bloque-buster/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
-- [ ] Con `scores` vacía para `arkanoid`, `/salon` (pestaña ARKANOID) y `/juegos/arkanoid` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/arkanoid/jugar`.
-- [ ] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título ARKANOID y el color amarillo.
-- [ ] Un mismo nombre con dos puntuaciones de Arkanoid aparece una sola vez en su ranking, con la mayor, y no se mezcla con los rankings de Asteroides ni de Tetris.
-- [ ] «TU MEJOR MARCA» de la pestaña ARKANOID muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
-- [ ] Las pestañas de ASTEROIDES, TETRIS y de los otros 7 juegos conservan el comportamiento que tenían.
-- [ ] `get_advisors` de seguridad no reporta incidencias nuevas.
-- [ ] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
-- [ ] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
+- [x] `games` contiene la fila `arkanoid` / `ARKANOID` / `ARCADE` y las filas `asteroides` y `tetris` siguen intactas.
+- [x] FIN, GAME OVER o victoria → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'arkanoid'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
+- [x] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
+- [x] En `/juegos/bloque-buster/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
+- [x] Con `scores` vacía para `arkanoid`, `/salon` (pestaña ARKANOID) y `/juegos/arkanoid` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/arkanoid/jugar`.
+- [x] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título ARKANOID y el color amarillo.
+- [x] Un mismo nombre con dos puntuaciones de Arkanoid aparece una sola vez en su ranking, con la mayor, y no se mezcla con los rankings de Asteroides ni de Tetris.
+- [x] «TU MEJOR MARCA» de la pestaña ARKANOID muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
+- [x] Las pestañas de ASTEROIDES, TETRIS y de los otros 7 juegos conservan el comportamiento que tenían.
+- [x] `get_advisors` de seguridad no reporta incidencias nuevas.
+- [x] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
+- [x] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
 
 ---
 
