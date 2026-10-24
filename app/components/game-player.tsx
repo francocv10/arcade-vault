@@ -28,12 +28,17 @@ export function GamePlayer({
   const esAsteroides = gameId === "asteroides";
   const esTetris = gameId === "tetris";
   const esArkanoid = gameId === "arkanoid";
+  const esSnake = gameId === "snake";
   // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
-  const esReal = esAsteroides || esTetris || esArkanoid;
+  const esReal = esAsteroides || esTetris || esArkanoid || esSnake;
   const [fakeScore, setScore] = useState(0);
   // Snapshot que envía el motor de canvas (solo en los juegos reales).
   const [snap, setSnap] = useState<
-    SnapshotAsteroides | SnapshotTetris | SnapshotArkanoid | null
+    | SnapshotAsteroides
+    | SnapshotTetris
+    | SnapshotArkanoid
+    | SnapshotSnake
+    | null
   >(null);
   // Tema del canvas de Tetris: arranca oscuro y se lee de localStorage tras hidratar.
   const [tema, setTema] = useState<TemaTetris>("dark");
@@ -43,7 +48,7 @@ export function GamePlayer({
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
   const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  // Asteroides, Tetris y Arkanoid guardan en Supabase; el resto de juegos sigue en localStorage.
+  // Asteroides, Tetris, Arkanoid y Snake guardan en Supabase; el resto de juegos sigue en localStorage.
   const [saving, setSaving] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
@@ -63,7 +68,7 @@ export function GamePlayer({
   const name = editedName ?? user?.name ?? "INVITADO";
   const score = esReal ? (snap?.score ?? 0) : fakeScore;
   const lives = esReal
-    ? (snap?.lives ?? (esTetris ? TETRIS_LIVES : LIVES))
+    ? (snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES))
     : LIVES;
   const level = esReal ? (snap?.level ?? 1) : 1 + Math.floor(score / 2500);
   // Lee el tema guardado tras hidratar; con localStorage bloqueado o un valor raro queda oscuro.
@@ -196,6 +201,12 @@ export function GamePlayer({
             />
           ) : esArkanoid ? (
             <ArkanoidCanvas
+              onChange={setSnap}
+              paused={paused || gameOver}
+              restartKey={restartKey}
+            />
+          ) : esSnake ? (
+            <SnakeCanvas
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}

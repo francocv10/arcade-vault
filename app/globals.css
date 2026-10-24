@@ -1422,10 +1422,27 @@ a {
   width: 100%;
   height: 100%;
 }
-.crt-screen:has(.asteroids-canvas, .tetris-canvas, .arkanoid-canvas)::before {
+.snake-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.crt-screen:has(
+    .asteroids-canvas,
+    .tetris-canvas,
+    .arkanoid-canvas,
+    .snake-canvas
+  )::before {
   z-index: 1;
 }
-.crt-screen:has(.asteroids-canvas, .tetris-canvas, .arkanoid-canvas)::after {
+.crt-screen:has(
+    .asteroids-canvas,
+    .tetris-canvas,
+    .arkanoid-canvas,
+    .snake-canvas
+  )::after {
   z-index: 1;
 }
 /* fake in-screen game */
