@@ -3,15 +3,17 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { SnapshotArkanoid } from "@/app/games/arkanoid/types";
 import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
+import type { SnapshotSnake } from "@/app/games/snake/types";
 import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { ArkanoidCanvas } from "./arkanoid-canvas";
 import { AsteroidsCanvas } from "./asteroids-canvas";
+import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
 import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 const LIVES = 3;
-const TETRIS_LIVES = 1;
+const UNA_VIDA = 1; // Tetris y Snake
 const CLAVE_TEMA_TETRIS = "av-tetris-theme";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
@@ -26,12 +28,17 @@ export function GamePlayer({
   const esAsteroides = gameId === "asteroides";
   const esTetris = gameId === "tetris";
   const esArkanoid = gameId === "arkanoid";
+  const esSnake = gameId === "snake";
   // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
-  const esReal = esAsteroides || esTetris || esArkanoid;
+  const esReal = esAsteroides || esTetris || esArkanoid || esSnake;
   const [fakeScore, setScore] = useState(0);
   // Snapshot que envía el motor de canvas (solo en los juegos reales).
   const [snap, setSnap] = useState<
-    SnapshotAsteroides | SnapshotTetris | SnapshotArkanoid | null
+    | SnapshotAsteroides
+    | SnapshotTetris
+    | SnapshotArkanoid
+    | SnapshotSnake
+    | null
   >(null);
   // Tema del canvas de Tetris: arranca oscuro y se lee de localStorage tras hidratar.
   const [tema, setTema] = useState<TemaTetris>("dark");
@@ -41,7 +48,7 @@ export function GamePlayer({
   // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
   const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  // Asteroides, Tetris y Arkanoid guardan en Supabase; el resto de juegos sigue en localStorage.
+  // Asteroides, Tetris, Arkanoid y Snake guardan en Supabase; el resto de juegos sigue en localStorage.
   const [saving, setSaving] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
@@ -61,7 +68,7 @@ export function GamePlayer({
   const name = editedName ?? user?.name ?? "INVITADO";
   const score = esReal ? (snap?.score ?? 0) : fakeScore;
   const lives = esReal
-    ? (snap?.lives ?? (esTetris ? TETRIS_LIVES : LIVES))
+    ? (snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES))
     : LIVES;
   const level = esReal ? (snap?.level ?? 1) : 1 + Math.floor(score / 2500);
   // Lee el tema guardado tras hidratar; con localStorage bloqueado o un valor raro queda oscuro.
@@ -194,6 +201,12 @@ export function GamePlayer({
             />
           ) : esArkanoid ? (
             <ArkanoidCanvas
+              onChange={setSnap}
+              paused={paused || gameOver}
+              restartKey={restartKey}
+            />
+          ) : esSnake ? (
+            <SnakeCanvas
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
