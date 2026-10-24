@@ -15,17 +15,19 @@ export function HallOfFame({
   asteroides,
   tetris,
   arkanoid,
+  snake,
 }: {
   asteroides: PuntuacionRanking[];
   tetris: PuntuacionRanking[];
   arkanoid: PuntuacionRanking[];
+  snake: PuntuacionRanking[];
 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState(GAMES[0].id);
   // Juegos con ranking real en Supabase; las demás pestañas siguen con datos falsos.
   const reales = useMemo<Record<string, PuntuacionRanking[]>>(
-    () => ({ asteroides, tetris, arkanoid }),
-    [asteroides, tetris, arkanoid],
+    () => ({ asteroides, tetris, arkanoid, snake }),
+    [asteroides, tetris, arkanoid, snake],
   );
   const esReal = tab in reales;
   const rows = useMemo(

@@ -1,6 +1,6 @@
 # SPEC 10 — Juego SNAKE jugable en la plataforma con ranking real
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06 (patrón de motor de canvas y reproductor), SPEC 07 (tablas `games` y `scores`, vista `leaderboard` y rankings reales), SPEC 08 (snapshot y canvas por `gameId`, prop por juego en `HallOfFame`, `lives: 1 → 0`), SPEC 09 (tercer juego real y primeros assets en `public/`)
 > **Date:** 2026-10-23
 > **Objective:** Diseñar un Snake clásico en un motor de canvas en TypeScript con las frutas de `references/source-assets/snake-assets/`, publicarlo como el juego `snake`, conectarlo al reproductor y guardar y mostrar sus puntuaciones en Supabase.
@@ -162,57 +162,57 @@ Verificados con Playwright (Chromium) sobre `npm run dev`, más `npm run lint`, 
 
 **Global**
 
-- [ ] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
-- [ ] No hay errores en la consola del navegador en `/juegos/snake/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/snake`.
-- [ ] La carpeta `references/source-assets/snake-assets/` no se modifica (`git diff` sin cambios en ella).
+- [x] `npm run lint`, `npx tsc --noEmit` y `npm run build` terminan sin errores.
+- [x] No hay errores en la consola del navegador en `/juegos/snake/jugar` durante una partida completa ni en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` y `/juegos/snake`.
+- [x] La carpeta `references/source-assets/snake-assets/` no se modifica (`git diff` sin cambios en ella).
 
 **Ficha y catálogo**
 
-- [ ] `/biblioteca` lista SNAKE con categoría ARCADE, portada `.cover-snake-real` propia y botón cian, y `serpentina` sigue existiendo con su texto y portada actuales.
-- [ ] `/juegos/snake` muestra la ficha y su botón JUGAR lleva a `/juegos/snake/jugar`.
-- [ ] `/home` muestra las mismas 6 tarjetas de juegos que antes.
-- [ ] Las pestañas de `/salon` incluyen SNAKE y no rompen las demás.
+- [x] `/biblioteca` lista SNAKE con categoría ARCADE, portada `.cover-snake-real` propia y botón cian, y `serpentina` sigue existiendo con su texto y portada actuales.
+- [x] `/juegos/snake` muestra la ficha y su botón JUGAR lleva a `/juegos/snake/jugar`.
+- [x] `/home` muestra las mismas 6 tarjetas de juegos que antes.
+- [x] Las pestañas de `/salon` incluyen SNAKE y no rompen las demás.
 
 **Jugabilidad**
 
-- [ ] Al cargar `/juegos/snake/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con el tablero de 20×15 casillas de 40 px alternando `#aad751` y `#a2d149`, la serpiente azul de 3 segmentos con la cabeza en `(6, 7)`, una fruta en una casilla libre y la leyenda «PULSA UNA FLECHA PARA EMPEZAR».
-- [ ] Las frutas se ven con su sprite pixel-art del atlas, sin imagen rota, recortes cortados ni suavizado borroso, y cada una cabe en su casilla.
-- [ ] La serpiente no se mueve hasta pulsar `→`, `↑`, `↓`, `D`, `W` o `S`; pulsar `←` o `A` antes de empezar no hace nada.
-- [ ] Con la serpiente en marcha, un giro de 180° (p. ej. `←` yendo a la derecha) se ignora y pulsar la misma dirección no cambia nada.
-- [ ] Pulsar dos giros dentro de un mismo paso (p. ej. `↑` y `←`) los aplica en pasos consecutivos y no mata a la serpiente por una reversa instantánea.
-- [ ] Al nivel 1 la serpiente avanza 8 casillas por segundo (125 ms por paso, ±1 fotograma); al nivel 2, 8,5; y la velocidad no pasa de 16 casillas por segundo.
-- [ ] Comer una fruta suma exactamente 10 puntos, alarga la serpiente un segmento y coloca otra fruta en una casilla libre (nunca sobre la serpiente).
-- [ ] Al comer la quinta fruta el nivel pasa de 1 a 2 y la barra muestra `NIVEL 2`; a las 10 frutas, nivel 3.
-- [ ] Salirse por cualquiera de los cuatro bordes termina la partida: el canvas deja de avanzar y dibuja «GAME OVER» y «Puntuación: N» sobre un velo semitransparente, con la puntuación final conservada.
-- [ ] Chocar con el propio cuerpo termina la partida; entrar en la casilla que la cola acaba de liberar en ese mismo paso no la termina.
-- [ ] Las flechas y `Espacio` no desplazan la página mientras se juega.
+- [x] Al cargar `/juegos/snake/jugar` aparece el canvas (resolución lógica 800×600) llenando todo el recuadro del CRT, sin franjas ni recortes a 1440, 1024 y 390 px de ancho, con el tablero de 20×15 casillas de 40 px alternando `#aad751` y `#a2d149`, la serpiente azul de 3 segmentos con la cabeza en `(6, 7)`, una fruta en una casilla libre y la leyenda «PULSA UNA FLECHA PARA EMPEZAR».
+- [x] Las frutas se ven con su sprite pixel-art del atlas, sin imagen rota, recortes cortados ni suavizado borroso, y cada una cabe en su casilla.
+- [x] La serpiente no se mueve hasta pulsar `→`, `↑`, `↓`, `D`, `W` o `S`; pulsar `←` o `A` antes de empezar no hace nada.
+- [x] Con la serpiente en marcha, un giro de 180° (p. ej. `←` yendo a la derecha) se ignora y pulsar la misma dirección no cambia nada.
+- [x] Pulsar dos giros dentro de un mismo paso (p. ej. `↑` y `←`) los aplica en pasos consecutivos y no mata a la serpiente por una reversa instantánea.
+- [x] Al nivel 1 la serpiente avanza 8 casillas por segundo (125 ms por paso, ±1 fotograma); al nivel 2, 8,5; y la velocidad no pasa de 16 casillas por segundo.
+- [x] Comer una fruta suma exactamente 10 puntos, alarga la serpiente un segmento y coloca otra fruta en una casilla libre (nunca sobre la serpiente).
+- [x] Al comer la quinta fruta el nivel pasa de 1 a 2 y la barra muestra `NIVEL 2`; a las 10 frutas, nivel 3.
+- [x] Salirse por cualquiera de los cuatro bordes termina la partida: el canvas deja de avanzar y dibuja «GAME OVER» y «Puntuación: N» sobre un velo semitransparente, con la puntuación final conservada.
+- [x] Chocar con el propio cuerpo termina la partida; entrar en la casilla que la cola acaba de liberar en ese mismo paso no la termina.
+- [x] Las flechas y `Espacio` no desplazan la página mientras se juega.
 
 **Integración con React**
 
-- [ ] La barra del reproductor muestra PUNTUACIÓN y NIVEL iguales a los de la partida en todo momento; VIDAS muestra `♥` mientras se juega y `—` al terminar.
-- [ ] PAUSA congela la serpiente, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la serpiente salte de casilla. El canvas no dibuja overlay de pausa.
-- [ ] Con el foco en el botón PAUSA, las flechas y `WASD` actúan sobre el juego y no activan ningún botón.
-- [ ] Al llegar a GAME OVER el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
-- [ ] Con el modal abierto, escribir en el campo de iniciales (incluidas las flechas y las letras `W`, `A`, `S` y `D`) no mueve la serpiente.
-- [ ] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, nivel 1, 1 vida, serpiente de 3 segmentos en `(6, 7)` y la leyenda de inicio.
-- [ ] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
-- [ ] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
-- [ ] `/juegos/asteroides/jugar`, `/juegos/tetris/jugar` y `/juegos/arkanoid/jugar` conservan su jugabilidad, y `/juegos/serpentina/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
+- [x] La barra del reproductor muestra PUNTUACIÓN y NIVEL iguales a los de la partida en todo momento; VIDAS muestra `♥` mientras se juega y `—` al terminar.
+- [x] PAUSA congela la serpiente, muestra «EN PAUSA» y cambia el botón a REANUDAR; REANUDAR continúa sin que la serpiente salte de casilla. El canvas no dibuja overlay de pausa.
+- [x] Con el foco en el botón PAUSA, las flechas y `WASD` actúan sobre el juego y no activan ningún botón.
+- [x] Al llegar a GAME OVER el modal «FIN DEL JUEGO» se abre solo con la puntuación real; FIN también lo abre pausando el juego.
+- [x] Con el modal abierto, escribir en el campo de iniciales (incluidas las flechas y las letras `W`, `A`, `S` y `D`) no mueve la serpiente.
+- [x] JUGAR DE NUEVO cierra el modal y reinicia con 0 puntos, nivel 1, 1 vida, serpiente de 3 segmentos en `(6, 7)` y la leyenda de inicio.
+- [x] SALIR y VOLVER AL VAULT detienen el bucle: tras navegar no quedan escuchas de teclado ni `requestAnimationFrame` activos (las flechas vuelven a desplazar la página).
+- [x] A 390 px de ancho el canvas se ve completo y escalado dentro del CRT, mantiene la proporción 4:3 y la página no genera desborde horizontal.
+- [x] `/juegos/asteroides/jugar`, `/juegos/tetris/jugar` y `/juegos/arkanoid/jugar` conservan su jugabilidad, y `/juegos/serpentina/jugar` (y los otros juegos) conservan la maqueta con la puntuación al azar y sus 3 vidas.
 
 **Base de datos y ranking**
 
-- [ ] `games` contiene la fila `snake` / `SNAKE` / `ARCADE` y las filas `asteroides`, `tetris` y `arkanoid` siguen intactas.
-- [ ] FIN o GAME OVER → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'snake'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
-- [ ] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
-- [ ] En `/juegos/serpentina/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
-- [ ] Con `scores` vacía para `snake`, `/salon` (pestaña SNAKE) y `/juegos/snake` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/snake/jugar`.
-- [ ] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título SNAKE y el color cian.
-- [ ] Un mismo nombre con dos puntuaciones de Snake aparece una sola vez en su ranking, con la mayor, y no se mezcla con los rankings de los otros juegos.
-- [ ] «TU MEJOR MARCA» de la pestaña SNAKE muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
-- [ ] Las pestañas de ASTEROIDES, TETRIS, ARKANOID y de los otros 7 juegos conservan el comportamiento que tenían.
-- [ ] `get_advisors` de seguridad no reporta incidencias nuevas.
-- [ ] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
-- [ ] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
+- [x] `games` contiene la fila `snake` / `SNAKE` / `ARCADE` y las filas `asteroides`, `tetris` y `arkanoid` siguen intactas.
+- [x] FIN o GAME OVER → GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'snake'`, el nombre en mayúsculas, la puntuación del canvas y `user_id` nulo; el modal muestra «PUNTUACIÓN GUARDADA».
+- [x] Con la petición bloqueada o fallando, el modal muestra `[ERR]`, conserva el nombre escrito y no muestra «PUNTUACIÓN GUARDADA»; el botón no permite doble envío.
+- [x] En `/juegos/serpentina/jugar` GUARDAR sigue usando `localStorage` y no crea filas en `scores`.
+- [x] Con `scores` vacía para `snake`, `/salon` (pestaña SNAKE) y `/juegos/snake` muestran el estado vacío «SIN PUNTUACIONES — SÉ EL PRIMERO» con enlace a `/juegos/snake/jugar`.
+- [x] Tras guardar, la puntuación aparece en la ficha y en el Salón sin reiniciar el servidor, y en las dos tarjetas de actividad del Home con el título SNAKE y el color cian.
+- [x] Un mismo nombre con dos puntuaciones de Snake aparece una sola vez en su ranking, con la mayor, y no se mezcla con los rankings de los otros juegos.
+- [x] «TU MEJOR MARCA» de la pestaña SNAKE muestra la mejor marca del nombre en sesión (sin distinguir mayúsculas) y su puesto, y no aparece si no tiene ninguna.
+- [x] Las pestañas de ASTEROIDES, TETRIS, ARKANOID y de los otros 7 juegos conservan el comportamiento que tenían.
+- [x] `get_advisors` de seguridad no reporta incidencias nuevas.
+- [x] En `.next/static` no aparece la clave `service_role` ni la contraseña de la base de datos.
+- [x] Las filas de prueba creadas en `scores` durante la verificación se borran al terminar.
 
 ---
 

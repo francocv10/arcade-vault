@@ -94,7 +94,8 @@ async function GameDetail({
           <h3>MEJORES PUNTUACIONES</h3>
           {game.id === "asteroides" ||
           game.id === "tetris" ||
-          game.id === "arkanoid" ? (
+          game.id === "arkanoid" ||
+          game.id === "snake" ? (
             <Suspense
               fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
             >
