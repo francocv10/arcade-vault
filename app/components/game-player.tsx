@@ -3,15 +3,17 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { SnapshotArkanoid } from "@/app/games/arkanoid/types";
 import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
+import type { SnapshotSnake } from "@/app/games/snake/types";
 import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { ArkanoidCanvas } from "./arkanoid-canvas";
 import { AsteroidsCanvas } from "./asteroids-canvas";
+import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
 import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 const LIVES = 3;
-const TETRIS_LIVES = 1;
+const UNA_VIDA = 1; // Tetris y Snake
 const CLAVE_TEMA_TETRIS = "av-tetris-theme";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
