@@ -30,6 +30,7 @@ No hay un test runner configurado. Scripts: `npm run dev`, `npm run build`, `npm
   - `/spec` (`SKILL.md` + `template.md`): escribe una spec nueva en `specs/NN-slug.md`. Es la referencia de formato para cualquier spec.
   - `/spec-impl`: implementa una spec en su rama `spec-NN-slug`. `specs/.spec-config.yml` tiene `AutoCreateBranch: true`, así que crea y cambia a la rama sin preguntar.
   - `/new-game` (`SKILL.md`, `plantilla-juego.md` y `puntos-de-integracion.md`): genera la spec de un juego nuevo (motor de canvas + alta en `games` y ranking real) a partir de una carpeta de `references/started-games/` o de una descripción. Solo se invoca a mano (`disable-model-invocation`), no escribe código ni aplica migraciones, y si su plantilla difiere de `/spec`, gana `/spec`. `puntos-de-integracion.md` es el mapa de archivos que toca un juego real: actualízalo si cambia alguno.
+- Subagente `game-planner` (`.claude/agents/game-planner.md`, solo local): recomienda qué juego portar después, recuerda sus sugerencias con `memory: local` (`.claude/agent-memory-local/game-planner/`) y registra cada una en `references/game-suggestions-todo.md` (Pendientes / Implementados / Descartados). No escribe specs ni código; el siguiente paso es `/new-game`.
 - `.gitignore` excluye `.claude/`, `CLAUDE.md` y `AGENTS.md`: `CLAUDE.md` y las skills `spec`/`spec-impl` se versionan porque se añadieron antes de la regla, pero `/new-game`, el hook y `settings.json` solo existen en local.
 
 ## Stack y convenciones
