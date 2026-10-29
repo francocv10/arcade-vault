@@ -1632,6 +1632,31 @@ a {
     display: none;
   }
 }
+/* consola más ajustada en vertical estrecho: cruceta 56 + A y B 64 no caben en 343 px */
+@media (pointer: coarse) and (max-width: 420px) {
+  .touch-console {
+    gap: 8px;
+    padding: 12px 10px;
+  }
+  .touch-dpad {
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(3, 52px);
+  }
+  .touch-dir {
+    width: 52px;
+    height: 52px;
+  }
+  .touch-actions {
+    gap: 12px;
+  }
+  .touch-action,
+  .touch-action .touch-btn {
+    width: 60px;
+  }
+  .touch-action .touch-btn {
+    height: 60px;
+  }
+}
 /* apaisado en móvil (spec 14): HUD en una fila y cruceta | marco | A y B en la misma fila */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .av-player {
