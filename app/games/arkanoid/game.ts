@@ -78,7 +78,7 @@ export function createArkanoidGame(
   }
   // La fuente pixel se resuelve una sola vez, al crear el motor.
   resolverFuentePixel();
-  const skin: SkinArkanoid = "clasico";
+  let skin: SkinArkanoid = "clasico";
   // ── Estado del juego ───────────────────────────────────────────────────────
   let blocks: Bloque[] = [];
   let explosions: Explosion[] = [];
@@ -405,6 +405,14 @@ export function createArkanoidGame(
       notify();
       draw();
       startLoop();
+    },
+    setSkin(nueva) {
+      if (destroyed || nueva === skin) return;
+      skin = nueva;
+      // Con el bucle en marcha el siguiente fotograma ya usa la skin nueva; si no
+      // (pausa, gameover o win) se redibuja a mano. Antes de cargar el spritesheet
+      // solo se guarda la skin: `sheet.onload` ya dibuja con ella.
+      if (ready && rafId === null) draw();
     },
     destroy() {
       if (destroyed) return;
