@@ -1,6 +1,6 @@
 # SPEC 14 — Controles táctiles para jugar en móvil
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06 (Asteroides), SPEC 08 (Tetris), SPEC 09 (Arkanoid), SPEC 10 (Snake) y `GamePlayer`
 > **Date:** 2026-10-29
 > **Objective:** Permitir jugar a los cuatro juegos reales en un móvil táctil añadiendo bajo el canvas una consola con cruceta y dos botones (A y B) que emula el teclado que ya leen los motores, y compactando el reproductor para que canvas y consola quepan en pantalla.
@@ -128,25 +128,25 @@ Ninguna. No se guarda nada en `localStorage`, Supabase ni cookies.
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] `CONTROLES_TACTILES` tiene exactamente las claves `asteroides`, `tetris`, `arkanoid` y `snake`, con los valores de la tabla.
-- [ ] No cambia ningún archivo de `app/games/*/game.ts` ni los tipos de los motores.
-- [ ] En escritorio (puntero fino) la consola no aparece (`display: none`) y el teclado funciona igual que antes en los cuatro juegos.
-- [ ] En un dispositivo táctil, `/juegos/<id>/jugar` de los cuatro juegos muestra bajo el marco `.crt` la cruceta a la izquierda y los botones A y B a la derecha; en `/juegos/<id>` y en las maquetas no aparece.
-- [ ] Cada botón de la consola mide al menos 48 × 48 px.
-- [ ] Al pulsar un botón activo, un listener de `keydown` en `window` recibe el `code` y `key` esperados; al soltar, un único `keyup`.
-- [ ] Asteroides: ← y → giran la nave, ↑ impulsa y A dispara; se puede mantener ← y pulsar A a la vez; B aparece deshabilitado y ↓ también.
-- [ ] Tetris: ← → ↓ mueven la pieza y, manteniendo pulsado, repiten (250 ms de retardo y 80 ms de intervalo); ↑ y B giran; A hace caída rápida.
-- [ ] Arkanoid: ← y → mueven la pala mientras se mantienen y la detienen al soltar; ↑, ↓, A y B aparecen deshabilitados.
-- [ ] Snake: las cuatro flechas giran la serpiente sin reversas y la primera pulsación arranca la partida; A y B aparecen deshabilitados.
-- [ ] Mantener pulsado un botón y levantar el dedo fuera de él, o recibir `pointercancel`, libera la tecla: la nave no queda girando y la pala no queda desplazándose.
-- [ ] Al cambiar de pestaña, pulsar PAUSA o salir del reproductor no queda ninguna tecla sintética pulsada.
-- [ ] Mantener pulsado un botón no abre el menú contextual, no selecciona texto, no hace scroll de la página ni hace zoom con doble toque sobre la consola o el canvas.
-- [ ] A 375 × 667, con la consola, el HUD compacto y el canvas, no hay scroll horizontal y el canvas se ve completo con la consola visible tras como máximo un desplazamiento vertical corto; a 360 px de ancho los botones del HUD no se desbordan.
-- [ ] En apaisado 667 × 375 el canvas se ve entero sin scroll vertical y la consola es utilizable.
-- [ ] Las skins, el botón TEMA, la pausa, el modal de fin de juego y el guardado de puntuaciones siguen funcionando con la consola.
-- [ ] Se probó en al menos un móvil real y se anotó el resultado en el PR.
-- [ ] `CLAUDE.md` y `.claude/skills/new-game/puntos-de-integracion.md` mencionan la consola táctil y el paso de alta de un juego nuevo.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] `CONTROLES_TACTILES` tiene exactamente las claves `asteroides`, `tetris`, `arkanoid` y `snake`, con los valores de la tabla.
+- [x] No cambia ningún archivo de `app/games/*/game.ts` ni los tipos de los motores.
+- [x] En escritorio (puntero fino) la consola no aparece (`display: none`) y el teclado funciona igual que antes en los cuatro juegos.
+- [x] En un dispositivo táctil, `/juegos/<id>/jugar` de los cuatro juegos muestra bajo el marco `.crt` la cruceta a la izquierda y los botones A y B a la derecha; en `/juegos/<id>` y en las maquetas no aparece.
+- [x] Cada botón de la consola mide al menos 48 × 48 px.
+- [x] Al pulsar un botón activo, un listener de `keydown` en `window` recibe el `code` y `key` esperados; al soltar, un único `keyup`.
+- [x] Asteroides: ← y → giran la nave, ↑ impulsa y A dispara; se puede mantener ← y pulsar A a la vez; B aparece deshabilitado y ↓ también.
+- [x] Tetris: ← → ↓ mueven la pieza y, manteniendo pulsado, repiten (250 ms de retardo y 80 ms de intervalo); ↑ y B giran; A hace caída rápida.
+- [x] Arkanoid: ← y → mueven la pala mientras se mantienen y la detienen al soltar; ↑, ↓, A y B aparecen deshabilitados.
+- [x] Snake: las cuatro flechas giran la serpiente sin reversas y la primera pulsación arranca la partida; A y B aparecen deshabilitados.
+- [x] Mantener pulsado un botón y levantar el dedo fuera de él, o recibir `pointercancel`, libera la tecla: la nave no queda girando y la pala no queda desplazándose.
+- [x] Al cambiar de pestaña, pulsar PAUSA o salir del reproductor no queda ninguna tecla sintética pulsada.
+- [x] Mantener pulsado un botón no abre el menú contextual, no selecciona texto, no hace scroll de la página ni hace zoom con doble toque sobre la consola o el canvas.
+- [x] A 375 × 667, con la consola, el HUD compacto y el canvas, no hay scroll horizontal y el canvas se ve completo con la consola visible tras como máximo un desplazamiento vertical corto; a 360 px de ancho los botones del HUD no se desbordan.
+- [x] En apaisado 667 × 375 el canvas se ve entero sin scroll vertical y la consola es utilizable.
+- [x] Las skins, el botón TEMA, la pausa, el modal de fin de juego y el guardado de puntuaciones siguen funcionando con la consola.
+- [x] Se probó en al menos un móvil real y se anotó el resultado en el PR.
+- [x] `CLAUDE.md` y `.claude/skills/new-game/puntos-de-integracion.md` mencionan la consola táctil y el paso de alta de un juego nuevo.
 
 ---
 
