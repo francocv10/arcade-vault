@@ -12,9 +12,15 @@ import {
   nivelPorFrutas,
 } from "./board";
 import type { Celda } from "./board";
+import { PALETAS } from "./paletas";
 import { NOMBRES_FRUTA, drawFruit } from "./sprites";
 import type { NombreFruta } from "./sprites";
-import type { EstadoSnake, JuegoSnake, SnapshotSnake } from "./types";
+import type {
+  EstadoSnake,
+  JuegoSnake,
+  SkinSnake,
+  SnapshotSnake,
+} from "./types";
 const FRUITS_URL = "/games/snake/fruits.png";
 const START_SPEED = 8; // pasos por segundo en el nivel 1
 const SPEED_PER_LEVEL = 0.5;
@@ -23,9 +29,10 @@ const MAX_DT = 0.05; // s: un salto de tiempo no debe hacer avanzar varios pasos
 const MAX_TURNS = 2;
 const POINTS_PER_FRUIT = 10;
 const FRUIT_BOX = 36;
-const TILE_LIGHT = "#aad751";
-const TILE_DARK = "#a2d149";
-const SNAKE_COLOR = "#4e7cf6";
+// Forma de fruta de `retro`: cuadrado centrado en la casilla y tallo encima.
+const FORMA_LADO = 24;
+const TALLO_ANCHO = 4;
+const TALLO_ALTO = 8;
 const DIRS: Record<string, Celda> = {
   arrowleft: { x: -1, y: 0 },
   a: { x: -1, y: 0 },
@@ -60,6 +67,7 @@ export function createSnakeGame(
 ): JuegoSnake {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("No se pudo obtener el contexto 2D del lienzo.");
+  let skin: SkinSnake = "clasico";
   // ── Estado del juego ───────────────────────────────────────────────────────
   let snake: Celda[] = [];
   let dir: Celda = { x: 1, y: 0 };
@@ -183,16 +191,24 @@ export function createSnakeGame(
     return { x: c.x * CELL + CELL / 2, y: c.y * CELL + CELL / 2 };
   }
   function drawBoard(c: CanvasRenderingContext2D) {
+    const p = PALETAS[skin];
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
-        c.fillStyle = (x + y) % 2 === 0 ? TILE_LIGHT : TILE_DARK;
+        c.fillStyle = (x + y) % 2 === 0 ? p.casillaClara : p.casillaOscura;
         c.fillRect(x * CELL, y * CELL, CELL, CELL);
       }
     }
   }
   function drawSnake(c: CanvasRenderingContext2D) {
-    c.strokeStyle = SNAKE_COLOR;
-    c.fillStyle = SNAKE_COLOR;
+    const p = PALETAS[skin];
+    // El brillo solo envuelve el cuerpo y la cabeza, no los ojos.
+    c.save();
+    if (p.brilloSerpiente > 0) {
+      c.shadowColor = p.serpiente;
+      c.shadowBlur = p.brilloSerpiente;
+    }
+    c.strokeStyle = p.serpiente;
+    c.fillStyle = p.serpiente;
     c.lineCap = "round";
     c.lineJoin = "round";
     c.lineWidth = 30;
@@ -207,15 +223,16 @@ export function createSnakeGame(
     c.beginPath();
     c.arc(h.x, h.y, 18, 0, Math.PI * 2);
     c.fill();
+    c.restore();
     // Ojos orientados según la dirección (perpendicular = (-dy, dx))
     for (const lado of [-1, 1]) {
       const ex = h.x + dir.x * 6 + -dir.y * 8 * lado;
       const ey = h.y + dir.y * 6 + dir.x * 8 * lado;
-      c.fillStyle = "#fff";
+      c.fillStyle = p.ojoBlanco;
       c.beginPath();
       c.arc(ex, ey, 6, 0, Math.PI * 2);
       c.fill();
-      c.fillStyle = "#000";
+      c.fillStyle = p.ojoPupila;
       c.beginPath();
       c.arc(ex + dir.x * 2, ey + dir.y * 2, 3, 0, Math.PI * 2);
       c.fill();
@@ -225,33 +242,57 @@ export function createSnakeGame(
     c: CanvasRenderingContext2D,
     text: string,
     y: number,
-    size: number,
+    fuente: string,
   ) {
-    c.fillStyle = "#fff";
-    c.font = `bold ${size}px monospace`;
+    c.fillStyle = PALETAS[skin].texto;
+    c.font = fuente;
     c.textAlign = "center";
     c.textBaseline = "middle";
     c.fillText(text, canvas.width / 2, y, 760);
   }
+  function drawFruta(c: CanvasRenderingContext2D, f: Fruta) {
+    const pal = PALETAS[skin];
+    const p = centro(f);
+    if (pal.frutaModo === "forma") {
+      const lado = FORMA_LADO;
+      const x = p.x - lado / 2;
+      const y = p.y - lado / 2;
+      c.fillStyle = pal.frutaForma;
+      c.fillRect(x, y, lado, lado);
+      c.fillStyle = pal.frutaTallo;
+      c.fillRect(
+        p.x - TALLO_ANCHO / 2,
+        y - TALLO_ALTO,
+        TALLO_ANCHO,
+        TALLO_ALTO,
+      );
+      return;
+    }
+    c.imageSmoothingEnabled = false;
+    c.save();
+    if (pal.frutaBrillo > 0) {
+      c.shadowColor = pal.frutaBrilloColor;
+      c.shadowBlur = pal.frutaBrillo;
+    }
+    drawFruit(c, fruits, f.kind, p.x, p.y, FRUIT_BOX);
+    c.restore();
+  }
   function draw() {
     const c = ctx!;
+    const p = PALETAS[skin];
     drawBoard(c);
-    if (fruit) {
-      const p = centro(fruit);
-      c.imageSmoothingEnabled = false;
-      drawFruit(c, fruits, fruit.kind, p.x, p.y, FRUIT_BOX);
-    }
+    if (fruit) drawFruta(c, fruit);
     drawSnake(c);
     if (gameState === "playing" && !started) {
-      c.fillStyle = "rgba(0, 0, 0, 0.55)";
+      c.fillStyle = p.velo;
       c.fillRect(0, 480, canvas.width, 56);
-      drawText(c, "PULSA UNA FLECHA PARA EMPEZAR", 508, 28);
+      drawText(c, "PULSA UNA FLECHA PARA EMPEZAR", 508, p.fuenteLeyenda);
     }
     if (gameState === "gameover") {
-      c.fillStyle = "rgba(0, 0, 0, 0.6)";
+      c.fillStyle = p.veloGameOver;
       c.fillRect(0, 0, canvas.width, canvas.height);
-      drawText(c, "GAME OVER", canvas.height / 2 - 24, 64);
-      drawText(c, "Puntuación: " + score, canvas.height / 2 + 36, 32);
+      drawText(c, "GAME OVER", canvas.height / 2 - 24, p.fuenteTitulo);
+      drawText(c, "Puntuación: " + score, canvas.height / 2 + 36, p.fuenteSub);
     }
   }
   // ── Bucle principal ────────────────────────────────────────────────────────
@@ -314,6 +355,13 @@ export function createSnakeGame(
       notify();
       draw();
       startLoop();
+    },
+    setSkin(nueva) {
+      if (destroyed || nueva === skin) return;
+      skin = nueva;
+      // Redibuja ya (pausa, gameover o corriendo). Antes de cargar fruits.png solo
+      // se guarda la skin: `fruits.onload` ya dibuja con ella.
+      if (ready) draw();
     },
     destroy() {
       if (destroyed) return;
