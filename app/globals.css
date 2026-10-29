@@ -3318,6 +3318,49 @@ a {
 .contact-form input::placeholder {
   color: var(--ink-faint);
 }
+/* móvil (revisión mobile-porter /about): objetivos de 48px y texto mínimo de 12px, sin tocar escritorio */
+@media (max-width: 1199px) {
+  .av-nav .logo,
+  .av-nav .auth-btn,
+  .av-nav .hamburger,
+  .av-mobile-panel .panel-head .btn {
+    min-height: 48px;
+  }
+  .av-nav .hamburger {
+    min-width: 48px;
+    font-size: 12px;
+  }
+  .av-nav .auth-btn,
+  .av-mobile-panel .panel-head .btn {
+    font-size: 12px;
+  }
+  .av-mobile-panel .panel-head .btn {
+    min-width: 48px;
+  }
+  .av-mobile-panel a {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    font-size: 12px;
+  }
+}
+@media (max-width: 720px) {
+  .field input {
+    height: 48px;
+  }
+  .field label,
+  .about .kicker {
+    font-size: 12px;
+  }
+  .contact-form .btn {
+    min-height: 48px;
+    font-size: 12px;
+  }
+  .contact-tips .tip,
+  .about .hl-text {
+    font-size: 12px;
+  }
+}
 .btn.press:active {
   transform: translateY(3px) scale(0.99);
   box-shadow: 0 0 6px rgba(0, 245, 255, 0.2) inset;
