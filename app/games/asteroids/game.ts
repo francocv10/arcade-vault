@@ -9,13 +9,16 @@ import {
   POWERUP_DURATION,
   PowerUp,
   Ship,
+  conBrillo,
   dist,
   rand,
   type Teclas,
 } from "./entities";
+import { PALETAS, type PaletaAsteroides } from "./paletas";
 import type {
   EstadoAsteroides,
   JuegoAsteroides,
+  SkinAsteroides,
   SnapshotAsteroides,
 } from "./types";
 const CONTROL_KEYS = new Set([
@@ -47,6 +50,8 @@ export function createAsteroidsGame(
   const justPressed: Teclas = {};
   let paused = false;
   let destroyed = false;
+  let skin: SkinAsteroides = "clasico";
+  const paleta = () => PALETAS[skin];
   function pressed(code: string) {
     const val = justPressed[code];
     justPressed[code] = false;
@@ -224,13 +229,14 @@ export function createAsteroidsGame(
     if (asteroids.length === 0) nextLevel();
   }
   // ── Draw ───────────────────────────────────────────────────────────────────
-  function drawLifeIcon(x: number, y: number) {
+  function drawLifeIcon(x: number, y: number, pal: PaletaAsteroides) {
     ctx!.save();
     ctx!.translate(x, y);
     ctx!.rotate(-Math.PI / 2);
-    ctx!.strokeStyle = "#fff";
-    ctx!.lineWidth = 1.2;
-    ctx!.lineJoin = "round";
+    ctx!.strokeStyle = pal.iconoVida;
+    ctx!.lineWidth = pal.grosorVida;
+    ctx!.lineJoin = pal.union;
+    conBrillo(ctx!, pal, pal.iconoVida);
     ctx!.beginPath();
     ctx!.moveTo(9, 0);
     ctx!.lineTo(-6, -5);
@@ -240,46 +246,60 @@ export function createAsteroidsGame(
     ctx!.stroke();
     ctx!.restore();
   }
-  function drawHUD(c: CanvasRenderingContext2D) {
-    c.fillStyle = "#fff";
-    c.font = "15px monospace";
+  function drawHUD(c: CanvasRenderingContext2D, pal: PaletaAsteroides) {
+    c.save();
+    c.fillStyle = pal.hud;
+    c.font = pal.fuenteHud;
+    conBrillo(c, pal, pal.hud);
     c.textAlign = "left";
     c.fillText(`SCORE  ${score}`, 14, 26);
     c.textAlign = "center";
     c.fillText(`NIVEL ${level}`, W / 2, 26);
-    for (let i = 0; i < lives; i++) drawLifeIcon(W - 16 - i * 22, 18);
+    c.restore();
+    for (let i = 0; i < lives; i++) drawLifeIcon(W - 16 - i * 22, 18, pal);
     if (ship.tripleShot > 0) {
+      c.save();
+      c.font = pal.fuenteHud;
       c.textAlign = "left";
-      c.fillStyle = "#0ff";
+      c.fillStyle = pal.hudExtra;
+      conBrillo(c, pal, pal.hudExtra);
       c.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
+      c.restore();
     }
   }
   function drawOverlay(
     c: CanvasRenderingContext2D,
+    pal: PaletaAsteroides,
     title: string,
     sub: string,
   ) {
+    c.save();
     c.textAlign = "center";
-    c.fillStyle = "#fff";
-    c.font = "bold 46px monospace";
+    c.fillStyle = pal.overlayTitulo;
+    c.font = pal.fuenteTitulo;
+    conBrillo(c, pal, pal.overlayTitulo);
     c.fillText(title, W / 2, H / 2 - 18);
-    c.font = "18px monospace";
-    c.fillStyle = "rgba(255,255,255,0.65)";
+    c.font = pal.fuenteSub;
+    c.fillStyle = pal.overlaySub;
+    conBrillo(c, pal, pal.overlaySub);
     c.fillText(sub, W / 2, H / 2 + 22);
+    c.restore();
   }
   function draw() {
     const c = ctx!;
-    c.fillStyle = "#000";
+    const pal = paleta();
+    c.fillStyle = pal.fondo;
     c.fillRect(0, 0, W, H);
-    particles.forEach((p) => p.draw(c));
-    asteroids.forEach((a) => a.draw(c));
-    powerUps.forEach((p) => p.draw(c));
-    bullets.forEach((b) => b.draw(c));
-    ship.draw(c);
-    drawHUD(c);
+    particles.forEach((p) => p.draw(c, pal));
+    asteroids.forEach((a) => a.draw(c, pal));
+    powerUps.forEach((p) => p.draw(c, pal));
+    bullets.forEach((b) => b.draw(c, pal));
+    ship.draw(c, pal);
+    drawHUD(c, pal);
     if (state === "gameover")
       drawOverlay(
         c,
+        pal,
         "GAME OVER",
         `PUNTAJE: ${score}   —   ESPACIO PARA REINICIAR`,
       );
@@ -321,6 +341,11 @@ export function createAsteroidsGame(
       clearInput();
       initGame();
       notify();
+      draw();
+    },
+    setSkin(nueva) {
+      if (destroyed || nueva === skin) return;
+      skin = nueva;
       draw();
     },
     destroy() {
