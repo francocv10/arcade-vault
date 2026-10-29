@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import type { SnapshotArkanoid } from "@/app/games/arkanoid/types";
+import type {
+  SkinArkanoid,
+  SnapshotArkanoid,
+} from "@/app/games/arkanoid/types";
 import type {
   SkinAsteroides,
   SnapshotAsteroides,
@@ -20,6 +23,7 @@ const LIVES = 3;
 const UNA_VIDA = 1; // Tetris y Snake
 const CLAVE_TEMA_TETRIS = "av-tetris-theme";
 const CLAVE_SKIN_ASTEROIDES = "av-asteroides-skin";
+const CLAVE_SKIN_ARKANOID = "av-arkanoid-skin";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
 export function GamePlayer({
@@ -50,6 +54,8 @@ export function GamePlayer({
   // Skin del canvas de Asteroides: arranca en clasico y se lee de localStorage tras hidratar.
   const [skinAsteroides, setSkinAsteroides] =
     useState<SkinAsteroides>("clasico");
+  // Skin del canvas de Arkanoid: misma lógica que la de Asteroides.
+  const [skinArkanoid, setSkinArkanoid] = useState<SkinArkanoid>("clasico");
   const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
@@ -116,6 +122,26 @@ export function GamePlayer({
     setSkinAsteroides(nueva);
     try {
       localStorage.setItem(CLAVE_SKIN_ASTEROIDES, nueva);
+    } catch {
+      // Sin localStorage la skin no se recuerda.
+    }
+  };
+  useEffect(() => {
+    if (!esArkanoid) return;
+    try {
+      const guardada = localStorage.getItem(CLAVE_SKIN_ARKANOID);
+      const valida = SKINS_BASE.find((s) => s === guardada);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+      if (valida) setSkinArkanoid(valida);
+    } catch {
+      // Sin localStorage el juego funciona en clasico, sin persistir.
+    }
+  }, [esArkanoid]);
+  const cambiarSkinArkanoid = () => {
+    const nueva = siguienteSkin(SKINS_BASE, skinArkanoid);
+    setSkinArkanoid(nueva);
+    try {
+      localStorage.setItem(CLAVE_SKIN_ARKANOID, nueva);
     } catch {
       // Sin localStorage la skin no se recuerda.
     }
@@ -201,6 +227,11 @@ export function GamePlayer({
               SKIN: {NOMBRES_SKIN[skinAsteroides]}
             </button>
           )}
+          {esArkanoid && (
+            <button className="btn cyan" onClick={cambiarSkinArkanoid}>
+              SKIN: {NOMBRES_SKIN[skinArkanoid]}
+            </button>
+          )}
           {esTetris && (
             <button className="btn cyan" onClick={cambiarTema}>
               TEMA
@@ -239,6 +270,7 @@ export function GamePlayer({
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+              skin={skinArkanoid}
             />
           ) : esSnake ? (
             <SnakeCanvas
