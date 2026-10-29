@@ -1593,11 +1593,11 @@ a {
     flex: 1 1 0;
   }
   .hud-stat .l {
-    font-size: 8px;
+    font-size: 12px;
     letter-spacing: 0.06em;
   }
   .hud-stat .v {
-    font-size: 11px;
+    font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1607,8 +1607,9 @@ a {
     gap: 6px;
   }
   .hud-actions .btn {
+    min-height: 48px;
     padding: 8px 10px;
-    font-size: 8px;
+    font-size: 12px;
     letter-spacing: 0.08em;
   }
   .crt {
@@ -1625,11 +1626,16 @@ a {
   .crt-bottom {
     margin-top: 8px;
     padding: 0 4px;
-    font-size: 7px;
+    font-size: 12px;
     letter-spacing: 0.1em;
   }
   .crt-bottom span:nth-child(2) {
     display: none;
+  }
+  .touch-label {
+    min-height: 12px;
+    font-size: 12px;
+    letter-spacing: 0;
   }
 }
 /* consola más ajustada en vertical estrecho: cruceta 56 + A y B 64 no caben en 343 px */
@@ -1652,6 +1658,9 @@ a {
   .touch-action,
   .touch-action .touch-btn {
     width: 60px;
+  }
+  .touch-label {
+    letter-spacing: -1px;
   }
   .touch-action .touch-btn {
     height: 60px;
@@ -1686,16 +1695,19 @@ a {
     gap: 6px;
   }
   .hud-stat .l {
-    font-size: 7px;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .hud-stat .v {
-    font-size: 10px;
+    font-size: 12px;
   }
   /* el ancho sale de la altura libre: viewport menos nav, HUD y marco (se afina al medir) */
   .crt {
     grid-area: 2 / 2;
     justify-self: center;
-    width: min(100%, calc((100svh - 150px) * 4 / 3 + 16px));
+    width: min(100%, calc((100svh - 174px) * 4 / 3 + 16px));
   }
   .crt-bottom {
     display: none;
@@ -3361,6 +3373,116 @@ a {
     font-size: 12px;
   }
 }
+/* móvil (revisión mobile-porter /home): texto de 12px, objetivos de 48px y sin desborde a 360px; escritorio sin cambios */
+@media (max-width: 1199px) {
+  .av-nav .logo-text {
+    font-size: 12px;
+  }
+  .av-mobile-panel .pixel {
+    font-size: 12px !important;
+  }
+}
+@media (max-width: 720px) {
+  .av-footer {
+    font-size: 12px !important;
+  }
+  .activity-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hero-eyebrow,
+  .hero-scroll,
+  .section-head .kicker,
+  .mini-title,
+  .mini-cat,
+  .stat-s,
+  .ac-title,
+  .tk-p,
+  .tk-s,
+  .tk-t,
+  .tp-rk,
+  .tp-p,
+  .tp-s,
+  .lb-link,
+  .empty-board .eb-title,
+  .empty-board .btn,
+  .pc-label,
+  .pc-amount-u,
+  .pc-tag,
+  .pc-foot,
+  .faq-q,
+  .av-hero .sub,
+  .av-search .ico,
+  .chip,
+  .card .cover .label,
+  .score-badge,
+  .card .btn,
+  .podium-slot .date,
+  .hall-table .tr .rk,
+  .hall-table .tr.you-label,
+  .auth-tabs button,
+  .auth-divider,
+  .auth-card .btn:not(.lg),
+  .detail-tags span,
+  .stat-strip .l,
+  .leaderboard h3,
+  .lb-row .rk {
+    font-size: 12px;
+  }
+  /* /juegos/<id>: fecha del ranking con estilo en línea */
+  .lb-row .pl > div {
+    font-size: 12px !important;
+  }
+  /* /acceso: textos con estilo en línea */
+  .auth-header .mono,
+  .auth-card > div:last-child {
+    font-size: 12px !important;
+  }
+  /* /salon: textos con estilo en línea y tabla sin desborde (2 líneas por fila, sin cabecera) */
+  .hall-head .pixel,
+  .podium-slot.gold > .pixel {
+    font-size: 12px !important;
+  }
+  .hall-table .th {
+    display: none;
+  }
+  .hall-table .tr:not(.you-label) {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas: "rk pl sc" "rk dt sc";
+    row-gap: 2px;
+  }
+  .hall-table .tr .rk {
+    grid-area: rk;
+  }
+  .hall-table .tr .pl {
+    grid-area: pl;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .hall-table .tr .sc {
+    grid-area: sc;
+  }
+  .hall-table .tr .dt {
+    grid-area: dt;
+  }
+  /* /biblioteca: buscador, chips y JUGAR de las tarjetas a 48px */
+  .av-search input,
+  .chip,
+  .card .btn,
+  .auth-tabs button,
+  .auth-card .btn {
+    min-height: 48px;
+  }
+  .ac-title {
+    white-space: normal;
+  }
+  .lb-link,
+  .empty-board .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+  }
+}
 .btn.press:active {
   transform: translateY(3px) scale(0.99);
   box-shadow: 0 0 6px rgba(0, 245, 255, 0.2) inset;
@@ -3528,5 +3650,35 @@ a {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+/* PWA (mobile-porter): safe-area con viewport-fit=cover; env() vale 0 en escritorio, así que solo suma en móviles con muescas */
+@media (max-width: 1199px) {
+  .av-nav {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .av-mobile-panel {
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .av-footer {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: max(32px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(32px, env(safe-area-inset-right, 0px)) !important;
+  }
+}
+@media (pointer: coarse) and (max-width: 720px) {
+  .av-player {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .av-player {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
 }

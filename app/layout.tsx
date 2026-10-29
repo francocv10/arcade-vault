@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
 import { AuthProvider } from "./components/auth-provider";
 import { Footer } from "./components/footer";
@@ -26,6 +26,14 @@ const courierPrime = Courier_Prime({
 export const metadata: Metadata = {
   title: "Arcade Vault",
   description: "Juega online y compite por la mayor cantidad de puntos.",
+};
+
+// Sin user-scalable=no ni bloqueo de orientación; viewportFit "cover" activa env(safe-area-inset-*).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

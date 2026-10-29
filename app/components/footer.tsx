@@ -1,6 +1,7 @@
 export function Footer() {
   return (
     <footer
+      className="av-footer"
       style={{
         borderTop: "1px solid var(--line)",
         padding: "20px 32px",
