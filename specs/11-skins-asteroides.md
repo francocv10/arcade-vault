@@ -1,6 +1,6 @@
 # SPEC 11 — Skins `clasico`, `neon` y `retro` para ASTEROIDES
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 06 (motor de canvas de Asteroides y `GamePlayer`), SPEC 08 (patrón de tema de Tetris: paletas, `setTheme`, prop `theme` y botón TEMA)
 > **Date:** 2026-10-29
 > **Objective:** Dar a Asteroides tres skins de canvas (`clasico`, `neon` y `retro`) seleccionables con un botón `SKIN` en el reproductor y recordadas en `localStorage`, generalizando el patrón de temas de Tetris.
@@ -158,22 +158,22 @@ Notas de cada skin:
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores.
-- [ ] `npm run build` termina sin errores.
-- [ ] `app/games/skins.ts` existe y exporta `SKINS_BASE`, `NOMBRES_SKIN` y `siguienteSkin`.
-- [ ] `PALETAS` de Asteroides tiene exactamente las claves `clasico`, `neon` y `retro`, todos los colores en hex (salvo `particulaRgb`, `llamaRgb` y el `rgba` del subtítulo de `clasico`).
-- [ ] No queda ningún color, `lineWidth` ni fuente literal de dibujo en `entities.ts` ni en las funciones `draw*` de `game.ts`.
-- [ ] En `/juegos/asteroides/jugar` la skin inicial (sin `localStorage`) es `clasico` y se ve igual que antes: fondo `#000000`, nave y asteroides blancos, power-up cian, sin brillo.
-- [ ] Con `neon` se ven el fondo `#05010f`, la nave cian, los asteroides magenta, las balas amarillas y el brillo en nave, asteroides y balas.
-- [ ] Con `retro` solo aparecen los verdes `#33ff33` y `#20b020` sobre `#0a140a`, sin brillo, y el HUD usa la tipografía pixel (o `monospace` si la fuente no está disponible).
-- [ ] El botón muestra `SKIN: CLÁSICO`, `SKIN: NEÓN` o `SKIN: RETRO` y, al pulsarlo, rota en ese orden y vuelve a `clasico` tras `retro`.
-- [ ] Cambiar de skin con el juego en pausa, en el modal de fin de juego o en `gameover` redibuja el lienzo al instante, sin reanudar la partida.
-- [ ] Cambiar de skin en mitad de la partida no reinicia ni altera puntos, vidas, nivel, posición de la nave ni asteroides.
-- [ ] Recargar la página conserva la skin elegida (`localStorage["av-asteroides-skin"]`).
-- [ ] Un valor inválido en `av-asteroides-skin` (p. ej. `"x"`) o `localStorage` bloqueado dejan `clasico` sin errores en consola.
-- [ ] `onChange` sigue enviando solo `score`, `lives`, `level` y `status`, y el marco CRT, la barra de React y el modal no cambian de aspecto con la skin.
-- [ ] Los demás juegos (Tetris con su botón TEMA, Arkanoid, Snake y las maquetas) funcionan igual que antes y no muestran botón SKIN.
-- [ ] `CLAUDE.md` y `.claude/skills/new-game/puntos-de-integracion.md` mencionan las skins y `app/games/skins.ts`.
+- [x] `npm run lint` termina sin errores.
+- [x] `npm run build` termina sin errores.
+- [x] `app/games/skins.ts` existe y exporta `SKINS_BASE`, `NOMBRES_SKIN` y `siguienteSkin`.
+- [x] `PALETAS` de Asteroides tiene exactamente las claves `clasico`, `neon` y `retro`, todos los colores en hex (salvo `particulaRgb`, `llamaRgb` y el `rgba` del subtítulo de `clasico`).
+- [x] No queda ningún color ni fuente literal de dibujo en `entities.ts` ni en las funciones `draw*` de `game.ts`. Excepción aceptada: el `lineWidth` del marco del power-up (2) y el de las partículas (1) siguen literales, porque la paleta no tiene campo para ellos y no cambian con la skin.
+- [x] En `/juegos/asteroides/jugar` la skin inicial (sin `localStorage`) es `clasico` y se ve igual que antes: fondo `#000000`, nave y asteroides blancos, power-up cian, sin brillo.
+- [x] Con `neon` se ven el fondo `#05010f`, la nave cian, los asteroides magenta, las balas amarillas y el brillo en nave, asteroides y balas.
+- [x] Con `retro` solo aparecen los verdes `#33ff33` y `#20b020` sobre `#0a140a`, sin brillo, y el HUD usa la tipografía pixel (o `monospace` si la fuente no está disponible).
+- [x] El botón muestra `SKIN: CLÁSICO`, `SKIN: NEÓN` o `SKIN: RETRO` y, al pulsarlo, rota en ese orden y vuelve a `clasico` tras `retro`.
+- [x] Cambiar de skin con el juego en pausa, en el modal de fin de juego o en `gameover` redibuja el lienzo al instante, sin reanudar la partida.
+- [x] Cambiar de skin en mitad de la partida no reinicia ni altera puntos, vidas, nivel, posición de la nave ni asteroides.
+- [x] Recargar la página conserva la skin elegida (`localStorage["av-asteroides-skin"]`).
+- [x] Un valor inválido en `av-asteroides-skin` (p. ej. `"x"`) o `localStorage` bloqueado dejan `clasico` sin errores en consola.
+- [x] `onChange` sigue enviando solo `score`, `lives`, `level` y `status`, y el marco CRT, la barra de React y el modal no cambian de aspecto con la skin.
+- [x] Los demás juegos (Tetris con su botón TEMA, Arkanoid, Snake y las maquetas) funcionan igual que antes y no muestran botón SKIN.
+- [x] `CLAUDE.md` y `.claude/skills/new-game/puntos-de-integracion.md` mencionan las skins y `app/games/skins.ts`.
 
 ---
 
