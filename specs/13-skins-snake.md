@@ -1,6 +1,6 @@
 # SPEC 13 — Skins `clasico`, `neon` y `retro` para SNAKE
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 10 (motor de canvas de Snake y `GamePlayer`), SPEC 11 (patrón de skins: `app/games/skins.ts`, `paletas.ts`, `setSkin`, prop `skin` y botón `SKIN`)
 > **Date:** 2026-10-29
 > **Objective:** Dar a Snake tres skins de canvas (`clasico`, `neon` y `retro`) seleccionables con un botón `SKIN` en el reproductor y recordadas en `localStorage` (`av-snake-skin`), reutilizando la base compartida y el patrón de Asteroides y resolviendo cómo se aplican `neon` y `retro` a las frutas del atlas `fruits.png`.
