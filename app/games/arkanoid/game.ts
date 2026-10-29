@@ -1,14 +1,26 @@
 // Motor de Arkanoid, portado de references/started-games/04-arkanoid/game.js.
 // Avisa a React de su estado con `onChange`, solo cuando cambia algún valor.
+import {
+  dibujarBloque,
+  dibujarExplosion,
+  dibujarPaleta,
+  dibujarPelota,
+} from "./formas";
 import { LEVELS } from "./levels";
 import type { ColorBloque } from "./levels";
+import { PALETAS, resolverFuentePixel } from "./paletas";
 import {
   EXPLOSION_DURATION,
   EXPLOSION_FRAMES,
   drawFrame,
   drawSprite,
 } from "./sprites";
-import type { EstadoArkanoid, JuegoArkanoid, SnapshotArkanoid } from "./types";
+import type {
+  EstadoArkanoid,
+  JuegoArkanoid,
+  SkinArkanoid,
+  SnapshotArkanoid,
+} from "./types";
 const SPRITESHEET_URL = "/games/arkanoid/spritesheet-breakout.png";
 const BOUNCE_SOUND_URL = "/games/arkanoid/ball-bounce.mp3";
 const BREAK_SOUND_URL = "/games/arkanoid/break-sound.mp3";
@@ -64,6 +76,9 @@ export function createArkanoidGame(
     const clon = sound.cloneNode() as HTMLAudioElement;
     clon.play().catch(() => {});
   }
+  // La fuente pixel se resuelve una sola vez, al crear el motor.
+  resolverFuentePixel();
+  const skin: SkinArkanoid = "clasico";
   // ── Estado del juego ───────────────────────────────────────────────────────
   let blocks: Bloque[] = [];
   let explosions: Explosion[] = [];
@@ -235,21 +250,32 @@ export function createArkanoidGame(
   }
   // ── Dibujo ─────────────────────────────────────────────────────────────────
   function drawOverlay(message: string) {
-    ctx!.fillStyle = "rgba(0, 0, 0, 0.6)";
+    const p = PALETAS[skin];
+    ctx!.save();
+    ctx!.fillStyle = p.overlayFondo;
     ctx!.fillRect(0, 0, canvas.width, canvas.height);
-    ctx!.fillStyle = "#fff";
-    ctx!.font = "bold 64px monospace";
+    if (p.brillo > 0) {
+      ctx!.shadowColor = p.overlayTexto;
+      ctx!.shadowBlur = p.brillo;
+    }
+    ctx!.fillStyle = p.overlayTexto;
+    ctx!.font = p.fuenteOverlay;
     ctx!.textAlign = "center";
     ctx!.textBaseline = "middle";
     // `maxWidth` evita que «¡Completaste el juego!» se recorte por los lados.
     ctx!.fillText(message, canvas.width / 2, canvas.height / 2, 760);
+    ctx!.restore();
   }
   function draw() {
     const c = ctx!;
-    c.fillStyle = "#000";
+    const p = PALETAS[skin];
+    c.fillStyle = p.fondo;
     c.fillRect(0, 0, canvas.width, canvas.height);
     for (const block of blocks) {
-      if (block.alive)
+      if (!block.alive) continue;
+      if (p.modo === "formas")
+        dibujarBloque(c, p, block.color, block.x, block.y, block.w, block.h);
+      else
         drawSprite(
           c,
           sheet,
@@ -265,31 +291,56 @@ export function createArkanoidGame(
         Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
         3,
       );
-      drawFrame(
-        c,
-        sheet,
-        EXPLOSION_FRAMES[exp.color][frameIndex],
-        exp.x,
-        exp.y,
-        exp.w,
-        exp.h,
-      );
+      if (p.modo === "formas")
+        dibujarExplosion(
+          c,
+          p,
+          exp.color,
+          frameIndex,
+          exp.x,
+          exp.y,
+          exp.w,
+          exp.h,
+        );
+      else
+        drawFrame(
+          c,
+          sheet,
+          EXPLOSION_FRAMES[exp.color][frameIndex],
+          exp.x,
+          exp.y,
+          exp.w,
+          exp.h,
+        );
     }
-    drawSprite(c, sheet, "paddle", paddle.x, paddle.y, paddle.w, paddle.h);
-    drawSprite(c, sheet, "ball", ball.x, ball.y, ball.w, ball.h);
+    if (p.modo === "formas") {
+      dibujarPaleta(c, p, paddle.x, paddle.y, paddle.w, paddle.h);
+      dibujarPelota(c, p, ball.x, ball.y, ball.w, ball.h);
+    } else {
+      drawSprite(c, sheet, "paddle", paddle.x, paddle.y, paddle.w, paddle.h);
+      drawSprite(c, sheet, "ball", ball.x, ball.y, ball.w, ball.h);
+    }
     if (gameState === "playing") {
-      c.fillStyle = "#fff";
-      c.font = "bold 18px monospace";
+      c.save();
+      if (p.brillo > 0) {
+        c.shadowColor = p.hud;
+        c.shadowBlur = p.brillo;
+      }
+      c.fillStyle = p.hud;
+      c.font = p.fuenteHud;
       c.textAlign = "left";
       c.textBaseline = "top";
       c.fillText("Score: " + score, 10, 10);
       c.textAlign = "center";
       c.fillText("Nivel: " + currentLevel, canvas.width / 2, 10);
+      c.restore();
       const ballSize = 16;
       const ballSpacing = 4;
       for (let i = 0; i < lives; i++) {
         const bx = canvas.width - 10 - (lives - i) * (ballSize + ballSpacing);
-        drawSprite(c, sheet, "ball", bx, 10, ballSize, ballSize);
+        if (p.modo === "formas")
+          dibujarPelota(c, p, bx, 10, ballSize, ballSize);
+        else drawSprite(c, sheet, "ball", bx, 10, ballSize, ballSize);
       }
     }
     if (gameState === "gameover") drawOverlay("GAME OVER");
