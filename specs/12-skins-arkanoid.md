@@ -1,6 +1,6 @@
 # SPEC 12 — Skins `clasico`, `neon` y `retro` para ARKANOID
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 09 (motor de canvas de Arkanoid y `GamePlayer`), SPEC 11 (base compartida `app/games/skins.ts` y patrón de paletas, `setSkin`, prop `skin` y botón `SKIN` de Asteroides)
 > **Date:** 2026-10-29
 > **Objective:** Dar a Arkanoid tres skins de canvas (`clasico`, `neon` y `retro`) seleccionables con un botón `SKIN` en el reproductor y recordadas en `localStorage`, resolviendo las skins no clásicas con formas vectoriales en lugar de filtrar el spritesheet.
