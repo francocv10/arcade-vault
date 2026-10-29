@@ -1,9 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import type { SnapshotArkanoid } from "@/app/games/arkanoid/types";
-import type { SnapshotAsteroides } from "@/app/games/asteroids/types";
-import type { SnapshotSnake } from "@/app/games/snake/types";
+import type {
+  SkinArkanoid,
+  SnapshotArkanoid,
+} from "@/app/games/arkanoid/types";
+import type {
+  SkinAsteroides,
+  SnapshotAsteroides,
+} from "@/app/games/asteroids/types";
+import { NOMBRES_SKIN, SKINS_BASE, siguienteSkin } from "@/app/games/skins";
+import type { SkinSnake, SnapshotSnake } from "@/app/games/snake/types";
 import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { ArkanoidCanvas } from "./arkanoid-canvas";
 import { AsteroidsCanvas } from "./asteroids-canvas";
@@ -15,6 +22,9 @@ import { useDialog } from "./use-dialog";
 const LIVES = 3;
 const UNA_VIDA = 1; // Tetris y Snake
 const CLAVE_TEMA_TETRIS = "av-tetris-theme";
+const CLAVE_SKIN_ASTEROIDES = "av-asteroides-skin";
+const CLAVE_SKIN_ARKANOID = "av-arkanoid-skin";
+const CLAVE_SKIN_SNAKE = "av-snake-skin";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
 export function GamePlayer({
@@ -42,6 +52,13 @@ export function GamePlayer({
   >(null);
   // Tema del canvas de Tetris: arranca oscuro y se lee de localStorage tras hidratar.
   const [tema, setTema] = useState<TemaTetris>("dark");
+  // Skin del canvas de Asteroides: arranca en clasico y se lee de localStorage tras hidratar.
+  const [skinAsteroides, setSkinAsteroides] =
+    useState<SkinAsteroides>("clasico");
+  // Skin del canvas de Arkanoid: misma lógica que la de Asteroides.
+  const [skinArkanoid, setSkinArkanoid] = useState<SkinArkanoid>("clasico");
+  // Skin del canvas de Snake: misma lógica que la de Asteroides y Arkanoid.
+  const [skinSnake, setSkinSnake] = useState<SkinSnake>("clasico");
   const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
@@ -89,6 +106,67 @@ export function GamePlayer({
       localStorage.setItem(CLAVE_TEMA_TETRIS, nuevo);
     } catch {
       // Sin localStorage el tema no se recuerda.
+    }
+  };
+  // Lee la skin guardada tras hidratar; con localStorage bloqueado o un valor raro queda clasico.
+  useEffect(() => {
+    if (!esAsteroides) return;
+    try {
+      const guardada = localStorage.getItem(CLAVE_SKIN_ASTEROIDES);
+      const valida = SKINS_BASE.find((s) => s === guardada);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+      if (valida) setSkinAsteroides(valida);
+    } catch {
+      // Sin localStorage el juego funciona en clasico, sin persistir.
+    }
+  }, [esAsteroides]);
+  const cambiarSkin = () => {
+    const nueva = siguienteSkin(SKINS_BASE, skinAsteroides);
+    setSkinAsteroides(nueva);
+    try {
+      localStorage.setItem(CLAVE_SKIN_ASTEROIDES, nueva);
+    } catch {
+      // Sin localStorage la skin no se recuerda.
+    }
+  };
+  useEffect(() => {
+    if (!esArkanoid) return;
+    try {
+      const guardada = localStorage.getItem(CLAVE_SKIN_ARKANOID);
+      const valida = SKINS_BASE.find((s) => s === guardada);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+      if (valida) setSkinArkanoid(valida);
+    } catch {
+      // Sin localStorage el juego funciona en clasico, sin persistir.
+    }
+  }, [esArkanoid]);
+  const cambiarSkinArkanoid = () => {
+    const nueva = siguienteSkin(SKINS_BASE, skinArkanoid);
+    setSkinArkanoid(nueva);
+    try {
+      localStorage.setItem(CLAVE_SKIN_ARKANOID, nueva);
+    } catch {
+      // Sin localStorage la skin no se recuerda.
+    }
+  };
+  useEffect(() => {
+    if (!esSnake) return;
+    try {
+      const guardada = localStorage.getItem(CLAVE_SKIN_SNAKE);
+      const valida = SKINS_BASE.find((s) => s === guardada);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+      if (valida) setSkinSnake(valida);
+    } catch {
+      // Sin localStorage el juego funciona en clasico, sin persistir.
+    }
+  }, [esSnake]);
+  const cambiarSkinSnake = () => {
+    const nueva = siguienteSkin(SKINS_BASE, skinSnake);
+    setSkinSnake(nueva);
+    try {
+      localStorage.setItem(CLAVE_SKIN_SNAKE, nueva);
+    } catch {
+      // Sin localStorage la skin no se recuerda.
     }
   };
   // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
@@ -167,6 +245,21 @@ export function GamePlayer({
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
+          {esAsteroides && (
+            <button className="btn cyan" onClick={cambiarSkin}>
+              SKIN: {NOMBRES_SKIN[skinAsteroides]}
+            </button>
+          )}
+          {esArkanoid && (
+            <button className="btn cyan" onClick={cambiarSkinArkanoid}>
+              SKIN: {NOMBRES_SKIN[skinArkanoid]}
+            </button>
+          )}
+          {esSnake && (
+            <button className="btn cyan" onClick={cambiarSkinSnake}>
+              SKIN: {NOMBRES_SKIN[skinSnake]}
+            </button>
+          )}
           {esTetris && (
             <button className="btn cyan" onClick={cambiarTema}>
               TEMA
@@ -191,6 +284,7 @@ export function GamePlayer({
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+              skin={skinAsteroides}
             />
           ) : esTetris ? (
             <TetrisCanvas
@@ -204,12 +298,14 @@ export function GamePlayer({
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+              skin={skinArkanoid}
             />
           ) : esSnake ? (
             <SnakeCanvas
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+              skin={skinSnake}
             />
           ) : (
             <div className="game-arena">

@@ -1,5 +1,6 @@
 // Entidades del juego Asteroids, portadas de references/started-games/02-asteroids/game.js.
-// No acceden a `document`: reciben el contexto de dibujo y el tamaño del lienzo.
+// No acceden a `document`: reciben el contexto de dibujo, la paleta activa y el tamaño del lienzo.
+import type { PaletaAsteroides } from "./paletas";
 export interface Tamano {
   w: number;
   h: number;
@@ -16,6 +17,16 @@ export const rand = (min: number, max: number) =>
   min + Math.random() * (max - min);
 export const randInt = (min: number, max: number) =>
   Math.floor(rand(min, max + 1));
+// Activa el brillo de la skin sobre el contexto actual (llamar dentro de save()/restore()).
+export const conBrillo = (
+  ctx: CanvasRenderingContext2D,
+  paleta: PaletaAsteroides,
+  color: string,
+) => {
+  if (paleta.brillo <= 0) return;
+  ctx.shadowBlur = paleta.brillo;
+  ctx.shadowColor = color;
+};
 // ── Constantes ───────────────────────────────────────────────────────────────
 export const POWERUP_DROP_CHANCE = 0.15;
 export const POWERUP_DURATION = 5;
@@ -46,11 +57,14 @@ export class Bullet {
     this.ttl -= dt;
     if (this.ttl <= 0) this.dead = true;
   }
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#fff";
+  draw(ctx: CanvasRenderingContext2D, paleta: PaletaAsteroides) {
+    ctx.save();
+    ctx.fillStyle = paleta.bala;
+    conBrillo(ctx, paleta, paleta.bala);
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
 }
 // ── Asteroid ─────────────────────────────────────────────────────────────────
@@ -96,13 +110,14 @@ export class Asteroid {
       new Asteroid(this.x, this.y, this.size - 1),
     ];
   }
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, paleta: PaletaAsteroides) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = "round";
+    ctx.strokeStyle = paleta.asteroide;
+    ctx.lineWidth = paleta.grosor;
+    ctx.lineJoin = paleta.union;
+    conBrillo(ctx, paleta, paleta.asteroide);
     ctx.beginPath();
     ctx.moveTo(this.verts[0][0], this.verts[0][1]);
     for (let i = 1; i < this.verts.length; i++)
@@ -135,22 +150,26 @@ export class PowerUp {
     this.ttl -= dt;
     if (this.ttl <= 0) this.dead = true;
   }
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, paleta: PaletaAsteroides) {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    ctx.strokeStyle = paleta.powerUp;
     ctx.lineWidth = 2;
+    conBrillo(ctx, paleta, paleta.powerUp);
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
-    ctx.fillStyle = "#0ff";
-    ctx.font = "bold 12px monospace";
+    ctx.save();
+    ctx.fillStyle = paleta.powerUp;
+    ctx.font = paleta.fuentePowerUp;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    conBrillo(ctx, paleta, paleta.powerUp);
     ctx.fillText("3x", this.x, this.y);
+    ctx.restore();
   }
 }
 // ── Ship ─────────────────────────────────────────────────────────────────────
@@ -215,7 +234,7 @@ export class Ship {
     }
     return [new Bullet(ox, oy, this.angle)];
   }
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, paleta: PaletaAsteroides) {
     if (this.dead) return;
     // Parpadeo durante invencibilidad de reaparición
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0)
@@ -223,9 +242,10 @@ export class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1.5;
-    ctx.lineJoin = "round";
+    ctx.strokeStyle = paleta.nave;
+    ctx.lineWidth = paleta.grosor;
+    ctx.lineJoin = paleta.union;
+    conBrillo(ctx, paleta, paleta.nave);
     // Silueta clásica: triángulo con muesca trasera
     ctx.beginPath();
     ctx.moveTo(20, 0); // nariz
@@ -240,7 +260,7 @@ export class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = `rgba(${paleta.llamaRgb}, ${paleta.llamaAlfa})`;
       ctx.stroke();
     }
     ctx.restore();
@@ -271,9 +291,9 @@ export class Particle {
     this.ttl -= dt;
     if (this.ttl <= 0) this.dead = true;
   }
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, paleta: PaletaAsteroides) {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    ctx.strokeStyle = `rgba(${paleta.particulaRgb},${alpha.toFixed(2)})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
