@@ -1279,6 +1279,11 @@ a {
   margin-bottom: 18px;
   flex-wrap: wrap;
 }
+.hud-stats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
 .hud-stat {
   display: flex;
   flex-direction: column;
@@ -1562,6 +1567,69 @@ a {
     opacity: 0.25;
     box-shadow: none;
     cursor: default;
+  }
+}
+/* reproductor compacto en móvil (spec 14): más ancho para el canvas, HUD en dos filas */
+@media (max-width: 720px) {
+  .av-player {
+    margin: 16px auto;
+    padding: 0 12px 40px;
+  }
+  .player-hud {
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .hud-stats {
+    flex-wrap: nowrap;
+    gap: 12px;
+    width: 100%;
+  }
+  .hud-stat {
+    min-width: 0;
+    gap: 3px;
+  }
+  .hud-stat:first-child {
+    flex: 1 1 0;
+  }
+  .hud-stat .l {
+    font-size: 8px;
+    letter-spacing: 0.06em;
+  }
+  .hud-stat .v {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hud-actions {
+    width: 100%;
+    gap: 6px;
+  }
+  .hud-actions .btn {
+    padding: 8px 10px;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+  .crt {
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 3px #1b1b22,
+      0 0 0 4px #2a2a35,
+      0 14px 40px -16px rgba(0, 245, 255, 0.35);
+  }
+  .crt-screen {
+    border-radius: 8px / 14px;
+  }
+  .crt-bottom {
+    margin-top: 8px;
+    padding: 0 4px;
+    font-size: 7px;
+    letter-spacing: 0.1em;
+  }
+  .crt-bottom span:nth-child(2) {
+    display: none;
   }
 }
 /* fake in-screen game */
