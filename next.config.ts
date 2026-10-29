@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     agentFeedback: true,
     agentUpgrade: "security",
   },
+  allowedDevOrigins: ['192.168.1.19'],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
