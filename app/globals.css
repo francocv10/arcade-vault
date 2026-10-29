@@ -1632,6 +1632,73 @@ a {
     display: none;
   }
 }
+/* apaisado en móvil (spec 14): HUD en una fila y cruceta | marco | A y B en la misma fila */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .av-player {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    margin: 6px auto;
+    padding: 0 12px 16px;
+  }
+  .player-hud {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+  }
+  .hud-stats {
+    flex-wrap: nowrap;
+    gap: 12px;
+    width: auto;
+    min-width: 0;
+  }
+  .hud-actions {
+    flex-wrap: nowrap;
+    width: auto;
+    gap: 6px;
+  }
+  .hud-stat .l {
+    font-size: 7px;
+  }
+  .hud-stat .v {
+    font-size: 10px;
+  }
+  /* el ancho sale de la altura libre: viewport menos nav, HUD y marco (se afina al medir) */
+  .crt {
+    grid-area: 2 / 2;
+    justify-self: center;
+    width: min(100%, calc((100svh - 150px) * 4 / 3 + 16px));
+  }
+  .crt-bottom {
+    display: none;
+  }
+  .touch-console {
+    display: contents;
+  }
+  .touch-dpad {
+    grid-area: 2 / 1;
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(3, 48px);
+  }
+  .touch-dir {
+    width: 48px;
+    height: 48px;
+  }
+  .touch-actions {
+    grid-area: 2 / 3;
+    gap: 12px;
+  }
+  .touch-action {
+    width: 56px;
+  }
+  .touch-action .touch-btn {
+    width: 56px;
+    height: 56px;
+  }
+}
 /* fake in-screen game */
 .game-arena {
   position: absolute;
