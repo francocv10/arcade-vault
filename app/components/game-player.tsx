@@ -16,6 +16,7 @@ import { ArkanoidCanvas } from "./arkanoid-canvas";
 import { AsteroidsCanvas } from "./asteroids-canvas";
 import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
+import { TouchControls } from "./touch-controls";
 import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
@@ -346,6 +347,7 @@ export function GamePlayer({
           <span>CARGA · 1MB</span>
         </div>
       </div>
+      <TouchControls gameId={gameId} />
       {gameOver && (
         <div className="modal-bd">
           <div

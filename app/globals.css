@@ -1445,6 +1445,125 @@ a {
   )::after {
   z-index: 1;
 }
+/* consola táctil (spec 14): solo con puntero grueso; emula el teclado en window */
+.touch-console {
+  display: none;
+}
+.touch-console,
+.asteroids-canvas,
+.tetris-canvas,
+.arkanoid-canvas,
+.snake-canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (pointer: coarse) {
+  .touch-console {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+  }
+  .touch-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(3, 56px);
+    gap: 4px;
+  }
+  .touch-dir-up {
+    grid-area: 1 / 2;
+  }
+  .touch-dir-left {
+    grid-area: 2 / 1;
+  }
+  .touch-dir-right {
+    grid-area: 2 / 3;
+  }
+  .touch-dir-down {
+    grid-area: 3 / 2;
+  }
+  .touch-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .touch-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 64px;
+  }
+  .touch-action:first-child {
+    margin-top: 24px;
+  }
+  .touch-label {
+    min-height: 8px;
+    font-family: var(--pixel);
+    font-size: 7px;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+    white-space: nowrap;
+  }
+  .touch-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0;
+    font-family: var(--pixel);
+    font-size: 14px;
+    color: var(--cyan);
+    background: var(--bg-3);
+    border: 2px solid var(--cyan);
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 245, 255, 0.25);
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .touch-dir {
+    width: 56px;
+    height: 56px;
+  }
+  .touch-action .touch-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    color: var(--magenta);
+    border-color: var(--magenta);
+    box-shadow: 0 0 10px rgba(255, 0, 110, 0.3);
+  }
+  .touch-btn:active {
+    background: rgba(0, 245, 255, 0.28);
+    transform: scale(0.94);
+  }
+  .touch-action .touch-btn:active {
+    background: rgba(255, 0, 110, 0.3);
+  }
+  .touch-btn:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 3px;
+  }
+  .touch-btn:disabled {
+    opacity: 0.25;
+    box-shadow: none;
+    cursor: default;
+  }
+}
 /* fake in-screen game */
 .game-arena {
   position: absolute;
