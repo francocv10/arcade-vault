@@ -1723,9 +1723,22 @@ a {
     outline-offset: 3px;
   }
   .touch-btn:disabled {
-    opacity: 0.25;
-    box-shadow: none;
+    opacity: 0.3;
     cursor: default;
+  }
+  .touch-action .touch-btn:disabled {
+    box-shadow:
+      0 6px 0 var(--gp-key-base),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+  }
+  .touch-action .touch-btn:disabled .touch-letter {
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .touch-hub-gem {
+    animation: none;
   }
 }
 /* reproductor compacto en móvil (spec 14): más ancho para el canvas, HUD en dos filas */
@@ -1865,6 +1878,10 @@ a {
   }
   .touch-console {
     display: contents;
+  }
+  .touch-console::before,
+  .touch-console::after {
+    content: none;
   }
   .touch-dpad {
     grid-area: 2 / 1;
