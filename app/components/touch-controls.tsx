@@ -13,13 +13,13 @@ const RETARDO_REPETICION_MS = 250;
 const INTERVALO_REPETICION_MS = 80;
 const DIRECCIONES: {
   dir: DireccionTactil;
-  glifo: string;
+  flecha: string;
   nombre: string;
 }[] = [
-  { dir: "up", glifo: "▲", nombre: "Arriba" },
-  { dir: "left", glifo: "◀", nombre: "Izquierda" },
-  { dir: "right", glifo: "▶", nombre: "Derecha" },
-  { dir: "down", glifo: "▼", nombre: "Abajo" },
+  { dir: "up", flecha: "M12 4 L20 16 L4 16 Z", nombre: "Arriba" },
+  { dir: "left", flecha: "M16 4 L16 20 L4 12 Z", nombre: "Izquierda" },
+  { dir: "right", flecha: "M8 4 L20 12 L8 20 Z", nombre: "Derecha" },
+  { dir: "down", flecha: "M4 8 L20 8 L12 20 Z", nombre: "Abajo" },
 ];
 interface Pulsada {
   tecla: TeclaEmulada;
@@ -76,6 +76,8 @@ function BotonTactil({
       type="button"
       className={`touch-btn ${className}`}
       aria-label={nombre}
+      title={tecla ? nombre : undefined}
+      data-code={tecla?.code}
       disabled={!tecla}
       onPointerDown={alPulsar}
       onPointerUp={alSoltar}
@@ -88,6 +90,7 @@ function BotonTactil({
 }
 function Consola({ controles }: { controles: ControlesTactiles }) {
   const pulsadas = useRef(new Map<string, Pulsada>());
+  const consola = useRef<HTMLDivElement>(null);
   const soltar = useCallback((code: string) => {
     const entrada = pulsadas.current.get(code);
     if (!entrada) return;
@@ -126,6 +129,34 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
       soltarTodas();
     };
   }, [soltar]);
+  useEffect(() => {
+    const botones = (code: string) =>
+      [
+        ...(consola.current?.querySelectorAll<HTMLButtonElement>(
+          "button[data-code]",
+        ) ?? []),
+      ].filter((b) => b.dataset.code === code);
+    const alPulsarTecla = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      for (const b of botones(e.code)) b.classList.add("on");
+    };
+    const alSoltarTecla = (e: KeyboardEvent) => {
+      for (const b of botones(e.code)) b.classList.remove("on");
+    };
+    const limpiar = () => {
+      for (const b of consola.current?.querySelectorAll(".touch-btn.on") ?? [])
+        b.classList.remove("on");
+    };
+    window.addEventListener("keydown", alPulsarTecla);
+    window.addEventListener("keyup", alSoltarTecla);
+    window.addEventListener("blur", limpiar);
+    return () => {
+      window.removeEventListener("keydown", alPulsarTecla);
+      window.removeEventListener("keyup", alSoltarTecla);
+      window.removeEventListener("blur", limpiar);
+      limpiar();
+    };
+  }, []);
   const accion = (
     letra: "A" | "B",
     boton: BotonAccion | null,
@@ -140,20 +171,21 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
         presionar={presionar}
         soltar={soltar}
       >
-        {letra}
+        <span className="touch-ring" aria-hidden="true" />
+        <span className="touch-letter">{letra}</span>
       </BotonTactil>
-      <span className="touch-label">{boton ? boton.etiqueta : ""}</span>
     </div>
   );
   return (
     <div
+      ref={consola}
       className="touch-console"
       role="group"
       aria-label="Controles táctiles"
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="touch-dpad">
-        {DIRECCIONES.map(({ dir, glifo, nombre }) => (
+        {DIRECCIONES.map(({ dir, flecha, nombre }) => (
           <BotonTactil
             key={dir}
             className={`touch-dir touch-dir-${dir}`}
@@ -165,9 +197,19 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
             presionar={presionar}
             soltar={soltar}
           >
-            <span aria-hidden="true">{glifo}</span>
+            <svg
+              className="touch-arrow"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d={flecha} fill="currentColor" />
+            </svg>
           </BotonTactil>
         ))}
+        <div className="touch-hub" aria-hidden="true">
+          <span className="touch-hub-gem" />
+        </div>
       </div>
       <div className="touch-actions">
         {accion("B", controles.b, "touch-action-b")}
