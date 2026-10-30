@@ -77,6 +77,7 @@ function BotonTactil({
       className={`touch-btn ${className}`}
       aria-label={nombre}
       title={tecla ? nombre : undefined}
+      data-code={tecla?.code}
       disabled={!tecla}
       onPointerDown={alPulsar}
       onPointerUp={alSoltar}
@@ -89,6 +90,7 @@ function BotonTactil({
 }
 function Consola({ controles }: { controles: ControlesTactiles }) {
   const pulsadas = useRef(new Map<string, Pulsada>());
+  const consola = useRef<HTMLDivElement>(null);
   const soltar = useCallback((code: string) => {
     const entrada = pulsadas.current.get(code);
     if (!entrada) return;
@@ -127,6 +129,34 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
       soltarTodas();
     };
   }, [soltar]);
+  useEffect(() => {
+    const botones = (code: string) =>
+      [
+        ...(consola.current?.querySelectorAll<HTMLButtonElement>(
+          "button[data-code]",
+        ) ?? []),
+      ].filter((b) => b.dataset.code === code);
+    const alPulsarTecla = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      for (const b of botones(e.code)) b.classList.add("on");
+    };
+    const alSoltarTecla = (e: KeyboardEvent) => {
+      for (const b of botones(e.code)) b.classList.remove("on");
+    };
+    const limpiar = () => {
+      for (const b of consola.current?.querySelectorAll(".touch-btn.on") ?? [])
+        b.classList.remove("on");
+    };
+    window.addEventListener("keydown", alPulsarTecla);
+    window.addEventListener("keyup", alSoltarTecla);
+    window.addEventListener("blur", limpiar);
+    return () => {
+      window.removeEventListener("keydown", alPulsarTecla);
+      window.removeEventListener("keyup", alSoltarTecla);
+      window.removeEventListener("blur", limpiar);
+      limpiar();
+    };
+  }, []);
   const accion = (
     letra: "A" | "B",
     boton: BotonAccion | null,
@@ -148,6 +178,7 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
   );
   return (
     <div
+      ref={consola}
       className="touch-console"
       role="group"
       aria-label="Controles táctiles"
