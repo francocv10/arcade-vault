@@ -76,6 +76,7 @@ function BotonTactil({
       type="button"
       className={`touch-btn ${className}`}
       aria-label={nombre}
+      title={tecla ? nombre : undefined}
       disabled={!tecla}
       onPointerDown={alPulsar}
       onPointerUp={alSoltar}
@@ -140,9 +141,9 @@ function Consola({ controles }: { controles: ControlesTactiles }) {
         presionar={presionar}
         soltar={soltar}
       >
-        {letra}
+        <span className="touch-ring" aria-hidden="true" />
+        <span className="touch-letter">{letra}</span>
       </BotonTactil>
-      <span className="touch-label">{boton ? boton.etiqueta : ""}</span>
     </div>
   );
   return (
