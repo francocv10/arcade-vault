@@ -1467,6 +1467,12 @@ a {
 }
 @media (pointer: coarse) {
   .touch-console {
+    --gp-shell-top: #1c1c28;
+    --gp-shell-bot: #0c0c14;
+    --gp-key-top: #1a1a25;
+    --gp-key-bot: #0a0a12;
+    --gp-key-base: #050507;
+    position: relative;
     display: grid;
     grid-template-columns: auto auto;
     align-items: center;
@@ -1474,9 +1480,44 @@ a {
     gap: 16px;
     margin-top: 16px;
     padding: 14px 18px;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 20px;
+    background: linear-gradient(
+      180deg,
+      var(--gp-shell-top) 0%,
+      var(--gp-shell-bot) 100%
+    );
+    border: 1px solid rgba(0, 245, 255, 0.18);
+    border-radius: 22px;
+    box-shadow:
+      0 30px 80px -30px rgba(0, 245, 255, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+  }
+  .touch-console::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0, 245, 255, 0.14);
+    border-radius: 18px;
+    pointer-events: none;
+  }
+  .touch-console::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    );
+    background-size: 8px 8px;
+    border-radius: inherit;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .touch-dpad,
+  .touch-actions {
+    position: relative;
+    z-index: 1;
   }
   .touch-dpad {
     display: grid;
@@ -1543,6 +1584,69 @@ a {
   .touch-dir {
     width: 56px;
     height: 56px;
+    color: var(--ink-dim);
+    background: linear-gradient(180deg, var(--gp-key-top), var(--gp-key-bot));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    box-shadow:
+      0 4px 0 var(--gp-key-base),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+    transition:
+      transform 80ms,
+      box-shadow 140ms,
+      color 140ms,
+      border-color 140ms,
+      background 140ms;
+  }
+  .touch-arrow {
+    width: 22px;
+    height: 22px;
+    transition: filter 140ms;
+  }
+  .touch-dir:not(:disabled):active,
+  .touch-dir.on:not(:disabled) {
+    transform: translateY(3px);
+    color: var(--cyan);
+    background: linear-gradient(180deg, #08161e, #030a0e);
+    border-color: var(--cyan);
+    box-shadow:
+      0 1px 0 var(--gp-key-base),
+      inset 0 0 16px rgba(0, 245, 255, 0.45),
+      0 0 16px rgba(0, 245, 255, 0.5);
+  }
+  .touch-dir:not(:disabled):active .touch-arrow,
+  .touch-dir.on:not(:disabled) .touch-arrow {
+    filter: drop-shadow(0 0 6px var(--cyan)) drop-shadow(0 0 12px var(--cyan));
+  }
+  .touch-hub {
+    grid-area: 2 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 50%, #181822 0%, #08080d 80%);
+    border: 1px solid rgba(0, 245, 255, 0.15);
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 12px rgba(0, 0, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+  }
+  .touch-hub-gem {
+    width: 12px;
+    height: 12px;
+    background: var(--cyan);
+    box-shadow:
+      0 0 10px var(--cyan),
+      inset 0 0 4px rgba(0, 0, 0, 0.5);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    animation: pulse-led 2s ease-in-out infinite;
+  }
+  @keyframes pulse-led {
+    50% {
+      opacity: 0.35;
+      transform: scale(0.85);
+    }
   }
   .touch-action .touch-btn {
     width: 64px;
