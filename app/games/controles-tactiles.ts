@@ -47,4 +47,10 @@ export const CONTROLES_TACTILES: Record<string, ControlesTactiles> = {
     b: null,
     repetir: false,
   },
+  frogger: {
+    direcciones: ["up", "down", "left", "right"],
+    a: null,
+    b: null,
+    repetir: false,
+  },
 };

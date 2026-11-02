@@ -10,10 +10,12 @@ import type {
   SnapshotAsteroides,
 } from "@/app/games/asteroids/types";
 import { NOMBRES_SKIN, SKINS_BASE, siguienteSkin } from "@/app/games/skins";
+import type { SnapshotFrogger } from "@/app/games/frogger/types";
 import type { SkinSnake, SnapshotSnake } from "@/app/games/snake/types";
 import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { ArkanoidCanvas } from "./arkanoid-canvas";
 import { AsteroidsCanvas } from "./asteroids-canvas";
+import { FroggerCanvas } from "./frogger-canvas";
 import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
 import { TouchControls } from "./touch-controls";
@@ -41,7 +43,8 @@ export function GamePlayer({
   const esArkanoid = gameId === "arkanoid";
   const esSnake = gameId === "snake";
   // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
-  const esReal = esAsteroides || esTetris || esArkanoid || esSnake;
+  const esFrogger = gameId === "frogger";
+  const esReal = esAsteroides || esTetris || esArkanoid || esSnake || esFrogger;
   const [fakeScore, setScore] = useState(0);
   // Snapshot que envía el motor de canvas (solo en los juegos reales).
   const [snap, setSnap] = useState<
@@ -49,6 +52,7 @@ export function GamePlayer({
     | SnapshotTetris
     | SnapshotArkanoid
     | SnapshotSnake
+    | SnapshotFrogger
     | null
   >(null);
   // Tema del canvas de Tetris: arranca oscuro y se lee de localStorage tras hidratar.
@@ -307,6 +311,12 @@ export function GamePlayer({
               paused={paused || gameOver}
               restartKey={restartKey}
               skin={skinSnake}
+            />
+          ) : esFrogger ? (
+            <FroggerCanvas
+              onChange={setSnap}
+              paused={paused || gameOver}
+              restartKey={restartKey}
             />
           ) : (
             <div className="game-arena">

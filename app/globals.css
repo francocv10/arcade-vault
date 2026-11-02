@@ -1096,6 +1096,43 @@ a {
     );
   filter: drop-shadow(0 0 6px rgba(255, 0, 110, 0.6));
 }
+/* Frogger: río arriba, carretera abajo y una rana verde en el centro.
+   Distinta de .cover-rana. */
+.cover-frogger {
+  background:
+    repeating-linear-gradient(
+        90deg,
+        transparent 0 18px,
+        rgba(255, 255, 255, 0.35) 18px 34px,
+        transparent 34px 52px
+      )
+      0 72% / 100% 2px no-repeat,
+    linear-gradient(180deg, #0b2a63 0 45%, #166534 45% 55%, #0f0f14 55%);
+}
+.cover-frogger::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 48px;
+  margin: -24px 0 0 -28px;
+  background:
+    radial-gradient(
+      circle at 14px 5px,
+      #000 0 2px,
+      #fff 3px 5px,
+      transparent 6px
+    ),
+    radial-gradient(
+      circle at 42px 5px,
+      #000 0 2px,
+      #fff 3px 5px,
+      transparent 6px
+    ),
+    radial-gradient(ellipse at 50% 58%, #4ade80 0 20px, transparent 21px);
+  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.7));
+}
 .cover-rana {
   background: linear-gradient(180deg, #001f2a, #0a0a18);
 }
@@ -1434,11 +1471,19 @@ a {
   width: 100%;
   height: 100%;
 }
+.frogger-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .crt-screen:has(
     .asteroids-canvas,
     .tetris-canvas,
     .arkanoid-canvas,
-    .snake-canvas
+    .snake-canvas,
+    .frogger-canvas
   )::before {
   z-index: 1;
 }
@@ -1446,7 +1491,8 @@ a {
     .asteroids-canvas,
     .tetris-canvas,
     .arkanoid-canvas,
-    .snake-canvas
+    .snake-canvas,
+    .frogger-canvas
   )::after {
   z-index: 1;
 }
@@ -1458,7 +1504,8 @@ a {
 .asteroids-canvas,
 .tetris-canvas,
 .arkanoid-canvas,
-.snake-canvas {
+.snake-canvas,
+.frogger-canvas {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;

@@ -15,6 +15,7 @@ export const JUEGOS_CON_RANKING: readonly string[] = [
   "tetris",
   "arkanoid",
   "snake",
+  "frogger",
 ];
 export type ResultadoEnvio =
   { ok: true; envio: EnvioPuntuacion } | { ok: false; error: string };

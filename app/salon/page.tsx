@@ -11,13 +11,14 @@ export default function SalonPage() {
   );
 }
 // HallOfFame es un Client Component y no puede consultar la base: los datos
-// reales de Asteroides, Tetris, Arkanoid y Snake se leen aquí y se le pasan como props.
+// reales de Asteroides, Tetris, Arkanoid, Snake y Frogger se leen aquí y se le pasan como props.
 async function SalonConDatos() {
-  const [asteroides, tetris, arkanoid, snake] = await Promise.all([
+  const [asteroides, tetris, arkanoid, snake, frogger] = await Promise.all([
     obtenerRanking("asteroides", 12),
     obtenerRanking("tetris", 12),
     obtenerRanking("arkanoid", 12),
     obtenerRanking("snake", 12),
+    obtenerRanking("frogger", 12),
   ]);
   return (
     <HallOfFame
@@ -25,6 +26,7 @@ async function SalonConDatos() {
       tetris={tetris}
       arkanoid={arkanoid}
       snake={snake}
+      frogger={frogger}
     />
   );
 }
