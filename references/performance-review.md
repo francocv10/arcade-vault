@@ -114,4 +114,30 @@ Medición tras el Paso 3 (build de producción, 10 s; el CSS compartido aún sin
 
 `clasico` y `retro` no cambian (su `brillo` es 0: el cambio no les afecta; la diferencia es ruido). `neon` mejora ~1,3 ms/fotograma en escritorio sobre las réplicas de la base (18,2 → 16,9 ms) y supera ya los 55 fps. Captura: `.playwright-screenshots/perf-paso3-desktop-neon.png` frente a `perf-base-desktop-neon.png` (visualmente equivalentes).
 
-> Pendiente: Pasos 5 y 6 (CSS compartido y medición final con la tabla antes/después en las tres skins y en móvil). El Paso 4 (tope de 60 fps) se marca «no necesario».
+## Paso 4: tope de 60 fps
+
+**No necesario.** Ninguna combinación estaba por debajo del umbral por hacer demasiados fotogramas: el coste era de capas CSS y de brillo, no de la frecuencia del bucle.
+
+## Paso 5: CSS compartido (`app/globals.css`)
+
+Aplicado, ambos cambios acotados:
+
+- **`.crt-screen::after`: quitado `mix-blend-mode: multiply`.** Las scanlines son `rgba(0, 0, 0, 0.18)`; multiplicar negro con alfa da `(1 - α) · fondo`, idéntico a la mezcla normal de negro con alfa. El resultado es el mismo píxel a píxel y el canvas deja de recomponerse con un modo de mezcla en cada fotograma. Afecta a todos los `.crt-screen`, sin cambio visual.
+- **`body:has(.av-player) .av-bg::before { animation: none }`.** La rejilla en perspectiva queda quieta solo en `/juegos/[id]/jugar`. En `/home`, `/biblioteca` y el resto sigue animada (comprobado: `animation-name` es `gridscroll` en `/home` y `/biblioteca` y `none` en las pantallas de juego; `mix-blend-mode` es `normal` en todas).
+
+No se tocó `.av-noise`, `.crt-screen::before`, las sombras `inset` ni `.av-bg::after` (sin efecto medible o menor).
+
+Medición tras el Paso 5 (build de producción, 10 s, Pasos 3 y 5 aplicados):
+
+| Dispositivo    | Skin      | fps   | ms/fotograma (media / p95) | Base (Paso 1) |
+| -------------- | --------- | ----- | -------------------------- | ------------- |
+| Escritorio     | `clasico` | 127,5 | 7,84 / 14,0                | 80,7          |
+| Escritorio     | `neon`    | 97,1  | 10,30 / 14,0               | 41,2          |
+| Escritorio     | `retro`   | 144,0 | 6,95 / 7,2                 | 92,4          |
+| Móvil (CPU 4×) | `clasico` | 92,3  | 10,83 / 20,8               | 50,9          |
+| Móvil (CPU 4×) | `neon`    | 63,0  | 15,88 / 27,9               | 32,9          |
+| Móvil (CPU 4×) | `retro`   | 77,1  | 12,97 / 21,0               | 70,0          |
+
+Capturas: `.playwright-screenshots/perf-paso5-*.png` (juego en las tres skins, `/home`, `/biblioteca` y `/juegos/tetris/jugar`). Sin errores en consola (solo el aviso de precarga de CSS).
+
+> Pendiente: Paso 6 (medición final con la misma metodología y veredicto frente a los umbrales, más `lint`/`build` y comprobar `clasico` idéntico) y Paso 7 (documentación en `CLAUDE.md`).
