@@ -183,8 +183,17 @@ export function createFroggerGame(
     tiempo = tiempoRonda(level);
     filaMaxima = ROW_START;
   }
-  // Provisional hasta el Paso 7: devuelve la rana al inicio sin quitar vidas.
+  // Resta una vida. Sin vidas termina la partida (el bucle se detiene tras dibujar
+  // el GAME OVER); con vidas la rana vuelve a la casilla de inicio.
   function killFrog() {
+    if (gameState !== "playing") return;
+    lives--;
+    if (lives <= 0) {
+      lives = 0;
+      gameState = "gameover";
+      pendingDir = null;
+      return;
+    }
     reaparecer();
   }
   // Con las 5 bocas llenas: +200, bocas vacías y siguiente nivel con carriles más rápidos.
