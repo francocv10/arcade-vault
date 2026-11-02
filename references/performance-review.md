@@ -30,4 +30,58 @@ Informe de la spec 17 (`specs/17-rendimiento-frogger.md`). Método reutilizable 
 - `clasico` es más lento que `retro` (12,4 frente a 10,8 ms), lo que apunta a trabajo común (fondo y capas CSS) más que a la skin.
 - No hay tareas largas en ningún caso: los tirones, si existen, son de ritmo de fotograma (p95) y no de bloqueos puntuales.
 
-> Pendiente: Paso 2 (aislar capas CSS y separar JS de pintado), Paso 2 bis (re-renders), y las tablas «después» de los pasos 3 a 6.
+## Paso 2: aislamiento de la causa (2026-11-02)
+
+Misma ruta y build. Se inyecta CSS con `page.addStyleTag` tras cargar (sin tocar código) y se repite la medición. El navegador de Playwright llega a ~144 fps como tope, así que 140-144 fps significa «sin cuello de botella». La variación entre réplicas es grande (la base de `clasico` salió 57, 73, 76 y 91 fps en distintas tandas), por eso se comparan órdenes de magnitud y no diferencias pequeñas.
+
+### Separación JavaScript / pintado (`neon`, escritorio, CDP `Performance.getMetrics`, 10 s)
+
+| Métrica (% del tiempo del hilo principal) | Valor  |
+| ----------------------------------------- | ------ |
+| `ScriptDuration` (JS, incluido el dibujo) | ~3 %   |
+| `TaskDuration` (todo el hilo principal)   | ~8 %   |
+| `LayoutDuration`                          | 0 %    |
+| `RecalcStyleDuration`                     | ~0,6 % |
+
+El JS del motor cuesta ~0,5 ms por fotograma y no hay layout ni recálculo de estilos apreciables. El tiempo de fotograma se va en **rasterizado y composición** (GPU/proceso de compositor), no en el hilo principal.
+
+### Capas CSS, escritorio, `clasico` (8 s)
+
+| Escenario                                                                               | fps     | ms/fotograma (media) |
+| --------------------------------------------------------------------------------------- | ------- | -------------------- |
+| Base                                                                                    | 91      | 10,99                |
+| `.av-bg::before` oculto                                                                 | 144     | 6,95                 |
+| `.av-bg::before` solo sin `animation` (`gridscroll`)                                    | 142,5   | 7,02                 |
+| `.av-bg::before` sin `mask-image`                                                       | 106     | 9,41                 |
+| `.av-bg::after` oculto (scanlines `overlay`)                                            | 109,5   | 9,13                 |
+| `.crt-screen::after` con `mix-blend-mode: normal`                                       | 112     | 8,91                 |
+| **Arreglo candidato** (sin `gridscroll` + sin `mix-blend-mode` en `.crt-screen::after`) | **143** | **6,98**             |
+
+Tanda previa (10 s, réplicas): `clasico` base 57-76 fps, sin `.av-bg` 135, sin `.crt-screen::after` 83, sin ambas 144. `neon`: base 54-57, sin `.av-bg` 73, sin `.crt-screen::after` 60, sin ambas 85. Sin `.av-noise`, sin `.crt-screen::before` y sin las sombras de `.crt-screen` no hubo diferencia fuera del ruido.
+
+### Capas CSS, móvil emulado (CPU 4×, 8 s)
+
+| Skin      | Base | Sin `gridscroll` | `.crt-screen::after` sin blend | Arreglo candidato (ambos) |
+| --------- | ---- | ---------------- | ------------------------------ | ------------------------- |
+| `clasico` | 54,9 | 69,2             | 67,1                           | **122,9**                 |
+| `neon`    | 41,9 | 52,6             | 44,5                           | **53,3**                  |
+
+### Cuellos de botella ordenados por impacto
+
+1. **`.av-bg::before` con `animation: gridscroll`.** Anima `background-position`, que no se compone en la GPU: fuerza un repintado continuo de una capa grande con `perspective`, `rotateX` y `mask-image`, y esa capa va debajo del canvas. Apagar solo la animación recupera casi todo el coste (91 → 142 fps en escritorio).
+2. **`.crt-screen::after` con `mix-blend-mode: multiply`.** El modo de mezcla obliga a recomponer el canvas con la capa de scanlines en cada fotograma (+~20 fps al quitarlo en solitario).
+3. **Brillo `shadowBlur` de `neon`.** Con todo el CSS apagado `neon` sigue en ~85 fps frente a ~140 de `clasico` en escritorio, y en móvil queda en ~53 fps frente a ~123. Es el coste propio del canvas.
+4. **`.av-bg::after` (`overlay`) y `mask-image`**: aportan algo (~+15-20 fps al quitarlos), menor que los dos primeros.
+5. **No relevantes:** `.av-noise`, `.crt-screen::before` y las sombras `inset` de `.crt-screen` (dentro del ruido). La caché del fondo del canvas y las asignaciones por fotograma de `draw.ts` ahorran como mucho una fracción de los ~0,5 ms de JS por fotograma.
+
+### Decisión sobre los pasos 3 a 5
+
+| Candidato de la spec                                 | Veredicto                                                                           |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 3.1 Caché del fondo estático (`fondoCache`)          | Dudosa: el JS del dibujo es ~0,5 ms/fotograma. A decidir con el usuario.            |
+| 3.2 Eliminar asignaciones por fotograma en `draw.ts` | Coste mínimo: cambio barato, ganancia pequeña.                                      |
+| 3.3 Reducir el coste del brillo de `neon`            | **Justificada** (~35 % del tiempo de `neon` móvil con el CSS ya arreglado).         |
+| 4. Tope de 60 fps en el bucle                        | No justificada por las cifras: ningún caso baja de umbral por exceso de fotogramas. |
+| 5. CSS compartido (`gridscroll` y `mix-blend-mode`)  | **Justificada**: es el mayor cuello de botella.                                     |
+
+> Pendiente: Paso 2 bis (recuento de renders de `GamePlayer`) y las tablas «después» de los pasos 3 a 6.
