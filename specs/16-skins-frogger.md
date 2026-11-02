@@ -1,6 +1,6 @@
 # SPEC 16 — Skins `clasico`, `neon` y `retro` para FROGGER
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** `specs/game-jam/frogger/01-juego-frogger-motor.md` (motor de canvas de Frogger y `GamePlayer`, ya implementado en `app/games/frogger/`), SPEC 11 (patrón de skins: `app/games/skins.ts`, `paletas.ts`, `setSkin`, prop `skin` y botón `SKIN`)
 > **Date:** 2026-11-02
 > **Objective:** Dar a Frogger tres skins de canvas (`clasico`, `neon` y `retro`) seleccionables con un botón `SKIN` en el reproductor y recordadas en `localStorage` (`av-frogger-skin`), reutilizando la base compartida y el patrón de Asteroides y Snake.
