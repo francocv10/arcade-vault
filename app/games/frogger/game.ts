@@ -12,9 +12,18 @@ import {
   tiempoRonda,
 } from "./board";
 import type { Direction, Frog, Lane } from "./board";
+import {
+  carrilDeLaRana,
+  checkGoal,
+  checkRoadCollision,
+  getSupport,
+} from "./collisions";
 import { dibujar } from "./draw";
-import { PERIODO, buildLanes } from "./lanes";
+import { PERIODO, buildLanes, esCarrilRio } from "./lanes";
 import type { EstadoFrogger, JuegoFrogger, SnapshotFrogger } from "./types";
+const PUNTOS_POR_FILA = 10;
+const PUNTOS_BOCA = 50;
+const PUNTOS_POR_SEGUNDO = 10; // bonus por cada segundo que sobra al llegar a una boca
 const MAX_DT = 50; // ms: un salto de tiempo no debe mover las entidades de golpe
 const CICLO_TORTUGA_MS = TURTLE_VISIBLE_MS + TURTLE_SUBMERGED_MS;
 // Las entidades viven en el circuito [-4, COLS) de PERIODO casillas.
@@ -59,6 +68,7 @@ export function createFroggerGame(
   let frog: Frog = nuevaRana();
   let ocupadas: boolean[] = [];
   let pendingDir: Direction | null = null;
+  let filaMaxima = ROW_START; // fila más alta alcanzada desde que reapareció
   let score = 0;
   let lives = LIVES_INICIALES;
   let level = 1;
@@ -85,6 +95,7 @@ export function createFroggerGame(
     frog = nuevaRana();
     ocupadas = Array<boolean>(GOAL_COUNT).fill(false);
     pendingDir = null;
+    filaMaxima = ROW_START;
     score = 0;
     lives = LIVES_INICIALES;
     level = 1;
@@ -164,19 +175,56 @@ export function createFroggerGame(
     frog.animT = 0;
     resolveLanding();
   }
-  // Se completa en el Paso 5 (puntuación, meta, vehículos y río).
-  function resolveLanding() {}
-  // Provisional hasta el Paso 7: devuelve la rana al inicio sin quitar vidas.
-  function killFrog() {
+  // Rana en la casilla de inicio, con el tiempo y el avance de la ronda a cero.
+  function reaparecer() {
     frog = nuevaRana();
     pendingDir = null;
     tiempo = tiempoRonda(level);
+    filaMaxima = ROW_START;
+  }
+  // Provisional hasta el Paso 7: devuelve la rana al inicio sin quitar vidas.
+  function killFrog() {
+    reaparecer();
+  }
+  // +50 y el bonus de tiempo al ocupar una boca. Completar la ronda llega en el Paso 6.
+  function ocuparBoca(indice: number) {
+    ocupadas[indice] = true;
+    score += PUNTOS_BOCA + Math.floor(tiempo / 1000) * PUNTOS_POR_SEGUNDO;
+    reaparecer();
+  }
+  // Se ejecuta al terminar cada salto: puntuación por avanzar y metas.
+  function resolveLanding() {
+    if (frog.row < filaMaxima) {
+      score += PUNTOS_POR_FILA * (filaMaxima - frog.row);
+      filaMaxima = frog.row;
+    }
+    const meta = checkGoal(frog, ocupadas);
+    if (!meta) return;
+    if (meta.tipo === "boca") ocuparBoca(meta.indice);
+    else killFrog();
+  }
+  // Peligros de la casilla en la que reposa la rana: vehículos, agua y bordes.
+  function comprobarPeligros(dt: number) {
+    if (checkRoadCollision(frog, lanes)) {
+      killFrog();
+      return;
+    }
+    const lane = carrilDeLaRana(frog, lanes);
+    if (!lane || !esCarrilRio(lane)) return;
+    if (!getSupport(frog, lanes)) {
+      killFrog();
+      return;
+    }
+    // El tronco o las tortugas arrastran a la rana con ellos.
+    frog.col += (lane.speed * lane.dir * dt) / 1000;
+    if (frog.col < -0.5 || frog.col > COLS - 0.5) killFrog();
   }
   function update(dt: number) {
     if (gameState !== "playing") return;
     moverEntidades(dt);
     if (!frog.animating) iniciarSalto();
     if (frog.animating) avanzarSalto(dt);
+    if (!frog.animating) comprobarPeligros(dt);
     tiempo -= dt;
     if (tiempo <= 0) killFrog();
   }
