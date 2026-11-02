@@ -177,4 +177,21 @@ El Paso 5 aportó la mayor parte de la mejora (`gridscroll` y `mix-blend-mode`);
 | 4. Tope de 60 fps                                  | No necesaria |
 | 5. CSS compartido (`gridscroll`, `mix-blend-mode`) | Aplicada     |
 
-> Pendiente: Paso 7 (documentación en `CLAUDE.md` y sección «Para las specs de los demás juegos» en este informe).
+## Para las specs de los demás juegos
+
+Método reutilizable (Asteroides, Tetris, Arkanoid, Snake):
+
+1. **Medir antes de tocar.** Build de producción (`npm run build` + `npx next start -p 3100`; si ya hay un `next dev` en el 3000 no estorba). Ruta `/juegos/<id>/jugar`, 10 s por skin o tema, escritorio 1280×800 y móvil 390×844 (`isMobile`, `hasTouch`, CPU 4× con `Emulation.setCPUThrottlingRate`). fps con un contador de `requestAnimationFrame`, ms/fotograma (media y p95) y `PerformanceObserver` de `longtask`. La skin se fija en `localStorage` (`av-<id>-skin`, o `av-tetris-theme`) y se recarga. Cada medición con una carga nueva de página.
+2. **Separar JS de pintado** con `Performance.getMetrics` por CDP (`ScriptDuration` frente a `TaskDuration`). Si el JS es una fracción pequeña, el cuello es de rasterizado o de composición.
+3. **Aislar capas CSS** inyectando `page.addStyleTag` con `display: none !important` en: `.av-bg`, `.av-bg::before` (y solo su `animation`), `.av-bg::after`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` (y solo su `mix-blend-mode`) y las sombras `inset` de `.crt-screen`. Hacer **réplicas de la base**: el ruido llega al ±15-25 %, así que solo cuentan los saltos grandes.
+4. **Orden de sospechosos, de más a menos probable** (según Frogger):
+   1. Animaciones de `background-position` o de propiedades que repintan (`gridscroll`) bajo o sobre el canvas.
+   2. `mix-blend-mode` en capas sobre el canvas (`.crt-screen::after`).
+   3. `shadowBlur` por entidad en las skins con brillo (`neon`): reducir los dibujos con sombra activa, no solo su radio.
+   4. Trabajo repetido por fotograma en el motor (fondo estático, arrays y closures en el bucle). Solo vale la pena si `ScriptDuration` es alto.
+   5. Tope de 60 fps o `devicePixelRatio`: solo si la medición lo justifica.
+5. **Cambios de CSS compartido** solo si son neutros y acotados (`body:has(.av-player)` para las pantallas de juego). Comprobar `/home`, `/biblioteca` y los otros juegos reales con capturas y el estilo calculado.
+6. **Cambiar una cosa cada vez y medir** después de cada una; dejar en el informe las cifras antes/después y marcar cada candidato como «aplicado» o «no necesario».
+7. **Re-renders:** contador temporal en `GamePlayer` (no se versiona), 10 s quieto y 10 s jugando; el resultado esperado es 0 sin actividad y renders solo por cambios del snapshot.
+
+Notas de entorno: el navegador de Playwright no está limitado a 60 Hz (llega a ~144 fps) y la CPU 4× no sustituye un teléfono real. En el resto de juegos, las mejoras de CSS ya aplicadas (`gridscroll` quieto y sin `mix-blend-mode`) valen también para ellos y se medirán con su propia spec.
