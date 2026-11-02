@@ -10,7 +10,7 @@ import type {
   SnapshotAsteroides,
 } from "@/app/games/asteroids/types";
 import { NOMBRES_SKIN, SKINS_BASE, siguienteSkin } from "@/app/games/skins";
-import type { SnapshotFrogger } from "@/app/games/frogger/types";
+import type { SkinFrogger, SnapshotFrogger } from "@/app/games/frogger/types";
 import type { SkinSnake, SnapshotSnake } from "@/app/games/snake/types";
 import type { SnapshotTetris, TemaTetris } from "@/app/games/tetris/types";
 import { ArkanoidCanvas } from "./arkanoid-canvas";
@@ -28,6 +28,7 @@ const CLAVE_TEMA_TETRIS = "av-tetris-theme";
 const CLAVE_SKIN_ASTEROIDES = "av-asteroides-skin";
 const CLAVE_SKIN_ARKANOID = "av-arkanoid-skin";
 const CLAVE_SKIN_SNAKE = "av-snake-skin";
+const CLAVE_SKIN_FROGGER = "av-frogger-skin";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Revisa tu conexión e inténtalo de nuevo.";
 export function GamePlayer({
@@ -64,6 +65,8 @@ export function GamePlayer({
   const [skinArkanoid, setSkinArkanoid] = useState<SkinArkanoid>("clasico");
   // Skin del canvas de Snake: misma lógica que la de Asteroides y Arkanoid.
   const [skinSnake, setSkinSnake] = useState<SkinSnake>("clasico");
+  // Skin del canvas de Frogger: misma lógica que la de Snake.
+  const [skinFrogger, setSkinFrogger] = useState<SkinFrogger>("clasico");
   const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
@@ -174,6 +177,26 @@ export function GamePlayer({
       // Sin localStorage la skin no se recuerda.
     }
   };
+  useEffect(() => {
+    if (!esFrogger) return;
+    try {
+      const guardada = localStorage.getItem(CLAVE_SKIN_FROGGER);
+      const valida = SKINS_BASE.find((s) => s === guardada);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
+      if (valida) setSkinFrogger(valida);
+    } catch {
+      // Sin localStorage el juego funciona en clasico, sin persistir.
+    }
+  }, [esFrogger]);
+  const cambiarSkinFrogger = () => {
+    const nueva = siguienteSkin(SKINS_BASE, skinFrogger);
+    setSkinFrogger(nueva);
+    try {
+      localStorage.setItem(CLAVE_SKIN_FROGGER, nueva);
+    } catch {
+      // Sin localStorage la skin no se recuerda.
+    }
+  };
   // Al guardar desaparece el campo (que tenía el foco): el foco pasa a la acción siguiente.
   useEffect(() => {
     if (saved) restartRef.current?.focus();
@@ -265,6 +288,11 @@ export function GamePlayer({
               SKIN: {NOMBRES_SKIN[skinSnake]}
             </button>
           )}
+          {esFrogger && (
+            <button className="btn cyan" onClick={cambiarSkinFrogger}>
+              SKIN: {NOMBRES_SKIN[skinFrogger]}
+            </button>
+          )}
           {esTetris && (
             <button className="btn cyan" onClick={cambiarTema}>
               TEMA
@@ -317,6 +345,7 @@ export function GamePlayer({
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
+              skin={skinFrogger}
             />
           ) : (
             <div className="game-arena">
