@@ -24,6 +24,14 @@ export const START_COL = COLS / 2;
 export const GOAL_COUNT = 5;
 export const GOAL_WIDTH = 2;
 export const LIVES_INICIALES = 3;
+// Columna izquierda de cada boca de meta (cada una ocupa GOAL_WIDTH columnas).
+export const GOAL_COLS = [1, 4, 7, 10, 13];
+export const TIEMPO_RONDA_MS = 15000;
+export const TIEMPO_RONDA_MIN_MS = 8000;
+// 15 s en el nivel 1, un segundo menos por nivel hasta un mínimo de 8 s.
+export function tiempoRonda(level: number): number {
+  return Math.max(TIEMPO_RONDA_MIN_MS, TIEMPO_RONDA_MS - (level - 1) * 1000);
+}
 export const JUMP_MS = 120;
 // Ciclo de inmersión de las tortugas: visibles 3 s y bajo el agua 1,5 s.
 export const TURTLE_VISIBLE_MS = 3000;
