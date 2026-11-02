@@ -25,6 +25,9 @@ export const GOAL_COUNT = 5;
 export const GOAL_WIDTH = 2;
 export const LIVES_INICIALES = 3;
 export const JUMP_MS = 120;
+// Ciclo de inmersión de las tortugas: visibles 3 s y bajo el agua 1,5 s.
+export const TURTLE_VISIBLE_MS = 3000;
+export const TURTLE_SUBMERGED_MS = 1500;
 export type Direction = "up" | "down" | "left" | "right";
 export type EntityType = "car" | "truck" | "log" | "turtle";
 export interface Entity {
@@ -32,6 +35,8 @@ export interface Entity {
   width: number;
   type: EntityType;
   submerged?: boolean;
+  // Solo tortugas: milisegundos dentro de su ciclo de inmersión (cada grupo tiene el suyo).
+  fase?: number;
 }
 export interface Lane {
   row: number;
