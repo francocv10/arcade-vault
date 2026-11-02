@@ -140,4 +140,41 @@ Medición tras el Paso 5 (build de producción, 10 s, Pasos 3 y 5 aplicados):
 
 Capturas: `.playwright-screenshots/perf-paso5-*.png` (juego en las tres skins, `/home`, `/biblioteca` y `/juegos/tetris/jugar`). Sin errores en consola (solo el aviso de precarga de CSS).
 
-> Pendiente: Paso 6 (medición final con la misma metodología y veredicto frente a los umbrales, más `lint`/`build` y comprobar `clasico` idéntico) y Paso 7 (documentación en `CLAUDE.md`).
+## Paso 6: medición final (2026-11-02)
+
+Misma metodología que la base (build de producción, 10 s tras 2-2,5 s de espera, mismos viewports y CPU 4× en móvil). `npm run lint` y `npm run build` terminan sin errores. Cambios totales respecto a `main`: `app/games/frogger/draw.ts` y `app/globals.css`.
+
+### Antes / después
+
+| Dispositivo    | Skin      | Base fps | **Final fps** | Base ms (media / p95) | **Final ms (media / p95)** | Umbral | Veredicto |
+| -------------- | --------- | -------- | ------------- | --------------------- | -------------------------- | ------ | --------- |
+| Escritorio     | `clasico` | 80,7     | **144,0**     | 12,39 / 20,8          | **6,95 / 7,1**             | ≥ 55   | Cumple    |
+| Escritorio     | `neon`    | 41,2     | **102,8**     | 24,25 / 28,9          | **9,73 / 13,9**            | ≥ 55   | Cumple    |
+| Escritorio     | `retro`   | 92,4     | **144,0**     | 10,82 / 14,1          | **6,95 / 7,2**             | ≥ 55   | Cumple    |
+| Móvil (CPU 4×) | `clasico` | 50,9     | **74,8**      | 19,66 / 28,2          | **13,37 / 27,6**           | ≥ 30   | Cumple    |
+| Móvil (CPU 4×) | `neon`    | 32,9     | **59,4**      | 30,40 / 41,7          | **16,84 / 27,8**           | ≥ 30   | Cumple    |
+| Móvil (CPU 4×) | `retro`   | 70,0     | **95,9**      | 14,29 / 27,7          | **10,43 / 20,9**           | ≥ 30   | Cumple    |
+
+Tareas largas: 0 en las seis combinaciones. El tiempo de fotograma medio mejora en todas. 144 fps es el tope del navegador de Playwright, no un límite del juego. En móvil el p95 de `clasico` casi no cambia (28,2 → 27,6 ms) porque el p95 de un contexto con CPU 4× está dominado por la cadencia de 60 Hz del compositor; la media sí baja 6 ms.
+
+El Paso 5 aportó la mayor parte de la mejora (`gridscroll` y `mix-blend-mode`); el Paso 3 aportó ~1,3 ms/fotograma en `neon`. Entre la medición del Paso 5 y esta hubo variación de hasta ±15 % por ruido del navegador (p. ej. `clasico` móvil 92,3 frente a 74,8): las conclusiones se apoyan en el orden de magnitud, no en diferencias pequeñas.
+
+### Comprobaciones de aceptación
+
+- **`clasico` idéntico:** en el canvas aparecen exactamente `#0b2a63` (río), `#166534` (zonas seguras), `#0f0f14` (carretera) y `#4ade80` (rana), sin brillo. `neon` conserva `#ff006e` y `#00ff88` y el brillo sigue visible en la captura (`perf-final-desktop-neon.png` frente a `perf-base-desktop-neon.png`).
+- **Cambio de skin:** con la partida en marcha, en pausa y en `gameover` (con el modal abierto), el lienzo se redibuja al instante con los colores de la skin nueva y el HUD (puntos, vidas, nivel) queda igual. No hay caché de fondo que regenerar porque no se aplicó (3.1 «no necesaria»).
+- **Jugabilidad y fugas:** `game.ts`, `frogger-canvas.tsx` y `game-player.tsx` no cambiaron respecto a `main` (solo `draw.ts` y `globals.css`), así que saltos, colisiones, arrastre, puntuación, tiempos y `destroy()` siguen siendo los mismos.
+- **Re-renders:** `GamePlayer` no cambió; el recuento del Paso 2 bis (0 renders quieto, solo por cambios de `score`/`lives`/`status` jugando) sigue valiendo. Sin `useState` nuevo.
+- **CSS compartido:** `/home`, `/biblioteca` y `/juegos/tetris/jugar` se ven iguales; la animación `gridscroll` solo se detiene en `/juegos/*/jugar`.
+
+### Estado de las optimizaciones candidatas
+
+| Candidato                                          | Estado       |
+| -------------------------------------------------- | ------------ |
+| 3.1 Caché del fondo estático (`fondoCache`)        | No necesaria |
+| 3.2 Asignaciones por fotograma en `draw.ts`        | Aplicada     |
+| 3.3 Coste del brillo de `neon`                     | Aplicada     |
+| 4. Tope de 60 fps                                  | No necesaria |
+| 5. CSS compartido (`gridscroll`, `mix-blend-mode`) | Aplicada     |
+
+> Pendiente: Paso 7 (documentación en `CLAUDE.md` y sección «Para las specs de los demás juegos» en este informe).
