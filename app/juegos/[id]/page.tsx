@@ -95,7 +95,8 @@ async function GameDetail({
           {game.id === "asteroides" ||
           game.id === "tetris" ||
           game.id === "arkanoid" ||
-          game.id === "snake" ? (
+          game.id === "snake" ||
+          game.id === "frogger" ? (
             <Suspense
               fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
             >

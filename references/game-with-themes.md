@@ -10,3 +10,4 @@ Estados: `Sin skins` · `Incompleto` · `Spec escrita` (spec en Borrador/Aprobad
 | Tetris     | `tetris`     | dark (= clasico), light | neon, retro | Incompleto | —                              | 2026-10-29  |
 | Arkanoid   | `arkanoid`   | clasico, neon, retro    | —           | Completo   | `specs/12-skins-arkanoid.md`   | 2026-10-29  |
 | Snake      | `snake`      | clasico, neon, retro    | —           | Completo   | `specs/13-skins-snake.md`      | 2026-10-29  |
+| Frogger    | `frogger`    | —                       | clasico, neon, retro | Spec escrita | `specs/16-skins-frogger.md`    | 2026-11-02  |
