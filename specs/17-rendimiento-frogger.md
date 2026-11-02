@@ -1,6 +1,6 @@
 # SPEC 17 — Rendimiento de FROGGER (medir primero, optimizar después)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** `specs/game-jam/frogger/01-juego-frogger-motor.md` (motor de Frogger), SPEC 16 (skins y brillo `shadowBlur` de `neon`), SPEC 14 (consola táctil y compactación móvil)
 > **Date:** 2026-11-02
 > **Objective:** Medir con Playwright por qué Frogger baja de fotogramas (escritorio y móvil, en sus tres skins) y corregir los cuellos de botella confirmados hasta alcanzar ≥ 55 fps medios en escritorio y ≥ 30 fps en móvil emulado, sin cambiar su aspecto ni su jugabilidad.
