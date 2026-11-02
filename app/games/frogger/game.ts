@@ -20,7 +20,13 @@ import {
 } from "./collisions";
 import { dibujar } from "./draw";
 import { PERIODO, buildLanes, esCarrilRio } from "./lanes";
-import type { EstadoFrogger, JuegoFrogger, SnapshotFrogger } from "./types";
+import { PALETAS } from "./paletas";
+import type {
+  EstadoFrogger,
+  JuegoFrogger,
+  SkinFrogger,
+  SnapshotFrogger,
+} from "./types";
 const PUNTOS_POR_FILA = 10;
 const PUNTOS_BOCA = 50;
 const PUNTOS_RONDA = 200;
@@ -77,6 +83,7 @@ export function createFroggerGame(
   let gameState: EstadoFrogger = "playing";
   let paused = false;
   let destroyed = false;
+  let skin: SkinFrogger = "clasico";
   let last: SnapshotFrogger | null = null;
   function notify() {
     if (destroyed) return;
@@ -249,17 +256,21 @@ export function createFroggerGame(
   }
   // ── Dibujo ─────────────────────────────────────────────────────────────────
   function draw() {
-    dibujar(ctx!, {
-      lanes,
-      frog,
-      ocupadas,
-      score,
-      level,
-      lives,
-      tiempo,
-      tiempoMax: tiempoRonda(level),
-      status: gameState,
-    });
+    dibujar(
+      ctx!,
+      {
+        lanes,
+        frog,
+        ocupadas,
+        score,
+        level,
+        lives,
+        tiempo,
+        tiempoMax: tiempoRonda(level),
+        status: gameState,
+      },
+      PALETAS[skin],
+    );
   }
   // ── Bucle principal ────────────────────────────────────────────────────────
   let lastTime: number | null = null;
@@ -309,6 +320,12 @@ export function createFroggerGame(
       notify();
       draw();
       startLoop();
+    },
+    setSkin(nueva) {
+      if (destroyed || nueva === skin) return;
+      skin = nueva;
+      // Con el bucle corriendo, el siguiente fotograma ya usa la skin nueva.
+      if (rafId === null) draw();
     },
     destroy() {
       if (destroyed) return;

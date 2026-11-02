@@ -5,9 +5,11 @@ export interface SnapshotFrogger {
   level: number; // >= 1
   status: EstadoFrogger;
 }
+export type SkinFrogger = "clasico" | "neon" | "retro";
 export interface JuegoFrogger {
   pause(): void;
   resume(): void;
   restart(): void;
+  setSkin(skin: SkinFrogger): void; // no-op si es la misma o tras destroy(); redibuja si el bucle está parado
   destroy(): void;
 }
