@@ -84,4 +84,34 @@ Tanda previa (10 s, réplicas): `clasico` base 57-76 fps, sin `.av-bg` 135, sin 
 | 4. Tope de 60 fps en el bucle                        | No justificada por las cifras: ningún caso baja de umbral por exceso de fotogramas. |
 | 5. CSS compartido (`gridscroll` y `mix-blend-mode`)  | **Justificada**: es el mayor cuello de botella.                                     |
 
-> Pendiente: Paso 2 bis (recuento de renders de `GamePlayer`) y las tablas «después» de los pasos 3 a 6.
+## Paso 2 bis: renders de `GamePlayer` (antes de cambiar nada)
+
+Contador temporal en el cuerpo de `GamePlayer` (ya retirado, no se versiona), build de producción, escritorio.
+
+| Situación (10 s)                                                    | Renders                                                |
+| ------------------------------------------------------------------- | ------------------------------------------------------ |
+| Partida quieta, sin pulsar nada                                     | **0**                                                  |
+| Partida con 3 saltos de la rana (`score` 0→30 y la partida terminó) | 5 (todos por un cambio de `score`, `lives` o `status`) |
+
+Ningún render es por fotograma: `onChange` solo notifica cuando cambia el snapshot. Los `useState` de `GamePlayer` (`snap`, `paused`, `over`, `saved`, `saving`, `errorGuardado`, `editedName`, `restartKey`, `tema` y las skins) se leen en el JSX, así que se quedan como estado: pasarlos a `useRef` dejaría el HUD, el modal o los botones desactualizados. **Ninguna conversión a `useRef` es necesaria** y no se añadió ningún `useState` nuevo.
+
+## Paso 3: dibujo de Frogger (`app/games/frogger/draw.ts`)
+
+Aplicado (el JS del dibujo es ~0,5 ms/fotograma, así que el objetivo es el coste de rasterizado):
+
+- **Brillo de `neon` (3.3):** el `shadowBlur` ya no se aplica a los detalles. Se apaga tras el cuerpo de coches y camiones (ruedas, cristales), troncos (vetas), tortugas (dibujo interior) y rana (ojos). El cuerpo conserva el brillo. Antes cada coche, camión y tronco hacía de 6 a 10 dibujos con desenfoque.
+- **Asignaciones por fotograma (3.2):** el array `zonas` y las listas de `setLineDash` pasan a constantes de módulo.
+- **Caché del fondo (3.1):** **no necesaria** por ahora (JS del dibujo ~0,5 ms/fotograma; se reevalúa tras el CSS).
+
+Medición tras el Paso 3 (build de producción, 10 s; el CSS compartido aún sin cambiar):
+
+| Dispositivo    | Skin      | fps  | ms/fotograma (media / p95) | Base (Paso 1)         |
+| -------------- | --------- | ---- | -------------------------- | --------------------- |
+| Escritorio     | `clasico` | 79,0 | 12,66 / 20,8               | 80,7                  |
+| Escritorio     | `neon`    | 59,3 | 16,87 / 21,0               | 41,2 (réplicas 54-57) |
+| Escritorio     | `retro`   | 87,5 | 11,43 / 14,1               | 92,4                  |
+| Móvil (CPU 4×) | `neon`    | 38,3 | 26,10 / 41,7               | 32,9 (réplica 41,9)   |
+
+`clasico` y `retro` no cambian (su `brillo` es 0: el cambio no les afecta; la diferencia es ruido). `neon` mejora ~1,3 ms/fotograma en escritorio sobre las réplicas de la base (18,2 → 16,9 ms) y supera ya los 55 fps. Captura: `.playwright-screenshots/perf-paso3-desktop-neon.png` frente a `perf-base-desktop-neon.png` (visualmente equivalentes).
+
+> Pendiente: Pasos 5 y 6 (CSS compartido y medición final con la tabla antes/después en las tres skins y en móvil). El Paso 4 (tope de 60 fps) se marca «no necesario».

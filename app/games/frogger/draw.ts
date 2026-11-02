@@ -41,20 +41,33 @@ function brillar(c: CanvasRenderingContext2D, p: PaletaFrogger, color: string) {
   c.shadowBlur = p.brillo;
   c.shadowColor = color;
 }
+// Apaga el brillo tras pintar el cuerpo: los detalles (cristales, ruedas, vetas) no
+// necesitan su propia sombra y cada dibujo con `shadowBlur` activo cuesta un desenfoque.
+function sinBrillo(c: CanvasRenderingContext2D) {
+  c.shadowBlur = 0;
+}
 const px = (col: number) => GRID_X + col * CELL;
 const py = (row: number) => GRID_Y + row * CELL;
+// Zonas del tablero (filas y clave de color en la paleta); constante para no crear
+// el array en cada fotograma.
+const ZONAS: readonly (readonly [
+  number,
+  number,
+  "meta" | "rio" | "segura" | "carretera",
+])[] = [
+  [ROW_GOALS, ROW_GOALS, "meta"],
+  [ROW_RIVER_TOP, ROW_RIVER_BOT, "rio"],
+  [ROW_SAFE_MID, ROW_SAFE_MID, "segura"],
+  [ROW_ROAD_TOP, ROW_ROAD_BOT, "carretera"],
+  [ROW_START, ROW_START, "segura"],
+];
+const LINEA_DISCONTINUA = [16, 14];
+const SIN_DASH: number[] = [];
 function drawFondo(c: CanvasRenderingContext2D, p: PaletaFrogger) {
   c.fillStyle = p.fondo;
   c.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  const zonas: [number, number, string][] = [
-    [ROW_GOALS, ROW_GOALS, p.meta],
-    [ROW_RIVER_TOP, ROW_RIVER_BOT, p.rio],
-    [ROW_SAFE_MID, ROW_SAFE_MID, p.segura],
-    [ROW_ROAD_TOP, ROW_ROAD_BOT, p.carretera],
-    [ROW_START, ROW_START, p.segura],
-  ];
-  for (const [desde, hasta, color] of zonas) {
-    c.fillStyle = color;
+  for (const [desde, hasta, color] of ZONAS) {
+    c.fillStyle = p[color];
     c.fillRect(GRID_X, py(desde), GRID_W, (hasta - desde + 1) * CELL);
   }
   // Ondas del río.
@@ -74,14 +87,14 @@ function drawFondo(c: CanvasRenderingContext2D, p: PaletaFrogger) {
   // Líneas discontinuas entre carriles de carretera.
   c.strokeStyle = p.linea;
   c.lineWidth = 2;
-  c.setLineDash([16, 14]);
+  c.setLineDash(LINEA_DISCONTINUA);
   for (let row = ROW_ROAD_TOP + 1; row <= ROW_ROAD_BOT; row++) {
     c.beginPath();
     c.moveTo(GRID_X, py(row));
     c.lineTo(GRID_X + GRID_W, py(row));
     c.stroke();
   }
-  c.setLineDash([]);
+  c.setLineDash(SIN_DASH);
 }
 function drawBocas(
   c: CanvasRenderingContext2D,
@@ -116,6 +129,7 @@ function drawCoche(
   brillar(c, p, color);
   c.fillStyle = color;
   c.fillRect(x + 3, y + 7, w - 6, CELL - 14);
+  sinBrillo(c);
   // Parabrisas en el lado hacia el que avanza.
   c.fillStyle = p.cristal;
   const cristalX = dir === 1 ? x + w - 14 : x + 6;
@@ -147,6 +161,7 @@ function drawCamion(
   c.fillRect(cargaX, y + 6, w - cabina - 2, CELL - 12);
   c.fillStyle = p.camionCabina;
   c.fillRect(cabinaX, y + 8, cabina - 2, CELL - 16);
+  sinBrillo(c);
   c.fillStyle = p.cristal;
   c.fillRect(
     dir === 1 ? cabinaX + cabina - 10 : cabinaX + 2,
@@ -177,6 +192,7 @@ function drawTronco(
   c.beginPath();
   c.roundRect(x + 2, y + 6, w - 4, CELL - 12, 8);
   c.fill();
+  sinBrillo(c);
   c.strokeStyle = p.troncoVeta;
   c.lineWidth = 2;
   for (let lx = x + 14; lx < x + w - 8; lx += 18) {
@@ -199,8 +215,8 @@ function drawTortugas(
   const aviso = !hundida && (e.fase ?? 0) >= TURTLE_VISIBLE_MS - 600;
   c.save();
   c.globalAlpha = hundida ? 0.35 : aviso ? 0.65 : 1;
-  brillar(c, p, p.tortuga);
   for (let i = 0; i < e.width; i++) {
+    brillar(c, p, p.tortuga);
     const cx = x + i * CELL + CELL / 2;
     const cy = y + CELL / 2;
     c.beginPath();
@@ -213,6 +229,7 @@ function drawTortugas(
     }
     c.fillStyle = p.tortuga;
     c.fill();
+    sinBrillo(c);
     c.strokeStyle = p.tortugaOscura;
     c.lineWidth = 2;
     c.beginPath();
@@ -260,7 +277,6 @@ function drawRana(
   escala = 1,
 ) {
   c.save();
-  brillar(c, p, p.rana);
   c.translate(x, y);
   c.scale(escala, escala);
   c.fillStyle = p.ranaOscura;
@@ -269,10 +285,12 @@ function drawRana(
     c.fillRect(lado * patas - 4, -11, 8, 6);
     c.fillRect(lado * patas - 4, 5, 8, 6);
   }
+  brillar(c, p, p.rana);
   c.fillStyle = p.rana;
   c.beginPath();
   c.ellipse(0, 0, 14, 12, 0, 0, Math.PI * 2);
   c.fill();
+  sinBrillo(c);
   for (const lado of [-1, 1]) {
     c.fillStyle = p.ojoBlanco;
     c.beginPath();
