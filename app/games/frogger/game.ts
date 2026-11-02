@@ -23,6 +23,7 @@ import { PERIODO, buildLanes, esCarrilRio } from "./lanes";
 import type { EstadoFrogger, JuegoFrogger, SnapshotFrogger } from "./types";
 const PUNTOS_POR_FILA = 10;
 const PUNTOS_BOCA = 50;
+const PUNTOS_RONDA = 200;
 const PUNTOS_POR_SEGUNDO = 10; // bonus por cada segundo que sobra al llegar a una boca
 const MAX_DT = 50; // ms: un salto de tiempo no debe mover las entidades de golpe
 const CICLO_TORTUGA_MS = TURTLE_VISIBLE_MS + TURTLE_SUBMERGED_MS;
@@ -186,11 +187,20 @@ export function createFroggerGame(
   function killFrog() {
     reaparecer();
   }
-  // +50 y el bonus de tiempo al ocupar una boca. Completar la ronda llega en el Paso 6.
+  // Con las 5 bocas llenas: +200, bocas vacías y siguiente nivel con carriles más rápidos.
+  function completeRound() {
+    score += PUNTOS_RONDA;
+    level++;
+    ocupadas = Array<boolean>(GOAL_COUNT).fill(false);
+    lanes = buildLanes(level);
+    reaparecer();
+  }
+  // +50 y el bonus de tiempo al ocupar una boca.
   function ocuparBoca(indice: number) {
     ocupadas[indice] = true;
     score += PUNTOS_BOCA + Math.floor(tiempo / 1000) * PUNTOS_POR_SEGUNDO;
-    reaparecer();
+    if (ocupadas.every(Boolean)) completeRound();
+    else reaparecer();
   }
   // Se ejecuta al terminar cada salto: puntuación por avanzar y metas.
   function resolveLanding() {
