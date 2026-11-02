@@ -122,7 +122,7 @@ Medición tras el Paso 3 (build de producción, 10 s; el CSS compartido aún sin
 
 Aplicado, ambos cambios acotados:
 
-- **`.crt-screen::after`: quitado `mix-blend-mode: multiply`.** Las scanlines son `rgba(0, 0, 0, 0.18)`; multiplicar negro con alfa da `(1 - α) · fondo`, idéntico a la mezcla normal de negro con alfa. El resultado es el mismo píxel a píxel y el canvas deja de recomponerse con un modo de mezcla en cada fotograma. Afecta a todos los `.crt-screen`, sin cambio visual.
+- **`.crt-screen::after`: quitado `mix-blend-mode: multiply`.** Las scanlines son `rgba(0, 0, 0, 0.18)`; multiplicar negro con alfa da `(1 - α) · fondo`, idéntico a la mezcla normal de negro con alfa. El resultado es el mismo salvo redondeo (ver «Verificación de criterios»: ±1 nivel de 255, máximo 2) y el canvas deja de recomponerse con un modo de mezcla en cada fotograma. Afecta a todos los `.crt-screen`, sin cambio visual.
 - **`body:has(.av-player) .av-bg::before { animation: none }`.** La rejilla en perspectiva queda quieta solo en `/juegos/[id]/jugar`. En `/home`, `/biblioteca` y el resto sigue animada (comprobado: `animation-name` es `gridscroll` en `/home` y `/biblioteca` y `none` en las pantallas de juego; `mix-blend-mode` es `normal` en todas).
 
 No se tocó `.av-noise`, `.crt-screen::before`, las sombras `inset` ni `.av-bg::after` (sin efecto medible o menor).
@@ -176,6 +176,17 @@ El Paso 5 aportó la mayor parte de la mejora (`gridscroll` y `mix-blend-mode`);
 | 3.3 Coste del brillo de `neon`                     | Aplicada     |
 | 4. Tope de 60 fps                                  | No necesaria |
 | 5. CSS compartido (`gridscroll`, `mix-blend-mode`) | Aplicada     |
+
+## Verificación de criterios pendientes (2026-11-02)
+
+Build de producción, escritorio 1280×800.
+
+- **Sin `mix-blend-mode`, mismo aspecto:** captura de `.crt-screen` (juego en pausa) con el CSS actual frente a la misma con `mix-blend-mode: multiply` inyectado, en Tetris, Frogger y Arkanoid. Los PNG no coinciden byte a byte: difieren en un 3-26 % de los píxeles por **±1 nivel de 255 (máximo 2)**, es decir, redondeo de la mezcla e imperceptible. La captura repetida dos veces sin cambios sí es idéntica, así que la diferencia es real pero mínima.
+- **Otras rutas y errores de consola:** `/juegos/{frogger,asteroides,tetris,arkanoid,snake}/jugar`, `/home`, `/biblioteca`, `/salon` y `/about` cargan sin errores de consola ni de página. `gridscroll` está en `none` en las cinco pantallas de juego y sigue activo (`gridscroll`) en las otras cuatro rutas.
+- **`destroy()` sin fugas:** con `addEventListener`/`removeEventListener` y `CanvasRenderingContext2D.fillRect` instrumentados: en `/home` hay 0 escuchas de teclado; en el juego, 4 (motor y consola táctil, `keydown` y `keyup`); al salir a `/home` por navegación del cliente vuelven a **0** y las llamadas de dibujo caen a **0** por segundo (antes ~6.700).
+- **Reinicio sin duplicados:** tras 3 reinicios con «JUGAR DE NUEVO» siguen 4 escuchas y la tasa de dibujo es la misma (13.340 → 13.432 llamadas/s), y el HUD vuelve a 0 puntos, 3 vidas y nivel 1.
+- **Re-renders tras los cambios:** 0 renders de `GamePlayer` en 10 s quieto y 4 en 10 s jugando (3 saltos), en `clasico` y en `neon`, todos por cambios de `score`, `lives` o `status`. Antes: 0 y 5. Mismo comportamiento.
+- **`npm run lint` y `npm run build`:** sin errores (con el código final, sin el contador temporal).
 
 ## Para las specs de los demás juegos
 
