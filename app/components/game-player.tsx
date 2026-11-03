@@ -39,7 +39,6 @@ export function GamePlayer({
   title: string;
 }) {
   const { user, saveScore } = useAuth();
-  if (typeof window !== "undefined") (window as unknown as { __r: number }).__r = ((window as unknown as { __r?: number }).__r ?? 0) + 1;
   const esAsteroides = gameId === "asteroides";
   const esTetris = gameId === "tetris";
   const esArkanoid = gameId === "arkanoid";
