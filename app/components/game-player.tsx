@@ -38,6 +38,7 @@ export function GamePlayer({
   gameId: string;
   title: string;
 }) {
+  (globalThis as unknown as { __gp?: number }).__gp = ((globalThis as unknown as { __gp?: number }).__gp ?? 0) + 1; // TEMP-RENDERS
   const { user, saveScore } = useAuth();
   const esAsteroides = gameId === "asteroides";
   const esTetris = gameId === "tetris";
