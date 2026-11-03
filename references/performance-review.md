@@ -11,7 +11,7 @@ Lo mantiene el agente `perf-auditor` (una fila por juego; Frogger se midió a ma
 | Frogger   | `frogger`    | 41,2 / 32,9                   | 102,8 / 59,4                   | Corregido | 2026-11-02  |
 | Asteroids | `asteroides` | 143,4 / 76,3                  | 143,4 / 75,2                   | OK        | 2026-11-03  |
 | Tetris    | `tetris`     | —                             | —                              | Pendiente | —           |
-| Arkanoid  | `arkanoid`   | —                             | —                              | Pendiente | —           |
+| Arkanoid  | `arkanoid`   | 142,9 / 66,9                  | 142,9 / 66,9                   | OK        | 2026-11-03  |
 | Snake     | `snake`      | —                             | —                              | Pendiente | —           |
 
 ## Metodología
@@ -252,6 +252,56 @@ No hay cambios netos de código en el motor, así que la medición final es la m
 ### Pendientes
 
 - En móvil emulado, `.av-noise` y `.av-bg::after` son las capas cuyo ocultado más devuelve fps (de ~78 a 120-141 en la tanda lenta). Es CSS compartido (`app/globals.css`), fuera del alcance de esta auditoría y sin necesidad por cifras; si se quisiera, merece una spec propia que revise el coste de esas capas en `/juegos/*/jugar`.
+
+## arkanoid
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/arkanoid/jugar`, skin fijada con `av-arkanoid-skin` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- El juego arranca solo, pero sin mover la paleta pierde las 3 vidas y llega a `gameover` (el bucle se detiene) antes de 10 s. Para medir con la partida viva, un script envuelve `drawImage`/`arc`/`fillRect` para leer la x de la pelota y despacha un `mousemove` sobre el canvas cada 8 ms para que la paleta la siga. Comprobado con un contador de `fillRect(0, 0, 800, 600)` (el fondo, una vez por fotograma del juego): ~144 fondos/s en escritorio y 63-83/s en móvil, durante los 10 s. El mismo método y los mismos envoltorios en todas las tandas, así que el sobrecoste de JS es común y el contador de fps cuenta los `requestAnimationFrame` de la página (que incluye el bucle del juego).
+- Scripts: `.playwright-mcp/audit/perf-arkanoid-*.txt`.
+
+### Medición base (fps medios; ms/fotograma media / p95)
+
+| Dispositivo    | `clasico`               | `neon`                | `retro`                 | Tareas largas |
+| -------------- | ----------------------- | --------------------- | ----------------------- | ------------- |
+| Escritorio     | 144 / 142,9 (6,95-7,0)  | 143,9 / 144 (6,95)    | 144 / 144 (6,95)        | 0             |
+| Móvil (CPU 4×) | 74,3 / 72,5 (13,5-13,8) | 74 / 66,9 (13,5-14,9) | 80,4 / 83,3 (12,0-12,4) | 0-2           |
+
+Medianas móvil: `clasico` 73,4, `neon` 70,5, `retro` 81,9. Escritorio es el tope del navegador (144 fps): sin cuello de botella. En móvil `neon` es ~4 % más lento que `clasico` y ~14 % más que `retro`, muy por encima del umbral (30 fps).
+
+### Aislamiento
+
+- **JS frente a pintado** (`ScriptDuration` / `TaskDuration`, % del tiempo): escritorio 3,6-6,3 % / 10,8-17,7 %; móvil 4×, 29-35 % / 93-95 %. Incluye los envoltorios de medición. En escritorio el hilo principal está casi libre; en móvil emulado está saturado por la CPU 4×, pero el resultado sigue siendo ≥ 67 fps.
+- **Capas CSS** (móvil, `neon`, 8 s, una réplica): base 77,7 fps; con `.av-bg`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` y las sombras de `.crt-screen` ocultas a la vez, 82,3 fps (+6 %, dentro del ruido). No se aislaron capa a capa porque ni todas juntas devuelven un salto grande: aquí el límite es la CPU emulada, no el CSS. (En Asteroides sí hubo un salto al ocultar `.av-noise` y `.av-bg::after`; en Arkanoid no se reproduce.) Las reglas de la spec 17 ya estaban aplicadas.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio, `clasico`): **7** en 10 s con la paleta siguiendo la pelota (todos por cambios de `score`) y **0** en 10 s en pausa. Sin tocar el ratón, la partida pierde las 3 vidas y el contador sube a 9 (cambios de `lives` y `status`). Ningún render por fotograma.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                                                             | Estado       | Motivo                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Menos desenfoques de `neon` (agrupar bloques por color o capa fuera de pantalla de los bloques vivos en `game.ts`) | No necesario | `neon` ya cumple por un factor 2,3 en móvil (66,9-74 frente a 30) y llega al tope en escritorio. Una capa de bloques tocaría `game.ts` y añadiría invalidaciones (romper bloque, nivel, `setSkin`, `destroy`) sin ganancia medible. |
+| B. Menos brillo en pelota y vidas                                                                                     | No necesario | Cambiaría el aspecto de `neon` sin ganancia medible.                                                                                                                                                                                |
+| C. Sustituir el `filter` de `explosions` (`game.ts`)                                                                  | No necesario | Allocación de ≤ unas pocas explosiones por fotograma; el JS no es el cuello.                                                                                                                                                        |
+| D. Cachear las cadenas de fuente de `retro` (getters de `paletas.ts`)                                                 | No necesario | `retro` es la skin más rápida en móvil (81,9 fps).                                                                                                                                                                                  |
+| Caché del fondo                                                                                                       | No aplicable | El fondo es un único `fillRect`.                                                                                                                                                                                                    |
+| E. Tope de 60 fps / `devicePixelRatio`                                                                                | No necesario | Ningún caso está bajo umbral.                                                                                                                                                                                                       |
+
+### Medición final
+
+Sin cambios netos de código en el motor: la medición final es la base. Escritorio 142,9-144 fps en las tres skins; móvil 66,9-83,3 (peor caso 66,9: `neon`, réplica 2). Umbrales cumplidos y tiempo de fotograma sin empeorar (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Skins: el botón `SKIN` rota `clasico → neon → retro` con redibujado inmediato en marcha (pixel (1,1) del canvas: `0,0,0` → `5,1,15` → `10,20,10`), en pausa (la tasa de dibujo es 0 y el canvas cambia igualmente) y en `gameover` con el modal «FIN DEL JUEGO» abierto (puntuación final 30). La lectura del HUD por texto no funcionó en el script, así que la igualdad de puntos/vidas/nivel al cambiar de skin no se midió; no hay cambios de código que la afecten.
+- Fugas: 7 escuchas de `keydown`/`keyup`/`blur` en `window` en el juego (129 fondos/s) y **0** tras salir a `/home` por navegación del cliente (0 fondos/s). Consola sin errores ni excepciones. No se midieron reinicios: sin cambios de código en el motor.
+- Jugabilidad intacta: sin cambios en el motor. `npm run lint` y `npm run build` sin errores.
+
+### Pendientes
+
+- Ninguno por cifras. La medición de móvil de Asteroides apuntaba a `.av-noise` y `.av-bg::after` (CSS compartido); en Arkanoid ocultar todas las capas no aportó un salto apreciable, así que no hace falta una spec propia para este juego.
 
 ## Para las specs de los demás juegos
 
