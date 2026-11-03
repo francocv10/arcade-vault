@@ -256,6 +256,7 @@ export class Ship {
     ctx.stroke();
     // Llama del propulsor
     if (this.thrusting && Math.random() > 0.35) {
+      ctx.shadowBlur = 0;
       ctx.beginPath();
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);

@@ -2,6 +2,18 @@
 
 Informe de la spec 17 (`specs/17-rendimiento-frogger.md`). Método reutilizable para las specs de rendimiento de los demás juegos.
 
+## Estado por juego
+
+Lo mantiene el agente `perf-auditor` (una fila por juego; Frogger se midió a mano en la spec 17). Cada juego tiene su sección `## <id>` más abajo (Frogger: las secciones de pasos de este informe).
+
+| Juego     | id           | Peor fps base (escr. / móvil) | Peor fps final (escr. / móvil) | Estado    | Actualizado |
+| --------- | ------------ | ----------------------------- | ------------------------------ | --------- | ----------- |
+| Frogger   | `frogger`    | 41,2 / 32,9                   | 102,8 / 59,4                   | Corregido | 2026-11-02  |
+| Asteroids | `asteroides` | —                             | —                              | Pendiente | —           |
+| Tetris    | `tetris`     | —                             | —                              | Pendiente | —           |
+| Arkanoid  | `arkanoid`   | —                             | —                              | Pendiente | —           |
+| Snake     | `snake`      | —                             | —                              | Pendiente | —           |
+
 ## Metodología
 
 - **Ruta:** `/juegos/frogger/jugar`, sin tocar nada durante la medición (la rana espera en la casilla de salida; el temporizador de ronda es de 14 s, así que no hay `gameover` en los 10 s).
