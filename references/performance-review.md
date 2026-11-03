@@ -10,7 +10,7 @@ Lo mantiene el agente `perf-auditor` (una fila por juego; Frogger se midió a ma
 | --------- | ------------ | ----------------------------- | ------------------------------ | --------- | ----------- |
 | Frogger   | `frogger`    | 41,2 / 32,9                   | 102,8 / 59,4                   | Corregido | 2026-11-02  |
 | Asteroids | `asteroides` | 143,4 / 76,3                  | 143,4 / 75,2                   | OK        | 2026-11-03  |
-| Tetris    | `tetris`     | —                             | —                              | Pendiente | —           |
+| Tetris    | `tetris`     | 143,9 / 140,4                 | 143,9 / 140,4                  | OK        | 2026-11-03  |
 | Arkanoid  | `arkanoid`   | 142,9 / 66,9                  | 142,9 / 66,9                   | OK        | 2026-11-03  |
 | Snake     | `snake`      | 112,4 / 79,0                  | 112,4 / 79,0                   | OK        | 2026-11-03  |
 
@@ -360,6 +360,60 @@ No hay cambios netos de código en el motor, así que la medición final es la b
 ### Pendientes
 
 - Ninguno por cifras. La medición móvil de `neon` con serpiente larga (79 fps) es la más baja, pero está a 2,6 veces del umbral; con el tablero casi lleno (300 segmentos) el trazo con brillo sería más largo, caso no medido.
+
+## tetris
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps). Tetris no tiene skins: se midieron los temas `dark` y `light` (clave `av-tetris-theme`).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/tetris/jugar`, tema fijado en `localStorage` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- El juego arranca solo y la pieza cae sola (1 casilla por segundo): quieto no termina en 10 s (`status` comprobado). Dos condiciones, iguales en todas las tandas: **quieto** (tablero vacío; 12 celdas `drawBlock` por fotograma: pieza, sombra y NEXT) y **tablero medio lleno** (un script despacha `keydown`/`keyup` sintéticos en `window`: 14 piezas con caída dura repartidas por columnas y después 10 s sin tocar; 40-80 celdas pintadas por fotograma). Con 20 piezas la partida terminó en 2 de 4 réplicas de escritorio (el bucle se detiene), así que esas réplicas se descartaron y se repitió con 14.
+- Un envoltorio de `fillRect` cuenta los fondos (`fillRect(0, 0, 800, 600)`, uno por fotograma del juego): `gameFps` coincide con los fps de la página en todas las tandas válidas (el bucle estaba vivo). El envoltorio es común a todas las mediciones.
+- Scripts: `.playwright-mcp/audit/perf-tetris-*.txt`. Capturas: `.playwright-screenshots/perf/tetris/antes-dark.png` y `antes-light.png` (no hay `despues-*`: sin cambios de código).
+
+### Medición base (fps medios por réplica; ms/fotograma media)
+
+| Dispositivo    | Condición | `dark`              | `light`             | Tareas largas |
+| -------------- | --------- | ------------------- | ------------------- | ------------- |
+| Escritorio     | quieto    | 144 / 144 (6,95)    | 144 / 143,9 (6,95)  | 0             |
+| Escritorio     | lleno     | 144 / 144 (6,95)    | 144 / 143,9 (6,95)  | 0             |
+| Móvil (CPU 4×) | quieto    | 142,6 / 141,6 (7,0) | 140,9 / 142,1 (7,1) | 0-4           |
+| Móvil (CPU 4×) | lleno     | 140,4 / 141,5 (7,1) | 140,8 / 140,5 (7,1) | 0             |
+
+Escritorio y móvil están en el tope del navegador (~144 fps, 7 ms por fotograma; p95 7,1-7,2 ms): no hay cuello de botella, ni con el tablero medio lleno ni entre temas.
+
+### Aislamiento
+
+- **JS frente a pintado** (`ScriptDuration` / `TaskDuration`, % del tiempo; incluye el envoltorio de `fillRect`): escritorio 3,8-4,5 % / 9-10 % quieto y 5,3-5,8 % / 11,9-12,8 % lleno; móvil 4×, 31-32 % / 75-79 % quieto y 34-36 % / 79-81 % lleno. El JS del motor son ~0,3 ms por fotograma en escritorio, muy por debajo del presupuesto de 7 ms, y llenar el tablero (de 12 a ~65-80 celdas) solo suma ~1,5 puntos porcentuales: la hipótesis del panel estático (6 `measureText`, 6 `roundRect`, más de 10 `fillText`) y de las 200 celdas con `drawBlock` no se confirma como cuello de botella.
+- **Capas CSS** (móvil, tablero medio lleno, 8 s, 2 réplicas): base 142,5 / 140 fps; con `.av-bg`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` y las sombras de `.crt-screen` ocultas a la vez, 142 / 143,4 (dentro del ruido). No se aislaron capa a capa porque la base ya está en el tope del navegador y no hay margen que recuperar. Las reglas de la spec 17 ya estaban aplicadas. `.av-noise` y `.av-bg::after` (CSS compartido, no tocado) no pesan aquí.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio): **0** en 10 s quieto (y durante todas las tandas de medición, con el tablero vacío o lleno) y **6** en 10 s jugando con 6 caídas duras (todos por cambios de `score`). Ningún render por fotograma; sin `useState` nuevo ni conversión a `useRef`.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                    | Estado       | Motivo                                                                                                                                |
+| ---------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Caché del fondo/panel estático en un canvas fuera de pantalla (`game.ts`) | No necesario | `ScriptDuration` es bajo (4-6 % en escritorio) y todo está en el tope del navegador. Añadiría invalidaciones (`setTheme`, `destroy`). |
+| B. Cadenas de fuente como constantes y sin `measureText` en el bucle         | No necesario | Ahorraría una fracción de ~0,3 ms por fotograma; no cambia ninguna combinación.                                                       |
+| C. Memoizar `toLocaleString("es-ES")`                                        | No necesario | Tres llamadas por fotograma, sin efecto medible.                                                                                      |
+| D. Dibujo bajo demanda (solo al cambiar el estado)                           | No necesario | Cambiaría el bucle de `game.ts` sin cifras que lo justifiquen.                                                                        |
+| `dt` sin tope en `game.ts`                                                   | No tocado    | No es cuello de botella; solo afectaría a la caída tras una pestaña en segundo plano.                                                 |
+| Tope de 60 fps / `devicePixelRatio`                                          | No necesario | Ningún caso está bajo umbral.                                                                                                         |
+
+### Medición final
+
+Sin cambios netos de código en el motor, así que la medición final es la base. Peor caso: **143,9 fps en escritorio** y **140,4 fps en móvil** (tablero medio lleno, `dark`). Umbrales cumplidos en los dos temas y en las dos condiciones; el tiempo de fotograma no empeora (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Colores clave del canvas (`getImageData`): `dark` fondo `15,15,23`, tablero `26,26,37`, tecla `34,34,58`; `light` `240,240,248`, `228,228,240`, `220,220,240`. Sin cambios de código, ambos temas son idénticos por construcción.
+- Botón TEMA: redibuja al instante en marcha (`dark` ↔ `light`), en pausa (0 `fillRect` por segundo antes del clic, 27 al cambiar de tema, y el canvas cambia) y en `gameover` con el modal «FIN DEL JUEGO» abierto (0 `fillRect` por segundo; el canvas pasa de `15,15,23` a `215,215,233`, el fondo claro bajo el velo). Puntos, vidas y nivel no cambian al alternar el tema.
+- Fugas: 4 escuchas de `keydown`/`keyup` en `window` en el juego y **0** tras salir con `SALIR` (navegación del cliente); los `fillRect` caen a **0** por segundo. Tras 3 reinicios con «JUGAR DE NUEVO» siguen 4 escuchas y la tasa de dibujo no se duplica (2.160 / 2.160 / 2.133 `fillRect` por segundo). El HUD vuelve a 0 puntos. Consola sin errores ni excepciones.
+- Jugabilidad intacta: sin cambios en el motor. `npm run lint` y `npm run build` sin errores.
+
+### Pendientes
+
+- Ninguno por cifras. Tetris es el juego con más trabajo estático por fotograma (rejilla, panel, 6 `measureText`), pero está en el tope del navegador incluso con CPU 4×; si algún día se mide en un teléfono real y baja, los candidatos A y B son el siguiente paso.
 
 ## Para las specs de los demás juegos
 
