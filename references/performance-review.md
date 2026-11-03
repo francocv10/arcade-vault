@@ -2,6 +2,18 @@
 
 Informe de la spec 17 (`specs/17-rendimiento-frogger.md`). Método reutilizable para las specs de rendimiento de los demás juegos.
 
+## Estado por juego
+
+Lo mantiene el agente `perf-auditor` (una fila por juego; Frogger se midió a mano en la spec 17). Cada juego tiene su sección `## <id>` más abajo (Frogger: las secciones de pasos de este informe).
+
+| Juego     | id           | Peor fps base (escr. / móvil) | Peor fps final (escr. / móvil) | Estado    | Actualizado |
+| --------- | ------------ | ----------------------------- | ------------------------------ | --------- | ----------- |
+| Frogger   | `frogger`    | 41,2 / 32,9                   | 102,8 / 59,4                   | Corregido | 2026-11-02  |
+| Asteroids | `asteroides` | 143,4 / 76,3                  | 143,4 / 75,2                   | OK        | 2026-11-03  |
+| Tetris    | `tetris`     | 143,9 / 140,4                 | 143,9 / 140,4                  | OK        | 2026-11-03  |
+| Arkanoid  | `arkanoid`   | 142,9 / 66,9                  | 142,9 / 66,9                   | OK        | 2026-11-03  |
+| Snake     | `snake`      | 112,4 / 79,0                  | 112,4 / 79,0                   | OK        | 2026-11-03  |
+
 ## Metodología
 
 - **Ruta:** `/juegos/frogger/jugar`, sin tocar nada durante la medición (la rana espera en la casilla de salida; el temporizador de ronda es de 14 s, así que no hay `gameover` en los 10 s).
@@ -187,6 +199,221 @@ Build de producción, escritorio 1280×800.
 - **Reinicio sin duplicados:** tras 3 reinicios con «JUGAR DE NUEVO» siguen 4 escuchas y la tasa de dibujo es la misma (13.340 → 13.432 llamadas/s), y el HUD vuelve a 0 puntos, 3 vidas y nivel 1.
 - **Re-renders tras los cambios:** 0 renders de `GamePlayer` en 10 s quieto y 4 en 10 s jugando (3 saltos), en `clasico` y en `neon`, todos por cambios de `score`, `lives` o `status`. Antes: 0 y 5. Mismo comportamiento.
 - **`npm run lint` y `npm run build`:** sin errores (con el código final, sin el contador temporal).
+
+## asteroides
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/asteroides/jugar`, skin fijada con `av-asteroides-skin` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- El juego arranca solo (nave invencible 3 s). Dos condiciones, iguales en todas las tandas: **quieto** (sin pulsar nada) y **jugando** (`ArrowUp` mantenido con `keydown` sintético en `window` y un disparo de Espacio cada 220 ms; la nave se mueve, dispara y pierde alguna vida: p. ej. 610 puntos y 2 vidas tras 10 s).
+- Scripts: `.playwright-mcp/audit/perf-asteroides-*.txt`.
+
+### Medición base (fps medios; ms/fotograma media / p95)
+
+| Dispositivo    | Condición | `clasico`                    | `neon`                       | `retro`                      | Tareas largas |
+| -------------- | --------- | ---------------------------- | ---------------------------- | ---------------------------- | ------------- |
+| Escritorio     | quieto    | 143,4-144 (6,95)             | 144 (6,95)                   | 144 (6,95)                   | 0             |
+| Escritorio     | jugando   | 144 (6,95)                   | 143,9-144 (6,95)             | 144 (6,95)                   | 0             |
+| Móvil (CPU 4×) | quieto    | 84,5-88,1 (11,3-11,8 / 20,8) | 78,1-80,9 (12,4-12,8 / 20,9) | 82,8-83,5 (12,0-12,1 / 20,8) | 0-7           |
+| Móvil (CPU 4×) | jugando   | 81,1-90 (11,1-12,4 / 20,9)   | 76,3-78,3 (12,8-13,1 / 21)   | 77,7-83,4 (12,0-12,9 / 21)   | 0-3           |
+
+Escritorio es el tope del navegador (144 fps, 6,95 ms): no hay cuello de botella. Las tareas largas de móvil son 0-7 por 10 s (aisladas, con CPU 4×).
+
+### Aislamiento
+
+- **JS frente a pintado** (`Performance.getMetrics`, `ScriptDuration` / `TaskDuration` como % del tiempo): escritorio 1,6-2,7 % / 7-9 % (el JS del motor es ~0,1 ms por fotograma); móvil 4×, 25-33 % / 92-94 % en la tanda lenta y 16-25 % / 63-83 % en la rápida. El coste real está en rasterizado y composición, no en el motor.
+- **Capas CSS** (móvil, `neon`, jugando, 8 s, una réplica; en esa tanda la base fue 78,1 fps): sin `.av-bg` 73,4; sin `.av-bg::before` 73,6; sin `.av-bg::after` **120,1**; sin `.av-noise` **140,9**; sin `.crt-screen::before` 133,6; sin `.crt-screen::after` 139,5; sin sombras `inset` 141; sin todas 140,3. Lectura: ocultar casi cualquier capa de composición lleva al tope de ~140 fps, así que en ese estado del navegador el límite es la cantidad de capas superpuestas al canvas, no el juego (la dispersión de una sola réplica no permite ordenarlas). Las reglas de la spec 17 (`gridscroll` quieto y sin `mix-blend-mode`) ya estaban aplicadas.
+- **Variación entre tandas:** con el código idéntico, `neon` móvil jugando dio 76-78 fps en la base y 140-142 fps en otra tanda posterior (3 réplicas, `clasico` 142-143); `clasico` móvil quieto dio 84-88, luego 91 y 111. Es un comportamiento bimodal del navegador/GPU (~80 o ~140 fps), no del juego. En ambos modos se cumple el umbral con holgura.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio, `clasico`): **0** en 10 s quieto y **12** en 10 s jugando (610 puntos y 2 vidas perdidas, todos por cambios de `score` o `lives`). Ningún render por fotograma.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                        | Estado       | Motivo                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. `shadowBlur = 0` antes de la llama del propulsor (`entities.ts`, `Ship.draw`) | No necesario | Probado y **revertido**: con el cambio `neon` móvil jugando dio 130-140 fps y sin él, en la misma tanda, 140-142: sin diferencia fuera del ruido. Además quitaba el brillo de la llama. |
+| B. Menos trazos con desenfoque en asteroides                                     | No necesario | `neon` ya cumple por un factor 2,5 en móvil y 2,6 en escritorio; reducirlos cambiaría el aspecto sin ganancia medible.                                                                  |
+| C. Cadenas por fotograma (rgba de partículas y llama, `filter`/`forEach`)        | No necesario | JS ~0,1 ms por fotograma en escritorio; no hay cuello de JS.                                                                                                                            |
+| Caché del fondo                                                                  | No aplicable | El fondo es un único `fillRect`.                                                                                                                                                        |
+| E. No pintar en `gameover`/`dead`                                                | No necesario | Sin cifras que lo justifiquen; tocaría `game.ts`.                                                                                                                                       |
+| Tope de 60 fps / `devicePixelRatio`                                              | No necesario | Ningún caso está bajo umbral.                                                                                                                                                           |
+
+### Medición final
+
+No hay cambios netos de código en el motor, así que la medición final es la misma base repetida: escritorio sin cambios (144 fps) y, en móvil, 75,2-142 fps según el estado del navegador (peor caso 75,2: `neon` quieto). Umbrales cumplidos en las tres skins y en las dos condiciones; el tiempo de fotograma no empeora (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Skins: el botón `SKIN` rota `clasico → neon → retro` con redibujado inmediato (pixel (1,1) del canvas: `0,0,0` → `5,1,15` → `10,20,10`), y en pausa también redibuja (vuelve a `clasico`, `0,0,0`) sin alterar puntos, vidas ni nivel.
+- Fugas: 7 escuchas de `keydown`/`keyup`/`blur` en `window` en el juego y **0** tras salir a `/home` por navegación del cliente; las llamadas a `fillRect` caen a 0 por segundo. Consola sin errores. No se midieron reinicios (requiere llegar a `gameover`) ni `gameover` con cambio de skin: no hay cambios de código que lo afecten.
+- Jugabilidad intacta: sin cambios en el motor.
+
+### Pendientes
+
+- En móvil emulado, `.av-noise` y `.av-bg::after` son las capas cuyo ocultado más devuelve fps (de ~78 a 120-141 en la tanda lenta). Es CSS compartido (`app/globals.css`), fuera del alcance de esta auditoría y sin necesidad por cifras; si se quisiera, merece una spec propia que revise el coste de esas capas en `/juegos/*/jugar`.
+
+## arkanoid
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/arkanoid/jugar`, skin fijada con `av-arkanoid-skin` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- El juego arranca solo, pero sin mover la paleta pierde las 3 vidas y llega a `gameover` (el bucle se detiene) antes de 10 s. Para medir con la partida viva, un script envuelve `drawImage`/`arc`/`fillRect` para leer la x de la pelota y despacha un `mousemove` sobre el canvas cada 8 ms para que la paleta la siga. Comprobado con un contador de `fillRect(0, 0, 800, 600)` (el fondo, una vez por fotograma del juego): ~144 fondos/s en escritorio y 63-83/s en móvil, durante los 10 s. El mismo método y los mismos envoltorios en todas las tandas, así que el sobrecoste de JS es común y el contador de fps cuenta los `requestAnimationFrame` de la página (que incluye el bucle del juego).
+- Scripts: `.playwright-mcp/audit/perf-arkanoid-*.txt`.
+
+### Medición base (fps medios; ms/fotograma media / p95)
+
+| Dispositivo    | `clasico`               | `neon`                | `retro`                 | Tareas largas |
+| -------------- | ----------------------- | --------------------- | ----------------------- | ------------- |
+| Escritorio     | 144 / 142,9 (6,95-7,0)  | 143,9 / 144 (6,95)    | 144 / 144 (6,95)        | 0             |
+| Móvil (CPU 4×) | 74,3 / 72,5 (13,5-13,8) | 74 / 66,9 (13,5-14,9) | 80,4 / 83,3 (12,0-12,4) | 0-2           |
+
+Medianas móvil: `clasico` 73,4, `neon` 70,5, `retro` 81,9. Escritorio es el tope del navegador (144 fps): sin cuello de botella. En móvil `neon` es ~4 % más lento que `clasico` y ~14 % más que `retro`, muy por encima del umbral (30 fps).
+
+### Aislamiento
+
+- **JS frente a pintado** (`ScriptDuration` / `TaskDuration`, % del tiempo): escritorio 3,6-6,3 % / 10,8-17,7 %; móvil 4×, 29-35 % / 93-95 %. Incluye los envoltorios de medición. En escritorio el hilo principal está casi libre; en móvil emulado está saturado por la CPU 4×, pero el resultado sigue siendo ≥ 67 fps.
+- **Capas CSS** (móvil, `neon`, 8 s, una réplica): base 77,7 fps; con `.av-bg`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` y las sombras de `.crt-screen` ocultas a la vez, 82,3 fps (+6 %, dentro del ruido). No se aislaron capa a capa porque ni todas juntas devuelven un salto grande: aquí el límite es la CPU emulada, no el CSS. (En Asteroides sí hubo un salto al ocultar `.av-noise` y `.av-bg::after`; en Arkanoid no se reproduce.) Las reglas de la spec 17 ya estaban aplicadas.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio, `clasico`): **7** en 10 s con la paleta siguiendo la pelota (todos por cambios de `score`) y **0** en 10 s en pausa. Sin tocar el ratón, la partida pierde las 3 vidas y el contador sube a 9 (cambios de `lives` y `status`). Ningún render por fotograma.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                                                             | Estado       | Motivo                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Menos desenfoques de `neon` (agrupar bloques por color o capa fuera de pantalla de los bloques vivos en `game.ts`) | No necesario | `neon` ya cumple por un factor 2,3 en móvil (66,9-74 frente a 30) y llega al tope en escritorio. Una capa de bloques tocaría `game.ts` y añadiría invalidaciones (romper bloque, nivel, `setSkin`, `destroy`) sin ganancia medible. |
+| B. Menos brillo en pelota y vidas                                                                                     | No necesario | Cambiaría el aspecto de `neon` sin ganancia medible.                                                                                                                                                                                |
+| C. Sustituir el `filter` de `explosions` (`game.ts`)                                                                  | No necesario | Allocación de ≤ unas pocas explosiones por fotograma; el JS no es el cuello.                                                                                                                                                        |
+| D. Cachear las cadenas de fuente de `retro` (getters de `paletas.ts`)                                                 | No necesario | `retro` es la skin más rápida en móvil (81,9 fps).                                                                                                                                                                                  |
+| Caché del fondo                                                                                                       | No aplicable | El fondo es un único `fillRect`.                                                                                                                                                                                                    |
+| E. Tope de 60 fps / `devicePixelRatio`                                                                                | No necesario | Ningún caso está bajo umbral.                                                                                                                                                                                                       |
+
+### Medición final
+
+Sin cambios netos de código en el motor: la medición final es la base. Escritorio 142,9-144 fps en las tres skins; móvil 66,9-83,3 (peor caso 66,9: `neon`, réplica 2). Umbrales cumplidos y tiempo de fotograma sin empeorar (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Skins: el botón `SKIN` rota `clasico → neon → retro` con redibujado inmediato en marcha (pixel (1,1) del canvas: `0,0,0` → `5,1,15` → `10,20,10`), en pausa (la tasa de dibujo es 0 y el canvas cambia igualmente) y en `gameover` con el modal «FIN DEL JUEGO» abierto (puntuación final 30). La lectura del HUD por texto no funcionó en el script, así que la igualdad de puntos/vidas/nivel al cambiar de skin no se midió; no hay cambios de código que la afecten.
+- Fugas: 7 escuchas de `keydown`/`keyup`/`blur` en `window` en el juego (129 fondos/s) y **0** tras salir a `/home` por navegación del cliente (0 fondos/s). Consola sin errores ni excepciones. No se midieron reinicios: sin cambios de código en el motor.
+- Jugabilidad intacta: sin cambios en el motor. `npm run lint` y `npm run build` sin errores.
+
+### Pendientes
+
+- Ninguno por cifras. La medición de móvil de Asteroides apuntaba a `.av-noise` y `.av-bg::after` (CSS compartido); en Arkanoid ocultar todas las capas no aportó un salto apreciable, así que no hace falta una spec propia para este juego.
+
+## snake
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/snake/jugar`, skin fijada con `av-snake-skin` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- La serpiente espera una flecha y choca con la pared en ~2 s si se mantiene una dirección, así que se midieron tres condiciones, iguales en base y final:
+  - **Espera:** sin pulsar nada (el bucle repinta la leyenda «PULSA UNA FLECHA PARA EMPEZAR»).
+  - **Partida viva:** un bot inyectado en la página (sin tocar el código) lee la cabeza (`arc` de radio 18) y la fruta (`drawImage` o `fillRect` 24×24) de las llamadas de dibujo, y despacha `keydown`/`keyup` sintéticos en `window` siguiendo un ciclo hamiltoniano del tablero 20×15 con atajos hacia la fruta. No muere en 10 s y come 1-5 frutas en la ventana (serpiente de 5 a 8 segmentos).
+  - **Serpiente larga:** el mismo bot, con 70 s de calentamiento antes de medir (`neon` y `clasico`, 1 réplica): 33-42 segmentos.
+- Se comprobó que el bucle del juego sigue vivo: las llamadas de dibujo de la cabeza coinciden con los fotogramas (`gameFps` = fps). Los envoltorios de `arc`/`drawImage`/`fillRect` del bot son comunes a todas las tandas (por eso escritorio queda en ~117-126 fps y no en el tope de 144).
+- Scripts: `.playwright-mcp/audit/perf-snake-*.txt`. Capturas: `.playwright-screenshots/perf/snake/antes-<skin>-espera.png`.
+
+### Medición base (fps medios; ms/fotograma media)
+
+| Dispositivo    | Condición | `clasico`             | `neon`                | `retro`               | Tareas largas |
+| -------------- | --------- | --------------------- | --------------------- | --------------------- | ------------- |
+| Escritorio     | espera    | 118,1-118,2 (8,5)     | 116,8-117,1 (8,5)     | 122,5-124,1 (8,1-8,2) | 0             |
+| Escritorio     | viva      | 123,9-124,9 (8,0-8,1) | 116,9-118,5 (8,4-8,6) | 126,2-126,4 (7,9)     | 0             |
+| Escritorio     | larga     | 119,9 (8,3)           | 112,4 (8,9)           | —                     | 0             |
+| Móvil (CPU 4×) | espera    | 100-101,7 (9,8-10,0)  | 83,9-86,1 (11,6-11,9) | 94,1-96,7 (10,3-10,6) | 0-3           |
+| Móvil (CPU 4×) | viva      | 104,4-113,1 (8,8-9,6) | 90,3-96,6 (10,4-11,1) | 114-117,9 (8,5-8,8)   | 0-2           |
+| Móvil (CPU 4×) | larga     | 85,3 (11,7)           | 79,0 (12,6)           | —                     | 0-2           |
+
+Medianas (viva): escritorio `clasico` 124,4, `neon` 117,7, `retro` 126,3; móvil `clasico` 108,8, `neon` 93,5, `retro` 116. El p95 es 14-21 ms (cadencia del compositor), sin tirones. `neon` es ~14-18 % más lento que `clasico` en móvil y baja a 79 fps con la serpiente larga (el brillo del trazo crece con la longitud), muy por encima del umbral.
+
+### Aislamiento
+
+- **JS frente a pintado** (`ScriptDuration` / `TaskDuration`, % del tiempo; incluye los envoltorios del bot): escritorio 3,1-4,0 % / 11-15 %; móvil 4×, 19-25 % / 78-89 %. En escritorio el hilo principal está casi libre y el JS del motor es pequeño, así que la hipótesis de los 300 `fillRect` del tablero no se confirma como cuello de botella; en móvil lo satura la CPU emulada, pero con ≥ 79 fps.
+- **Capas CSS** (móvil, `neon`, partida viva, 8 s, 2 réplicas): base 80,2 / 75,5 fps; con `.av-bg`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` y las sombras de `.crt-screen` ocultas a la vez, 83,9 / 80,9 (+4-8 %, dentro del ruido). No se aislaron capa a capa porque ni todas juntas devuelven un salto. Las reglas de la spec 17 (`gridscroll` quieto y sin `mix-blend-mode`) ya estaban aplicadas.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio, `clasico`): **0** en 10 s en espera y **3** en 10 s con la partida viva (3 frutas = 3 cambios de `score`). Ningún render por fotograma; sin `useState` nuevo ni conversión a `useRef`.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                   | Estado       | Motivo                                                                                                                                                          |
+| --------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Caché del tablero (`drawBoard`, 300 `fillRect`) en canvas fuera de pantalla | No necesario | `ScriptDuration` es bajo (3-4 % en escritorio) y todas las combinaciones superan el umbral por un factor ≥ 2,6. Añadiría invalidaciones (`setSkin`, `destroy`). |
+| Brillo de `neon` (`shadowBlur` 12 en la serpiente y 14 en la fruta)         | No necesario | Ya son solo 2 dibujos con brillo y los ojos van fuera; el coste con 40 segmentos es de ~-15 % en móvil. Reducirlo cambiaría el aspecto sin ganancia útil.       |
+| `centro()`, closure de `forEach` y array `[-1, 1]` por fotograma            | No necesario | Asignaciones pequeñas; el JS no es el cuello.                                                                                                                   |
+| Atlas `fruits.png` (3790×442) escalado a 36 px                              | No necesario | `clasico` (sin brillo) es la skin más rápida junto a `retro`; un `drawImage` por fotograma no se aprecia.                                                       |
+| Tope de 60 fps / `devicePixelRatio`                                         | No necesario | Ningún caso está bajo umbral.                                                                                                                                   |
+
+### Medición final
+
+No hay cambios netos de código en el motor, así que la medición final es la base. Peor caso: escritorio 112,4 fps (`neon`, serpiente larga) y móvil 79,0 fps (`neon`, serpiente larga). Umbrales cumplidos en las tres skins y en las tres condiciones; el tiempo de fotograma no empeora (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Colores clave del canvas (`getImageData`): `clasico` casillas `170,215,81` y `162,209,73`, serpiente `78,124,246`; `neon` `11,6,32` y `7,3,26`, serpiente `0,245,255`; `retro` `10,20,10` y `13,26,13`, serpiente `51,255,51`. Sin cambios de código, `clasico` es idéntico por construcción (capturas `antes-*-espera.png`; no hay `despues-*` porque no hay diferencia).
+- Cambio de skin: el botón `SKIN` rota `clasico → neon → retro` y redibuja al instante en espera, en marcha, en pausa (0 llamadas de dibujo por segundo; cambia igualmente) y en `gameover` con el modal abierto (0 llamadas de dibujo por segundo; el canvas cambia). Puntos (10), vidas y nivel no se alteran al cambiar de skin.
+- Fugas: 2 escuchas de `keydown`/`keyup`/`blur` en `window` en el juego y **0** tras salir a `/home` por navegación del cliente; las llamadas de dibujo caen de ~44.000 a **0** por segundo. Tras 3 reinicios con «JUGAR DE NUEVO» siguen 2 escuchas y la tasa de dibujo no se duplica (29.700-30.000 llamadas por segundo en los tres). Consola sin errores ni excepciones.
+- Jugabilidad intacta: sin cambios en el motor. `npm run lint` y `npm run build` sin errores.
+
+### Pendientes
+
+- Ninguno por cifras. La medición móvil de `neon` con serpiente larga (79 fps) es la más baja, pero está a 2,6 veces del umbral; con el tablero casi lleno (300 segmentos) el trazo con brillo sería más largo, caso no medido.
+
+## tetris
+
+Medido por `perf-auditor` (modo `medir`, 2026-11-03). Resultado: **OK sin cambios de código**; ninguna combinación se acerca a los umbrales (escritorio ≥ 55 fps, móvil ≥ 30 fps). Tetris no tiene skins: se midieron los temas `dark` y `light` (clave `av-tetris-theme`).
+
+### Metodología específica
+
+- Build de producción en el puerto 3100, ruta `/juegos/tetris/jugar`, tema fijado en `localStorage` y recarga; carga nueva por medición, 2,2 s de espera y 10 s de medición, 2 réplicas. Escritorio 1280×800; móvil 390×844 (`isMobile`, `hasTouch`, `pointer: coarse` verificado `true`, `deviceScaleFactor` 1, CPU 4×).
+- El juego arranca solo y la pieza cae sola (1 casilla por segundo): quieto no termina en 10 s (`status` comprobado). Dos condiciones, iguales en todas las tandas: **quieto** (tablero vacío; 12 celdas `drawBlock` por fotograma: pieza, sombra y NEXT) y **tablero medio lleno** (un script despacha `keydown`/`keyup` sintéticos en `window`: 14 piezas con caída dura repartidas por columnas y después 10 s sin tocar; 40-80 celdas pintadas por fotograma). Con 20 piezas la partida terminó en 2 de 4 réplicas de escritorio (el bucle se detiene), así que esas réplicas se descartaron y se repitió con 14.
+- Un envoltorio de `fillRect` cuenta los fondos (`fillRect(0, 0, 800, 600)`, uno por fotograma del juego): `gameFps` coincide con los fps de la página en todas las tandas válidas (el bucle estaba vivo). El envoltorio es común a todas las mediciones.
+- Scripts: `.playwright-mcp/audit/perf-tetris-*.txt`. Capturas: `.playwright-screenshots/perf/tetris/antes-dark.png` y `antes-light.png` (no hay `despues-*`: sin cambios de código).
+
+### Medición base (fps medios por réplica; ms/fotograma media)
+
+| Dispositivo    | Condición | `dark`              | `light`             | Tareas largas |
+| -------------- | --------- | ------------------- | ------------------- | ------------- |
+| Escritorio     | quieto    | 144 / 144 (6,95)    | 144 / 143,9 (6,95)  | 0             |
+| Escritorio     | lleno     | 144 / 144 (6,95)    | 144 / 143,9 (6,95)  | 0             |
+| Móvil (CPU 4×) | quieto    | 142,6 / 141,6 (7,0) | 140,9 / 142,1 (7,1) | 0-4           |
+| Móvil (CPU 4×) | lleno     | 140,4 / 141,5 (7,1) | 140,8 / 140,5 (7,1) | 0             |
+
+Escritorio y móvil están en el tope del navegador (~144 fps, 7 ms por fotograma; p95 7,1-7,2 ms): no hay cuello de botella, ni con el tablero medio lleno ni entre temas.
+
+### Aislamiento
+
+- **JS frente a pintado** (`ScriptDuration` / `TaskDuration`, % del tiempo; incluye el envoltorio de `fillRect`): escritorio 3,8-4,5 % / 9-10 % quieto y 5,3-5,8 % / 11,9-12,8 % lleno; móvil 4×, 31-32 % / 75-79 % quieto y 34-36 % / 79-81 % lleno. El JS del motor son ~0,3 ms por fotograma en escritorio, muy por debajo del presupuesto de 7 ms, y llenar el tablero (de 12 a ~65-80 celdas) solo suma ~1,5 puntos porcentuales: la hipótesis del panel estático (6 `measureText`, 6 `roundRect`, más de 10 `fillText`) y de las 200 celdas con `drawBlock` no se confirma como cuello de botella.
+- **Capas CSS** (móvil, tablero medio lleno, 8 s, 2 réplicas): base 142,5 / 140 fps; con `.av-bg`, `.av-noise`, `.crt-screen::before`, `.crt-screen::after` y las sombras de `.crt-screen` ocultas a la vez, 142 / 143,4 (dentro del ruido). No se aislaron capa a capa porque la base ya está en el tope del navegador y no hay margen que recuperar. Las reglas de la spec 17 ya estaban aplicadas. `.av-noise` y `.av-bg::after` (CSS compartido, no tocado) no pesan aquí.
+- **Re-renders de `GamePlayer`** (contador temporal, retirado; escritorio): **0** en 10 s quieto (y durante todas las tandas de medición, con el tablero vacío o lleno) y **6** en 10 s jugando con 6 caídas duras (todos por cambios de `score`). Ningún render por fotograma; sin `useState` nuevo ni conversión a `useRef`.
+
+### Decisiones sobre los candidatos
+
+| Candidato                                                                    | Estado       | Motivo                                                                                                                                |
+| ---------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| A. Caché del fondo/panel estático en un canvas fuera de pantalla (`game.ts`) | No necesario | `ScriptDuration` es bajo (4-6 % en escritorio) y todo está en el tope del navegador. Añadiría invalidaciones (`setTheme`, `destroy`). |
+| B. Cadenas de fuente como constantes y sin `measureText` en el bucle         | No necesario | Ahorraría una fracción de ~0,3 ms por fotograma; no cambia ninguna combinación.                                                       |
+| C. Memoizar `toLocaleString("es-ES")`                                        | No necesario | Tres llamadas por fotograma, sin efecto medible.                                                                                      |
+| D. Dibujo bajo demanda (solo al cambiar el estado)                           | No necesario | Cambiaría el bucle de `game.ts` sin cifras que lo justifiquen.                                                                        |
+| `dt` sin tope en `game.ts`                                                   | No tocado    | No es cuello de botella; solo afectaría a la caída tras una pestaña en segundo plano.                                                 |
+| Tope de 60 fps / `devicePixelRatio`                                          | No necesario | Ningún caso está bajo umbral.                                                                                                         |
+
+### Medición final
+
+Sin cambios netos de código en el motor, así que la medición final es la base. Peor caso: **143,9 fps en escritorio** y **140,4 fps en móvil** (tablero medio lleno, `dark`). Umbrales cumplidos en los dos temas y en las dos condiciones; el tiempo de fotograma no empeora (no hay diferencia de código).
+
+### Verificación de calidad (escritorio)
+
+- Colores clave del canvas (`getImageData`): `dark` fondo `15,15,23`, tablero `26,26,37`, tecla `34,34,58`; `light` `240,240,248`, `228,228,240`, `220,220,240`. Sin cambios de código, ambos temas son idénticos por construcción.
+- Botón TEMA: redibuja al instante en marcha (`dark` ↔ `light`), en pausa (0 `fillRect` por segundo antes del clic, 27 al cambiar de tema, y el canvas cambia) y en `gameover` con el modal «FIN DEL JUEGO» abierto (0 `fillRect` por segundo; el canvas pasa de `15,15,23` a `215,215,233`, el fondo claro bajo el velo). Puntos, vidas y nivel no cambian al alternar el tema.
+- Fugas: 4 escuchas de `keydown`/`keyup` en `window` en el juego y **0** tras salir con `SALIR` (navegación del cliente); los `fillRect` caen a **0** por segundo. Tras 3 reinicios con «JUGAR DE NUEVO» siguen 4 escuchas y la tasa de dibujo no se duplica (2.160 / 2.160 / 2.133 `fillRect` por segundo). El HUD vuelve a 0 puntos. Consola sin errores ni excepciones.
+- Jugabilidad intacta: sin cambios en el motor. `npm run lint` y `npm run build` sin errores.
+
+### Pendientes
+
+- Ninguno por cifras. Tetris es el juego con más trabajo estático por fotograma (rejilla, panel, 6 `measureText`), pero está en el tope del navegador incluso con CPU 4×; si algún día se mide en un teléfono real y baja, los candidatos A y B son el siguiente paso.
 
 ## Para las specs de los demás juegos
 
