@@ -19,6 +19,10 @@ const MENSAJES_AUTH = new Map<string, string>([
     "[ERR] Aún no podemos enviar correos a esta dirección.",
   ],
   [
+    "email_address_invalid",
+    "[ERR] No podemos enviar correos a esta dirección.",
+  ],
+  [
     "over_email_send_rate_limit",
     "[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.",
   ],

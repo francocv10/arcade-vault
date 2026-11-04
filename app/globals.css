@@ -407,6 +407,81 @@ body:has(.av-player) .av-bg::before {
 .av-mobile-panel a.active {
   color: var(--cyan);
 }
+.av-mobile-panel .mobile-account {
+  padding: 14px 12px 4px;
+  font-family: var(--pixel);
+  font-size: 11px;
+  color: var(--cyan);
+  overflow-wrap: anywhere;
+}
+.av-mobile-panel .mobile-logout {
+  padding: 14px 12px;
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--line-2);
+  font-family: var(--pixel);
+  font-size: 11px;
+  text-align: left;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.av-mobile-panel .mobile-logout:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+/* menú de cuenta */
+.av-nav .auth-btn-reserva {
+  visibility: hidden;
+}
+.account-menu {
+  position: relative;
+  min-width: 0;
+}
+.account-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(260px, calc(100vw - 96px));
+  padding: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  box-shadow: 0 0 22px rgba(0, 245, 255, 0.22);
+}
+.account-email {
+  margin: 0;
+  padding: 10px 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+  overflow-wrap: anywhere;
+  border-bottom: 1px dashed var(--line-2);
+}
+.account-panel [role="menuitem"] {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 10px;
+  background: none;
+  border: 0;
+  font-family: var(--pixel);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+.account-panel [role="menuitem"]:hover,
+.account-panel [role="menuitem"]:focus-visible {
+  color: var(--cyan);
+  background: rgba(0, 245, 255, 0.08);
+}
+.account-panel [role="menuitem"]:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
 .av-mobile-backdrop {
   position: fixed;
   inset: 0;
@@ -2091,6 +2166,10 @@ body:has(.av-player) .av-bg::before {
   outline: 0;
   font-family: var(--mono);
 }
+.modal .input-row input[readonly] {
+  color: var(--ink-dim);
+  cursor: default;
+}
 .modal .input-row input:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 10px rgba(0, 245, 255, 0.35);
@@ -3570,9 +3649,14 @@ body:has(.av-player) .av-bg::before {
   .av-mobile-panel .panel-head .btn {
     min-width: 48px;
   }
-  .av-mobile-panel a {
+  .av-mobile-panel a,
+  .av-mobile-panel .mobile-logout {
     display: flex;
     align-items: center;
+    min-height: 48px;
+    font-size: 12px;
+  }
+  .account-panel [role="menuitem"] {
     min-height: 48px;
     font-size: 12px;
   }

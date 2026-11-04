@@ -1,17 +1,17 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
+import { AccountMenu } from "./account-menu";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
-
 export function Nav() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, cargando, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
-
+  // Al salir, el botón de cuenta desaparece: el foco pasa a «Iniciar Sesión».
+  const enfocarAcceso = useRef(false);
   const isHome = pathname.startsWith("/home");
   const isLibrary =
     pathname.startsWith("/biblioteca") || pathname.startsWith("/juegos");
@@ -19,12 +19,19 @@ export function Nav() {
   const isAbout = pathname.startsWith("/about");
   const isAuth = pathname.startsWith("/acceso");
   const close = () => setOpen(false);
+  const salirDesdeBarra = () => {
+    enfocarAcceso.current = true;
+    void logout();
+  };
+  const salirDesdePanel = () => {
+    close();
+    void logout();
+  };
   const panelRef = useDialog<HTMLDivElement>(open, {
     onEscape: close,
     // Safari no da el foco a un botón al hacer clic: el foco se devuelve al hamburguesa de forma explícita.
     returnFocus: () => hamburgerRef.current,
   });
-
   return (
     <>
       <nav className="av-nav" aria-label="Principal">
@@ -53,12 +60,24 @@ export function Nav() {
           <span className="coin"></span>
           <span>CRÉDITOS · 03</span>
         </div>
-        {user ? (
-          <button className="btn ghost auth-btn" onClick={logout}>
-            {user.name} ▾
-          </button>
+        {cargando ? (
+          // Reserva el hueco sin mostrar «Iniciar Sesión» a quien tiene sesión.
+          <span className="btn auth-btn auth-btn-reserva" aria-hidden="true">
+            Iniciar Sesión
+          </span>
+        ) : user ? (
+          <AccountMenu user={user} onSalir={salirDesdeBarra} />
         ) : (
-          <Link href="/acceso" className="btn auth-btn">
+          <Link
+            href="/acceso"
+            className="btn auth-btn"
+            ref={(enlace) => {
+              if (enlace && enfocarAcceso.current) {
+                enfocarAcceso.current = false;
+                enlace.focus();
+              }
+            }}
+          >
             Iniciar Sesión
           </Link>
         )}
@@ -73,7 +92,6 @@ export function Nav() {
           ≡
         </button>
       </nav>
-
       <div
         className={"av-mobile-backdrop" + (open ? " open" : "")}
         onClick={close}
@@ -112,13 +130,35 @@ export function Nav() {
         <Link href="/about" className={isAbout ? "active" : ""} onClick={close}>
           Sobre nosotros
         </Link>
-        <Link href="/acceso" className={isAuth ? "active" : ""} onClick={close}>
-          {user ? "Cuenta" : "Iniciar Sesión"}
-        </Link>
+        {!cargando &&
+          (user ? (
+            <>
+              <div className="mobile-account">{user.name}</div>
+              <button
+                type="button"
+                className="mobile-logout"
+                onClick={salirDesdePanel}
+              >
+                CERRAR SESIÓN
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/acceso"
+              className={isAuth ? "active" : ""}
+              onClick={close}
+            >
+              Iniciar Sesión
+            </Link>
+          ))}
         <div style={{ flex: 1 }}></div>
         <div
           className="pixel"
-          style={{ fontSize: 9, color: "var(--ink-faint)", letterSpacing: "0.16em" }}
+          style={{
+            fontSize: 9,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.16em",
+          }}
         >
           CRÉDITOS · 03
         </div>

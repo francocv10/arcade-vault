@@ -10,11 +10,11 @@ import {
   type ReactNode,
 } from "react";
 import type { PuntuacionGuardada, Usuario } from "@/app/data";
+import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { createClient } from "@/app/lib/supabase/client";
 // Clave de la sesión simulada anterior: solo se usa para borrarla.
 const USER_KEY_ANTIGUA = "av_user";
 const SCORES_KEY = "av_scores";
-const NOMBRE_SIN_USERNAME = "JUGADOR";
 interface AuthContextValue {
   user: Usuario | null;
   cargando: boolean; // true hasta recibir la primera sesión
@@ -23,11 +23,9 @@ interface AuthContextValue {
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
 function aUsuario(cuenta: User): Usuario {
-  const { username } = cuenta.user_metadata;
   return {
     id: cuenta.id,
-    name:
-      typeof username === "string" && username ? username : NOMBRE_SIN_USERNAME,
+    name: nombreDeCuenta(cuenta.user_metadata.username),
     email: cuenta.email ?? "",
   };
 }

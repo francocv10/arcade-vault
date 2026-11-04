@@ -9,6 +9,7 @@ import {
 } from "./queries";
 import {
   JUEGOS_CON_RANKING,
+  nombreDeCuenta,
   normalizarNombre,
   validarEnvio,
   type EnvioPuntuacion,
@@ -18,15 +19,24 @@ const ERROR_GUARDADO =
 export async function guardarPuntuacion(
   envio: EnvioPuntuacion,
 ): Promise<{ ok: boolean; error?: string }> {
-  const resultado = validarEnvio(envio);
-  if (!resultado.ok) return { ok: false, error: resultado.error };
-  const { game, name, score } = resultado.envio;
+  let game: string;
   try {
     const supabase = await createClient();
-    // `user_id` queda en NULL: la autenticación real es otro spec.
-    const { error } = await supabase
-      .from("scores")
-      .insert({ game_id: game, player_name: name, score });
+    const { data } = await supabase.auth.getClaims();
+    const claims = data?.claims;
+    // Con sesión decide el servidor: se ignora el nombre que envíe el cliente.
+    const entrada = claims
+      ? { ...envio, name: nombreDeCuenta(claims.user_metadata?.username) }
+      : envio;
+    const resultado = validarEnvio(entrada);
+    if (!resultado.ok) return { ok: false, error: resultado.error };
+    game = resultado.envio.game;
+    const { error } = await supabase.from("scores").insert({
+      game_id: game,
+      player_name: resultado.envio.name,
+      score: resultado.envio.score,
+      user_id: claims?.sub ?? null,
+    });
     if (error) {
       console.error("guardarPuntuacion: error de Supabase", error.message);
       return { ok: false, error: ERROR_GUARDADO };

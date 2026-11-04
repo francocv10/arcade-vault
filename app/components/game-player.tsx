@@ -90,7 +90,7 @@ export function GamePlayer({
     initialFocus: "input",
     returnFocus: () => finRef.current,
   });
-  const name = editedName ?? user?.name ?? "INVITADO";
+  const name = user?.name ?? editedName ?? "INVITADO";
   const score = esReal ? (snap?.score ?? 0) : fakeScore;
   const lives = esReal
     ? (snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES))
@@ -404,6 +404,7 @@ export function GamePlayer({
                 <input
                   aria-label="Iniciales"
                   value={name}
+                  readOnly={!!user}
                   onChange={(e) =>
                     setEditedName(e.target.value.toUpperCase().slice(0, 10))
                   }

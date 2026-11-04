@@ -121,6 +121,7 @@ export function mensajeAuth(codigo: string | undefined): string; // código de S
 | `invalid_credentials`                 | `[ERR] Correo o contraseña incorrectos.`                                   |
 | `user_already_exists`, `email_exists` | `[ERR] Ya existe una cuenta con ese correo. Inicia sesión.`                |
 | `email_address_not_authorized`        | `[ERR] Aún no podemos enviar correos a esta dirección.`                    |
+| `email_address_invalid`               | `[ERR] No podemos enviar correos a esta dirección.`                        |
 | `over_email_send_rate_limit`          | `[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.` |
 | `over_request_rate_limit`             | `[ERR] Demasiados intentos. Espera un momento.`                            |
 | `weak_password`                       | `[ERR] La contraseña es demasiado débil.`                                  |
