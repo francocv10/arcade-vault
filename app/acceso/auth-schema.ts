@@ -29,7 +29,7 @@ const MENSAJES_AUTH = new Map<string, string>([
     "[ERR] La contraseña nueva debe ser distinta de la anterior.",
   ],
 ]);
-function validarCorreo(email: string): string | null {
+export function validarCorreo(email: string): string | null {
   const correo = email.trim();
   if (!correo) return "El correo es obligatorio.";
   if (correo.length > CORREO_MAX || !FORMATO_CORREO.test(correo)) {

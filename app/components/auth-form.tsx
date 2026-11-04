@@ -2,7 +2,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
-import { mensajeAuth, validarAcceso } from "@/app/acceso/auth-schema";
+import {
+  mensajeAuth,
+  validarAcceso,
+  validarCorreo,
+  validarRegistro,
+} from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 // Lee la URL en su propio límite de Suspense para que el formulario se
@@ -17,6 +22,104 @@ function AvisoEnlace() {
     </div>
   );
 }
+function RecuperarClave({
+  correoInicial,
+  onVolver,
+}: {
+  correoInicial: string;
+  onVolver: () => void;
+}) {
+  const [email, setEmail] = useState(correoInicial);
+  const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const submit = async (e: SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const encontrado = validarCorreo(email);
+    setErrorCorreo(encontrado);
+    setErrorGeneral(null);
+    if (encontrado) return;
+    setEnviando(true);
+    try {
+      const { error } = await createClient().auth.resetPasswordForEmail(
+        email.trim(),
+      );
+      if (error) setErrorGeneral(mensajeAuth(error.code));
+      else setEnviado(true);
+    } catch {
+      setErrorGeneral(mensajeAuth(undefined));
+    }
+    setEnviando(false);
+  };
+  if (enviado) {
+    return (
+      <>
+        {/* Mismo texto exista o no la cuenta: no revela qué correos hay. */}
+        <div className="auth-ok" role="status">
+          [OK] Si hay una cuenta con ese correo, recibirás un enlace para crear
+          una contraseña nueva.
+        </div>
+        <button
+          className="btn ghost"
+          type="button"
+          style={{ width: "100%" }}
+          onClick={onVolver}
+        >
+          VOLVER A INICIAR SESIÓN
+        </button>
+      </>
+    );
+  }
+  return (
+    <form onSubmit={submit} noValidate>
+      <p className="auth-intro">
+        Escribe tu correo y te enviaremos un enlace para crear una contraseña
+        nueva.
+      </p>
+      <div className="field">
+        <label htmlFor="recuperar-correo">Correo electrónico</label>
+        <input
+          id="recuperar-correo"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="jugador@vault.gg"
+          aria-invalid={!!errorCorreo}
+          aria-describedby={errorCorreo ? "recuperar-correo-error" : undefined}
+        />
+        {errorCorreo && (
+          <p className="field-error" id="recuperar-correo-error">
+            {errorCorreo}
+          </p>
+        )}
+      </div>
+      {errorGeneral && (
+        <div className="terminal-error" role="alert">
+          <span className="err-tag">&gt;</span> {errorGeneral}
+        </div>
+      )}
+      <button
+        className="btn lg"
+        type="submit"
+        disabled={enviando}
+        style={{ width: "100%", marginTop: 8 }}
+      >
+        {enviando ? "ENVIANDO…" : "ENVIAR ENLACE"}
+      </button>
+      <button
+        className="btn ghost"
+        type="button"
+        style={{ width: "100%", marginTop: 10 }}
+        onClick={onVolver}
+      >
+        VOLVER A INICIAR SESIÓN
+      </button>
+    </form>
+  );
+}
 export function AuthForm() {
   const router = useRouter();
   const { user: sesion, cargando, logout } = useAuth();
@@ -27,14 +130,24 @@ export function AuthForm() {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
+  // Next oculta esta ruta con <Activity> al navegar, sin desmontarla: tras
+  // entrar hay que limpiar la contraseña y el envío para que no reaparezcan.
   // Única redirección tras entrar: también cubre a quien llega con sesión.
   useEffect(() => {
     if (!cargando && sesion) router.replace("/home");
   }, [cargando, sesion, router]);
-  const cambiarTab = (siguiente: "in" | "up") => {
-    setTab(siguiente);
+  const limpiarErrores = () => {
     setErrores({});
     setErrorGeneral(null);
+  };
+  const cambiarTab = (siguiente: "in" | "up") => {
+    setTab(siguiente);
+    limpiarErrores();
+  };
+  const abrirRecuperacion = () => {
+    limpiarErrores();
+    setRecuperando(true);
   };
   const entrar = async () => {
     const encontrados = validarAcceso({ email, password: pass });
@@ -47,18 +160,40 @@ export function AuthForm() {
         email: email.trim(),
         password: pass,
       });
-      if (error) {
-        setErrorGeneral(mensajeAuth(error.code));
-        setEnviando(false);
-      }
+      if (error) setErrorGeneral(mensajeAuth(error.code));
+      else setPass("");
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
-      setEnviando(false);
     }
+    setEnviando(false);
+  };
+  const registrar = async () => {
+    const encontrados = validarRegistro({
+      username: user,
+      email,
+      password: pass,
+    });
+    setErrores(encontrados);
+    setErrorGeneral(null);
+    if (Object.keys(encontrados).length > 0) return;
+    setEnviando(true);
+    try {
+      const { data, error } = await createClient().auth.signUp({
+        email: email.trim(),
+        password: pass,
+        options: { data: { username: user } },
+      });
+      // Sin sesión y sin error, Confirm email sigue activo en Supabase.
+      if (error || !data.session) setErrorGeneral(mensajeAuth(error?.code));
+      else setPass("");
+    } catch {
+      setErrorGeneral(mensajeAuth(undefined));
+    }
+    setEnviando(false);
   };
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (tab === "in") void entrar();
+    void (tab === "in" ? entrar() : registrar());
   };
   const playAsGuest = async () => {
     await logout();
@@ -82,127 +217,158 @@ export function AuthForm() {
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
-        <div className="auth-tabs">
-          <button
-            type="button"
-            className={tab === "in" ? "on" : ""}
-            onClick={() => cambiarTab("in")}
-          >
-            INICIAR SESIÓN
-          </button>
-          <button
-            type="button"
-            className={tab === "up" ? "on" : ""}
-            onClick={() => cambiarTab("up")}
-          >
-            CREAR CUENTA
-          </button>
-        </div>
-        <form onSubmit={submit} noValidate>
-          {tab === "up" && (
-            <div className="field slide-in">
-              <label htmlFor="acceso-usuario">Usuario</label>
-              <input
-                id="acceso-usuario"
-                name="username"
-                autoComplete="username"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
-                placeholder="px_kai"
-              />
+        {recuperando ? (
+          <RecuperarClave
+            correoInicial={email}
+            onVolver={() => setRecuperando(false)}
+          />
+        ) : (
+          <>
+            <div className="auth-tabs">
+              <button
+                type="button"
+                className={tab === "in" ? "on" : ""}
+                onClick={() => cambiarTab("in")}
+              >
+                INICIAR SESIÓN
+              </button>
+              <button
+                type="button"
+                className={tab === "up" ? "on" : ""}
+                onClick={() => cambiarTab("up")}
+              >
+                CREAR CUENTA
+              </button>
             </div>
-          )}
-          <div className="field">
-            <label htmlFor="acceso-correo">Correo electrónico</label>
-            <input
-              id="acceso-correo"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jugador@vault.gg"
-              aria-invalid={!!errores.email}
-              aria-describedby={
-                errores.email ? "acceso-correo-error" : undefined
-              }
-            />
-            {errores.email && (
-              <p className="field-error" id="acceso-correo-error">
-                {errores.email}
-              </p>
-            )}
-          </div>
-          <div className="field">
-            <label htmlFor="acceso-clave">Contraseña</label>
-            <input
-              id="acceso-clave"
-              name="password"
-              type="password"
-              autoComplete={tab === "in" ? "current-password" : "new-password"}
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              placeholder="••••••••"
-              aria-invalid={!!errores.password}
-              aria-describedby={
-                errores.password ? "acceso-clave-error" : undefined
-              }
-            />
-            {errores.password && (
-              <p className="field-error" id="acceso-clave-error">
-                {errores.password}
-              </p>
-            )}
-          </div>
-          {errorGeneral ? (
-            <div className="terminal-error" role="alert">
-              <span className="err-tag">&gt;</span> {errorGeneral}
+            <form onSubmit={submit} noValidate>
+              {tab === "up" && (
+                <div className="field slide-in">
+                  <label htmlFor="acceso-usuario">Usuario</label>
+                  <input
+                    id="acceso-usuario"
+                    name="username"
+                    autoComplete="username"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    placeholder="px_kai"
+                    aria-invalid={!!errores.username}
+                    aria-describedby={
+                      errores.username ? "acceso-usuario-error" : undefined
+                    }
+                  />
+                  {errores.username && (
+                    <p className="field-error" id="acceso-usuario-error">
+                      {errores.username}
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="field">
+                <label htmlFor="acceso-correo">Correo electrónico</label>
+                <input
+                  id="acceso-correo"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jugador@vault.gg"
+                  aria-invalid={!!errores.email}
+                  aria-describedby={
+                    errores.email ? "acceso-correo-error" : undefined
+                  }
+                />
+                {errores.email && (
+                  <p className="field-error" id="acceso-correo-error">
+                    {errores.email}
+                  </p>
+                )}
+              </div>
+              <div className="field">
+                <label htmlFor="acceso-clave">Contraseña</label>
+                <input
+                  id="acceso-clave"
+                  name="password"
+                  type="password"
+                  autoComplete={
+                    tab === "in" ? "current-password" : "new-password"
+                  }
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  placeholder="••••••••"
+                  aria-invalid={!!errores.password}
+                  aria-describedby={
+                    errores.password ? "acceso-clave-error" : undefined
+                  }
+                />
+                {errores.password && (
+                  <p className="field-error" id="acceso-clave-error">
+                    {errores.password}
+                  </p>
+                )}
+              </div>
+              {tab === "in" && (
+                <button
+                  type="button"
+                  className="auth-link"
+                  onClick={abrirRecuperacion}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              )}
+              {errorGeneral ? (
+                <div className="terminal-error" role="alert">
+                  <span className="err-tag">&gt;</span> {errorGeneral}
+                </div>
+              ) : (
+                <Suspense fallback={null}>
+                  <AvisoEnlace />
+                </Suspense>
+              )}
+              <button
+                className="btn lg"
+                type="submit"
+                disabled={enviando}
+                style={{ width: "100%", marginTop: 8 }}
+              >
+                {tab === "in"
+                  ? enviando
+                    ? "ENTRANDO…"
+                    : "ENTRAR AL VAULT"
+                  : enviando
+                    ? "CREANDO CUENTA…"
+                    : "CREAR Y JUGAR"}
+              </button>
+            </form>
+            <button
+              className="btn ghost"
+              type="button"
+              style={{ width: "100%", marginTop: 10 }}
+              onClick={playAsGuest}
+            >
+              JUGAR COMO INVITADO
+            </button>
+            <div className="auth-divider">O CONTINÚA CON</div>
+            <div className="social">
+              <button
+                className="btn ghost"
+                type="button"
+                disabled
+                title="Próximamente"
+              >
+                ◆ GOOGLE
+              </button>
+              <button
+                className="btn ghost"
+                type="button"
+                disabled
+                title="Próximamente"
+              >
+                ▣ GITHUB
+              </button>
             </div>
-          ) : (
-            <Suspense fallback={null}>
-              <AvisoEnlace />
-            </Suspense>
-          )}
-          <button
-            className="btn lg"
-            type="submit"
-            disabled={enviando}
-            style={{ width: "100%", marginTop: 8 }}
-          >
-            {enviando
-              ? "ENTRANDO…"
-              : tab === "in"
-                ? "ENTRAR AL VAULT"
-                : "CREAR Y JUGAR"}
-          </button>
-        </form>
-        <button
-          className="btn ghost"
-          type="button"
-          style={{ width: "100%", marginTop: 10 }}
-          onClick={playAsGuest}
-        >
-          JUGAR COMO INVITADO
-        </button>
-        <div className="auth-divider">O CONTINÚA CON</div>
-        <div className="social">
-          <button
-            className="btn ghost"
-            type="button"
-            disabled
-            title="Próximamente"
-          >
-            ◆ GOOGLE
-          </button>
-          <button
-            className="btn ghost"
-            type="button"
-            disabled
-            title="Próximamente"
-          >
-            ▣ GITHUB
-          </button>
-        </div>
+          </>
+        )}
         <div
           style={{
             marginTop: 18,

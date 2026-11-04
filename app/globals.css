@@ -3770,14 +3770,16 @@ body:has(.av-player) .av-bg::before {
   animation: blink 1s steps(1) infinite;
 }
 /* contact form: errores, honeypot y estado deshabilitado */
-.contact-form .field-error {
+.contact-form .field-error,
+.auth-card .field-error {
   margin: 0;
   font-family: var(--mono);
   font-size: 12px;
   color: var(--magenta);
   text-shadow: 0 0 6px rgba(255, 0, 110, 0.4);
 }
-.contact-form [aria-invalid="true"] {
+.contact-form [aria-invalid="true"],
+.auth-card [aria-invalid="true"] {
   border-color: var(--magenta);
 }
 .contact-form .hp-field {
@@ -3787,9 +3789,61 @@ body:has(.av-player) .av-bg::before {
   height: 1px;
   overflow: hidden;
 }
-.contact-form .btn:disabled {
+.contact-form .btn:disabled,
+.auth-card .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+/* Deshabilitado no reacciona: GOOGLE y GITHUB no deben parecer disponibles. */
+.auth-card .btn:disabled:hover {
+  box-shadow: none;
+}
+.auth-card .btn.ghost:disabled:hover {
+  color: var(--ink-dim);
+  --btn-c: var(--ink-faint);
+}
+.auth-card .btn:disabled:active {
+  transform: none;
+}
+.auth-intro {
+  margin: 0 0 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+.auth-ok {
+  background: #000;
+  border: 1px solid var(--green);
+  box-shadow: 0 0 18px rgba(0, 255, 136, 0.25);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--green);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.auth-link {
+  display: block;
+  margin: 0 0 14px auto;
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.auth-link:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .auth-link {
+    padding: 12px 0;
+  }
 }
 .terminal-error {
   background: #000;
