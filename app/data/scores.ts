@@ -1,29 +1,41 @@
-// Puntuaciones, jugadores y usuario ficticios. Esta capa se sustituirá por una base de datos.
-
+// Puntuaciones y jugadores ficticios. Esta capa se sustituirá por una base de datos.
 export interface PuntuacionRanking {
   rank: number;
   name: string;
   score: number;
   date: string;
 }
-
 export interface Usuario {
-  name: string;
+  id: string; // auth.users.id
+  name: string; // user_metadata.username
+  email: string;
 }
-
 export interface PuntuacionGuardada {
   game: string;
   score: number;
   name: string;
   at: number;
 }
-
 export const PLAYERS: string[] = [
-  "PX_KAI", "NEONFOX", "Z3R0COOL", "M00NRYU", "VAULT_07", "GLITCHA",
-  "ATARI_KID", "CYBER_LU", "MAGENTA88", "SCANLINE", "BIT_LORD", "ARKADYA",
-  "DROID_X", "RGB_QUEEN", "PIXEL_DAD", "RETROVIRA", "VECTORX", "JOY_STK",
+  "PX_KAI",
+  "NEONFOX",
+  "Z3R0COOL",
+  "M00NRYU",
+  "VAULT_07",
+  "GLITCHA",
+  "ATARI_KID",
+  "CYBER_LU",
+  "MAGENTA88",
+  "SCANLINE",
+  "BIT_LORD",
+  "ARKADYA",
+  "DROID_X",
+  "RGB_QUEEN",
+  "PIXEL_DAD",
+  "RETROVIRA",
+  "VECTORX",
+  "JOY_STK",
 ];
-
 export function seededScores(seed: number, count = 12): PuntuacionRanking[] {
   let s = seed;
   const rand = () => (s = (s * 9301 + 49297) % 233280) / 233280;

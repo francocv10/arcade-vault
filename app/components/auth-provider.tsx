@@ -1,5 +1,5 @@
 "use client";
-
+import type { User } from "@supabase/supabase-js";
 import {
   createContext,
   useCallback,
@@ -10,45 +10,55 @@ import {
   type ReactNode,
 } from "react";
 import type { PuntuacionGuardada, Usuario } from "@/app/data";
-
-const USER_KEY = "av_user";
+import { createClient } from "@/app/lib/supabase/client";
+// Clave de la sesión simulada anterior: solo se usa para borrarla.
+const USER_KEY_ANTIGUA = "av_user";
 const SCORES_KEY = "av_scores";
-
+const NOMBRE_SIN_USERNAME = "JUGADOR";
 interface AuthContextValue {
   user: Usuario | null;
-  login: (user: Usuario) => void;
-  logout: () => void;
+  cargando: boolean; // true hasta recibir la primera sesión
+  logout: () => Promise<void>;
   saveScore: (entry: Omit<PuntuacionGuardada, "at">) => void;
 }
-
 const AuthContext = createContext<AuthContextValue | null>(null);
-
+function aUsuario(cuenta: User): Usuario {
+  const { username } = cuenta.user_metadata;
+  return {
+    id: cuenta.id,
+    name:
+      typeof username === "string" && username ? username : NOMBRE_SIN_USERNAME,
+    email: cuenta.email ?? "",
+  };
+}
+function mismoUsuario(a: Usuario | null, b: Usuario | null): boolean {
+  return a?.id === b?.id && a?.name === b?.name && a?.email === b?.email;
+}
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Render inicial sin sesión; localStorage se lee en useEffect para evitar errores de hidratación.
+  // Render inicial sin sesión: la sesión se resuelve en cliente tras hidratar.
   const [user, setUser] = useState<Usuario | null>(null);
-
+  const [cargando, setCargando] = useState(true);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(USER_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única tras hidratar
-      if (raw) setUser(JSON.parse(raw) as Usuario);
+      localStorage.removeItem(USER_KEY_ANTIGUA);
     } catch {}
+    // El callback solo actualiza estado: llamar a Supabase dentro lo bloquearía.
+    const {
+      data: { subscription },
+    } = createClient().auth.onAuthStateChange((_evento, sesion) => {
+      const siguiente = sesion ? aUsuario(sesion.user) : null;
+      // Refrescar el token no debe volver a renderizar a quien usa useAuth,
+      // como GamePlayer: si la cuenta es la misma, se conserva el objeto.
+      setUser((actual) =>
+        mismoUsuario(actual, siguiente) ? actual : siguiente,
+      );
+      setCargando(false);
+    });
+    return () => subscription.unsubscribe();
   }, []);
-
-  const login = useCallback((u: Usuario) => {
-    setUser(u);
-    try {
-      localStorage.setItem(USER_KEY, JSON.stringify(u));
-    } catch {}
+  const logout = useCallback(async () => {
+    await createClient().auth.signOut();
   }, []);
-
-  const logout = useCallback(() => {
-    setUser(null);
-    try {
-      localStorage.removeItem(USER_KEY);
-    } catch {}
-  }, []);
-
   const saveScore = useCallback((entry: Omit<PuntuacionGuardada, "at">) => {
     try {
       const all: PuntuacionGuardada[] = JSON.parse(
@@ -58,15 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(SCORES_KEY, JSON.stringify(all));
     } catch {}
   }, []);
-
   const value = useMemo(
-    () => ({ user, login, logout, saveScore }),
-    [user, login, logout, saveScore],
+    () => ({ user, cargando, logout, saveScore }),
+    [user, cargando, logout, saveScore],
   );
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>");
