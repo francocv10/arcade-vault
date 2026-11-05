@@ -27,9 +27,12 @@ const AVISOS_URL = new Map([
     "[ERR] No pudimos abrir la sesión con este enlace. Inicia sesión: si tu cuenta aún no está confirmada, podrás pedir otro enlace.",
   ],
 ]);
-// Solo se llama desde manejadores: `location` no existe al prerrenderizar.
+// Solo se llaman desde manejadores: `location` no existe al prerrenderizar.
 function urlConfirmacion() {
   return `${location.origin}/auth/callback?origen=correo`;
+}
+function urlRecuperacion() {
+  return `${location.origin}/auth/callback?origen=recuperacion`;
 }
 // Lee la URL en su propio límite de Suspense para que el formulario se
 // prerrenderice: useSearchParams no se puede resolver en el HTML estático.
@@ -65,6 +68,7 @@ function RecuperarClave({
     try {
       const { error } = await createClient().auth.resetPasswordForEmail(
         email.trim(),
+        { redirectTo: urlRecuperacion() },
       );
       if (error) setErrorGeneral(mensajeAuth(error.code));
       else setEnviado(true);

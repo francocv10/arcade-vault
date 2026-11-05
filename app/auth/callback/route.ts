@@ -5,8 +5,14 @@ import { createClient } from "@/app/lib/supabase/server";
 // puede usarse como redirección abierta.
 const DESTINO_CON_NOMBRE = "/home";
 const DESTINO_SIN_NOMBRE = "/acceso/nombre";
+const DESTINO_RECUPERACION = "/acceso/nueva-clave";
 const DESTINO_ERROR_OAUTH = "/acceso?error=oauth";
 const DESTINO_ERROR_CONFIRMACION = "/acceso?error=confirmacion";
+const DESTINO_ERROR_RECUPERACION = "/acceso?error=enlace";
+const DESTINOS_ERROR = new Map([
+  ["correo", DESTINO_ERROR_CONFIRMACION],
+  ["recuperacion", DESTINO_ERROR_RECUPERACION],
+]);
 function redirigir(destino: string, request: NextRequest) {
   const respuesta = NextResponse.redirect(new URL(destino, request.url));
   // Esta respuesta puede llevar las cookies de la sesión recién creada.
@@ -15,18 +21,19 @@ function redirigir(destino: string, request: NextRequest) {
 }
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  // `origen` solo elige entre dos avisos fijos: lo escribe la app en
-  // emailRedirectTo y nunca decide adónde se redirige fuera de esta tabla.
-  const destinoError =
-    searchParams.get("origen") === "correo"
-      ? DESTINO_ERROR_CONFIRMACION
-      : DESTINO_ERROR_OAUTH;
+  // `origen` lo escribe la app en los enlaces de sus correos y solo elige entre
+  // destinos fijos de este archivo: nunca decide una URL.
+  const origen = searchParams.get("origen") ?? "";
+  const destinoError = DESTINOS_ERROR.get(origen) ?? DESTINO_ERROR_OAUTH;
   // Sin código también llega quien cancela en el proveedor.
   const code = searchParams.get("code");
   if (!code) return redirigir(destinoError, request);
   const supabase = await createClient();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return redirigir(destinoError, request);
+  if (origen === "recuperacion") {
+    return redirigir(DESTINO_RECUPERACION, request);
+  }
   return redirigir(
     tieneUsuario(data.user.user_metadata.username)
       ? DESTINO_CON_NOMBRE

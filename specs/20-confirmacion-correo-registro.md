@@ -142,7 +142,7 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 ## Criterios de aceptación
 
 - [x] `npm run lint` y `npm run build` terminan sin errores.
-- [x] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`. _Comprobado por el usuario en el panel; `mailer_autoconfirm` es `false` y el enlace real pasó por `/auth/v1/verify` y volvió a `/auth/callback?origen=correo`._
+- [x] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`. _`mailer_autoconfirm` es `false`. La variable se vio en el HTML de la vista previa del panel, con el inspector del navegador (`<a href="{{ .ConfirmationURL }}">`), y el enlace real pasó por `/auth/v1/verify` y volvió a `/auth/callback?origen=correo`._
 - [x] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
 - [x] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
 - [x] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse. _El enlace real llegó a `/home`; `NOMBRE ▾` se vio con una cuenta de prueba confirmada por `/auth/confirm`._
