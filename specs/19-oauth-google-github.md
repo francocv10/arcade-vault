@@ -1,6 +1,6 @@
 # SPEC 19 — Inicio de sesión con Google y GitHub
 
-> **Status:** Borrador
+> **Status:** Aprobado
 > **Depends on:** SPEC 18 (sesión de Supabase, `proxy.ts`, `AuthProvider`, `/acceso` y reglas de `username`)
 > **Date:** 2026-11-03
 > **Objective:** Activar los botones GOOGLE y GITHUB de `/acceso` con OAuth de Supabase y pedir un nombre de jugador en el primer acceso a quien todavía no lo tenga.
