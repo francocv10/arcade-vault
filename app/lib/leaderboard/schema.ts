@@ -29,6 +29,10 @@ export function normalizarNombre(nombre: string): string {
     .trim()
     .toUpperCase();
 }
+// Nombre que se muestra de una cuenta: "" o sin definir mientras no lo elija.
+export function nombreDeCuenta(username: unknown): string {
+  return typeof username === "string" && username ? username : "JUGADOR";
+}
 export function validarEnvio(entrada: unknown): ResultadoEnvio {
   if (typeof entrada !== "object" || entrada === null) {
     return { ok: false, error: "Envío no válido." };

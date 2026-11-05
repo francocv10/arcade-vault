@@ -20,6 +20,7 @@ import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
 import { TouchControls } from "./touch-controls";
 import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
+import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
 const LIVES = 3;
@@ -90,7 +91,7 @@ export function GamePlayer({
     initialFocus: "input",
     returnFocus: () => finRef.current,
   });
-  const name = editedName ?? user?.name ?? "INVITADO";
+  const name = user ? nombreDeCuenta(user.name) : (editedName ?? "INVITADO");
   const score = esReal ? (snap?.score ?? 0) : fakeScore;
   const lives = esReal
     ? (snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES))
@@ -404,6 +405,7 @@ export function GamePlayer({
                 <input
                   aria-label="Iniciales"
                   value={name}
+                  readOnly={!!user}
                   onChange={(e) =>
                     setEditedName(e.target.value.toUpperCase().slice(0, 10))
                   }

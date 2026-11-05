@@ -17,7 +17,7 @@ export async function createClient() {
           );
         } catch {
           // Server Components no pueden escribir cookies. Se ignora: el
-          // refresco de sesión llegará con proxy.ts en el spec de auth.
+          // refresco de sesión lo hace proxy.ts.
         }
       },
     },

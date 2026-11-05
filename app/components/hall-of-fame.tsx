@@ -8,6 +8,7 @@ import {
   type PuntuacionRanking,
 } from "@/app/data";
 import { obtenerMejorMarca } from "@/app/lib/leaderboard/actions";
+import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { useAuth } from "./auth-provider";
 import { EmptyBoard } from "./empty-board";
 type MejorMarca = { rank: number; score: number; date: string };
@@ -167,7 +168,7 @@ export function HallOfFame({
                     #{String(mejorMarca?.rank ?? youRank).padStart(2, "0")}
                   </div>
                   <div className="pl" style={{ color: "var(--yellow)" }}>
-                    {user.name}
+                    {nombreDeCuenta(user.name)}
                   </div>
                   <div
                     className="sc"

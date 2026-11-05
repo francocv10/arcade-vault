@@ -1,5 +1,6 @@
 "use server";
 import { updateTag } from "next/cache";
+import { tieneUsuario } from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/server";
 import {
   ETIQUETA_ACTIVIDAD,
@@ -15,18 +16,38 @@ import {
 } from "./schema";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Inténtalo de nuevo.";
+const ERROR_SIN_NOMBRE =
+  "[ERR] Elige tu nombre de jugador antes de guardar la puntuación.";
 export async function guardarPuntuacion(
   envio: EnvioPuntuacion,
 ): Promise<{ ok: boolean; error?: string }> {
-  const resultado = validarEnvio(envio);
-  if (!resultado.ok) return { ok: false, error: resultado.error };
-  const { game, name, score } = resultado.envio;
+  let game: string;
   try {
     const supabase = await createClient();
-    // `user_id` queda en NULL: la autenticación real es otro spec.
-    const { error } = await supabase
-      .from("scores")
-      .insert({ game_id: game, player_name: name, score });
+    const { data } = await supabase.auth.getClaims();
+    const claims = data?.claims;
+    let entrada = envio;
+    if (claims) {
+      // Con sesión decide el servidor: se ignora el nombre que envíe el cliente.
+      // getUser y no los claims: updateUser no renueva el JWT, así que el
+      // nombre recién elegido no estaría en el token hasta el siguiente refresco.
+      const { data: cuenta } = await supabase.auth.getUser();
+      if (!cuenta.user) return { ok: false, error: ERROR_GUARDADO };
+      const { username } = cuenta.user.user_metadata;
+      if (!tieneUsuario(username)) {
+        return { ok: false, error: ERROR_SIN_NOMBRE };
+      }
+      entrada = { ...envio, name: username };
+    }
+    const resultado = validarEnvio(entrada);
+    if (!resultado.ok) return { ok: false, error: resultado.error };
+    game = resultado.envio.game;
+    const { error } = await supabase.from("scores").insert({
+      game_id: game,
+      player_name: resultado.envio.name,
+      score: resultado.envio.score,
+      user_id: claims?.sub ?? null,
+    });
     if (error) {
       console.error("guardarPuntuacion: error de Supabase", error.message);
       return { ok: false, error: ERROR_GUARDADO };
