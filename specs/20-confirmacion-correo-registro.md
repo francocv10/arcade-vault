@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Aplazado (2026-11-05). Sin dominio ni SMTP propio, el panel de Supabase no dejó editar la plantilla «Confirm signup», y sin ella el enlace no pasa por `/auth/confirm` ni abre la sesión. **Confirm email** sigue desactivado, como en la SPEC 19. Los pasos 2 a 7 están en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; los pasos 8 y 9 quedan pendientes.
+> **Status:** Aprobado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** sigue desactivado hasta el paso 10. Los pasos 2 a 7 están en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; los pasos 1 y 8 a 11 quedan pendientes.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -17,15 +17,23 @@ Con la confirmación desactivada, alguien puede registrar el correo de otra pers
 
 Cuentas existentes: la base tiene 3 cuentas y ninguna sin confirmar (consultado el 2026-11-04), así que activar la opción no bloquea a nadie.
 
+### Por qué se reabre
+
+Esta spec se aplazó el 2026-11-05: sin dominio ni SMTP propio, el panel de Supabase no dejó editar la plantilla «Confirm signup», y el plan dependía de esa edición para usar `token_hash` y `/auth/confirm`.
+
+El nuevo plan no toca la plantilla. Su `{{ .ConfirmationURL }}` pasa por el dominio de Supabase, que debería volver a `emailRedirectTo` con un `code` de PKCE. `/auth/callback` ya canjea esos códigos. En `@supabase/auth-js` 2.118.0, `signUp` y `resend` envían el `code_challenge` y aceptan `emailRedirectTo`.
+
+**Esta vía no está confirmada:** la documentación de Supabase solo describe la de `token_hash`. Por eso el paso 10 la prueba con correos reales, y si falla la spec vuelve a Aplazado.
+
 ### Registro con Google y GitHub
 
 Google y GitHub siguen siendo una vía de registro, no solo de acceso: esta spec no los retira ni les añade pasos. Hasta conectar Resend, serán la única forma de crear cuenta para quien no pertenece al equipo. Lo que ocurre depende del correo que devuelve el proveedor:
 
-| Correo del proveedor              | Resultado                                                                                                                                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Sin cuenta en `auth.users`        | Se crea una cuenta nueva sin enviar correo, y `/auth/callback` lleva a `/acceso/nombre`. No hay vinculación.                                                                               |
-| Con cuenta confirmada             | La identidad se vincula a esa cuenta, que conserva su nombre y sus puntuaciones.                                                                                                           |
-| Con cuenta pendiente de confirmar | Según la documentación de Supabase, la identidad se vincula y se elimina la identidad de correo sin confirmar, así que la contraseña elegida no debería servir. Se comprueba en el paso 8. |
+| Correo del proveedor              | Resultado                                                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sin cuenta en `auth.users`        | Se crea una cuenta nueva sin enviar correo, y `/auth/callback` lleva a `/acceso/nombre`. No hay vinculación.                                                                                |
+| Con cuenta confirmada             | La identidad se vincula a esa cuenta, que conserva su nombre y sus puntuaciones.                                                                                                            |
+| Con cuenta pendiente de confirmar | Según la documentación de Supabase, la identidad se vincula y se elimina la identidad de correo sin confirmar, así que la contraseña elegida no debería servir. Se comprueba en el paso 10. |
 
 ---
 
@@ -33,8 +41,10 @@ Google y GitHub siguen siendo una vía de registro, no solo de acceso: esta spec
 
 **In:**
 
-- Configuración del panel (pasos manuales del usuario): plantilla «Confirm signup» en español y **Confirm email** activado.
-- `/auth/confirm` acepta también `type=email`, abre la sesión y redirige a `/home`.
+- Configuración del panel (paso manual del usuario): **Confirm email** activado, con la plantilla «Confirm signup» por defecto.
+- `signUp` y `auth.resend` envían `emailRedirectTo` a `/auth/callback?origen=correo`.
+- `/auth/callback` abre la sesión del enlace de confirmación, y si falla redirige a `/acceso?error=confirmacion` con un aviso propio.
+- `/auth/confirm` acepta también `type=email`, ya hecho en la rama. Queda preparado para usarlo cuando se pueda editar la plantilla.
 - Estado «REVISA TU CORREO» dentro de la tarjeta de `AuthForm`, con el correo de destino, REENVIAR ENLACE y VOLVER A INICIAR SESIÓN.
 - Reenvío del enlace con `auth.resend`.
 - Iniciar sesión con una cuenta sin confirmar lleva a ese mismo estado, con un texto propio.
@@ -44,12 +54,14 @@ Google y GitHub siguen siendo una vía de registro, no solo de acceso: esta spec
 **Out of scope (para futuros specs):**
 
 - Conectar Resend como SMTP de Supabase y comprar o verificar un dominio.
+- Traducir el correo de confirmación, que sigue en inglés hasta poder editar la plantilla.
+- Pasar el enlace a `token_hash` y `/auth/confirm`, que depende de esa misma edición.
 - Configuración de producción: Site URL y redirecciones.
 - Pantalla o ruta propia para la confirmación.
 - Código de 6 dígitos como alternativa al enlace.
 - Reconfirmar las 3 cuentas existentes.
 - Cambiar de correo desde un perfil.
-- Cambios en el código de OAuth: Google y GitHub ya verifican el correo y no pasan por este flujo, y siguen permitiendo registrarse (ver «Registro con Google y GitHub»).
+- Cambios en el flujo de OAuth: Google y GitHub ya verifican el correo y no pasan por este flujo, y siguen permitiendo registrarse (ver «Registro con Google y GitHub»). `/auth/callback` solo añade la rama de `origen=correo`.
 - CAPTCHA.
 
 ---
@@ -84,7 +96,22 @@ const [pendiente, setPendiente] = useState<ConfirmacionPendiente | null>(null);
 | `email`        | `/home`                 | `/acceso?error=enlace` |
 | cualquier otro | —                       | `/acceso?error=enlace` |
 
-El destino sigue saliendo de una tabla interna, nunca de un parámetro de la URL.
+El destino sigue saliendo de una tabla interna, nunca de un parámetro de la URL. Con la plantilla por defecto ningún correo enlaza aquí todavía: esta tabla queda preparada para cuando se pueda editar.
+
+### Destinos de `/auth/callback`
+
+| `origen`             | Con `code` válido                      | Sin `code` o si falla        |
+| -------------------- | -------------------------------------- | ---------------------------- |
+| `correo`             | `/home`, o `/acceso/nombre` sin nombre | `/acceso?error=confirmacion` |
+| ausente o otro valor | `/home`, o `/acceso/nombre` sin nombre | `/acceso?error=oauth`        |
+
+`origen` solo elige entre dos destinos fijos. `?origen=correo` lo escribe la app en `emailRedirectTo`, y solo cambia qué aviso se muestra.
+
+### Aviso de `?error=confirmacion`
+
+`[ERR] No pudimos abrir la sesión con este enlace. Inicia sesión: si tu cuenta aún no está confirmada, podrás pedir otro enlace.`
+
+Cubre el enlace caducado, el reutilizado y el abierto en otro navegador, porque `/auth/callback` no los distingue. Es válido en los tres casos: iniciar sesión entra si la cuenta ya está confirmada, y si no lleva a «REVISA TU CORREO».
 
 ---
 
@@ -94,26 +121,34 @@ Antes de escribir código hay que leer la guía de `route.ts` en `node_modules/n
 
 El orden importa: **Confirm email** se activa al final. Si se activara antes, `signUp` respondería sin sesión y el código actual lo mostraría como un error general.
 
-1. **Plantilla (manual, en el panel).** Traducir «Confirm signup» al español con el enlace `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`. Verificación: la plantilla guardada no contiene `{{ .ConfirmationURL }}`.
-2. **Enlace de confirmación.** En `app/auth/confirm/route.ts`, sustituir la comprobación de `recovery` por una tabla de tipos y destinos, y pasar el `type` validado a `verifyOtp`. Verificación: `/auth/confirm?type=email` sin `token_hash` y `/auth/confirm?type=signup&token_hash=x` redirigen a `/acceso?error=enlace`; `recovery` funciona como antes.
+1. **Plantilla (manual, en el panel).** Comprobar, sin cambiar nada, que «Confirm signup» conserva el enlace `{{ .ConfirmationURL }}`. Verificación: la plantilla guardada contiene esa variable.
+2. **Enlace de `/auth/confirm` (hecho en la rama).** En `app/auth/confirm/route.ts`, sustituir la comprobación de `recovery` por una tabla de tipos y destinos, y pasar el `type` validado a `verifyOtp`. Verificación: `/auth/confirm?type=email` sin `token_hash` y `/auth/confirm?type=signup&token_hash=x` redirigen a `/acceso?error=enlace`; `recovery` funciona como antes.
 3. **Estado «REVISA TU CORREO».** Añadir a `app/components/auth-form.tsx` el componente `RevisaCorreo`, con el mismo patrón que `RecuperarClave`, y mostrarlo cuando `pendiente` no sea nulo. El texto va en `role="status"`. Verificación: forzando `pendiente`, el estado se ve y se usa con teclado a 320 px.
 4. **Reenvío.** REENVIAR ENLACE llama a `auth.resend({ type: "signup", email })`, se deshabilita mientras envía y muestra los errores con `mensajeAuth` en un bloque `role="alert"`. Verificación: `over_email_send_rate_limit` muestra su mensaje y no rompe la pantalla.
 5. **Registro.** En `registrar`, sin error y sin sesión, limpiar la contraseña y fijar `pendiente` con `motivo: "registro"`. Con sesión, conservar la rama actual. Con error, conservar el mensaje y lo escrito. Cambiar el texto del botón a «CREAR CUENTA» y «CREANDO CUENTA…». Verificación: `npx tsc --noEmit` sin errores.
-6. **Acceso sin confirmar.** En `entrar`, con `error.code === "email_not_confirmed"`, limpiar la contraseña y fijar `pendiente` con `motivo: "acceso"`, sin enviar nada. Verificación en el paso 8.
+6. **Acceso sin confirmar.** En `entrar`, con `error.code === "email_not_confirmed"`, limpiar la contraseña y fijar `pendiente` con `motivo: "acceso"`, sin enviar nada. Verificación en el paso 10.
 7. **Limpieza.** VOLVER A INICIAR SESIÓN pone `pendiente` a `null` y deja la pestaña INICIAR SESIÓN con el correo escrito. Como `<Activity>` conserva el estado, `pendiente` también se limpia al detectar una sesión.
-8. **Activar (manual, en el panel).** Activar **Confirm email**. Recorrer el flujo con un correo del equipo y comprobar que una contraseña errónea sobre una cuenta sin confirmar da `invalid_credentials`, no `email_not_confirmed`. Si no fuera así, el acceso revelaría qué correos existen: parar y replantear el paso 6. Con la opción activa, repetir también el registro con Google y GitHub y entrar por OAuth con el correo de una cuenta pendiente de confirmar.
-9. **Documentación.** Actualizar en `CLAUDE.md` la lista de specs, `/auth/confirm`, `AuthForm`, la configuración de Auth, la limitación del correo sin dominio y el riesgo aceptado de la SPEC 19.
+8. **Redirección del correo.** En `registrar` y en REENVIAR ENLACE, pasar `emailRedirectTo: ${location.origin}/auth/callback?origen=correo` en `options`. Verificación: `npx tsc --noEmit` sin errores, y con **Confirm email** desactivado el registro sigue abriendo la sesión.
+9. **Callback y aviso.** En `app/auth/callback/route.ts`, elegir el destino de error con la tabla de «Destinos de `/auth/callback`». Añadir `confirmacion` a los avisos de `?error=` de `app/components/auth-form.tsx`. Verificación: `/auth/callback?origen=correo` sin código redirige a `/acceso?error=confirmacion` y muestra el aviso; `/auth/callback` y `/auth/callback?origen=otro` sin código redirigen a `/acceso?error=oauth`.
+10. **Activar y probar (manual, en el panel).** Activar **Confirm email** y registrarse con un correo del equipo. Pulsar el enlace debe abrir la sesión en `/home`. Si no la abre, o el enlace no vuelve a `/auth/callback`, desactivar **Confirm email** y devolver esta spec a Aplazado. Con la opción activa, comprobar también:
+    - Una contraseña errónea sobre una cuenta sin confirmar da `invalid_credentials`, no `email_not_confirmed`. Si no fuera así, el acceso revelaría qué correos existen: parar y replantear el paso 6.
+    - El enlace de REENVIAR ENLACE también abre la sesión.
+    - El enlace abierto en otro navegador muestra el aviso y deja la cuenta confirmada.
+    - El registro con Google y GitHub, y la entrada por OAuth con el correo de una cuenta pendiente de confirmar.
+11. **Documentación.** Actualizar en `CLAUDE.md` la lista de specs, `/auth/confirm`, `AuthForm`, la configuración de Auth, la limitación del correo sin dominio y el riesgo aceptado de la SPEC 19.
 
 ---
 
 ## Criterios de aceptación
 
 - [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] **Confirm email** está activado y la plantilla «Confirm signup» está en español con el enlace a `/auth/confirm`.
+- [ ] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`.
 - [ ] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
-- [ ] El correo llega en español y su enlace apunta a `/auth/confirm?token_hash=…&type=email`.
+- [ ] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
 - [ ] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse.
-- [ ] Reutilizar o manipular el enlace lleva a `/acceso?error=enlace` y muestra un aviso.
+- [ ] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso.
+- [ ] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta.
+- [ ] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
 - [ ] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
 - [ ] Iniciar sesión con una contraseña errónea en una cuenta sin confirmar muestra `[ERR] Correo o contraseña incorrectos.`
 - [ ] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta.
@@ -140,7 +175,11 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 - **Sí:** «REVISA TU CORREO» dentro de la tarjeta de `AuthForm` (decisión del usuario). **No:** ruta propia, que obligaría a llevar el correo en la URL o en almacenamiento.
 - **Sí:** el enlace abre la sesión y entra en `/home` (decisión del usuario). **No:** volver a `/acceso` y pedir la contraseña, un paso más sin ventaja real.
 - **Sí:** un correo duplicado ve el mismo «REVISA TU CORREO» (decisión del usuario). Supabase ya responde sin error ni correo, y así el registro deja de revelar qué correos existen. **No:** detectar `identities` vacío.
-- **Sí:** `/auth/confirm` para los dos tipos, con `token_hash`. Es el patrón SSR ya usado en la recuperación. **No:** `{{ .ConfirmationURL }}`, que pasa por el dominio de Supabase y no por nuestra tabla de destinos.
+- **Sí:** plantilla por defecto con `{{ .ConfirmationURL }}` y retorno a `/auth/callback` (decisión del usuario). Se puede hacer sin dominio y sustituye a la decisión anterior de usar `token_hash`. **No:** esperar a tener dominio y Resend, que mantendría abierto el riesgo de la SPEC 19.
+- **Sí:** correo en inglés mientras no se pueda editar la plantilla (decisión del usuario, consecuencia de la anterior).
+- **Sí:** aviso propio `?error=confirmacion` (decisión del usuario). **No:** reutilizar `?error=oauth`, que hablaría de proveedores a quien se registró con correo.
+- **Sí:** marca fija `origen=correo` en `emailRedirectTo`. Es la forma mínima de elegir el aviso sin aceptar un destino desde la URL.
+- **Sí:** conservar `type=email` en `/auth/confirm`, que ya está en la rama. Es inofensivo sin un enlace que lo use y evita rehacerlo cuando se pueda editar la plantilla. **No:** revertirlo.
 - **Sí:** tipo `email`, el que indica la documentación vigente para la plantilla. **No:** aceptar `signup`.
 - **Sí:** el acceso sin confirmar no reenvía solo. El jugador decide, y así intentar entrar no gasta el límite de correos.
 - **Sí:** cambiar el botón a «CREAR CUENTA». «CREAR Y JUGAR» promete una entrada que ya no ocurre.
@@ -153,24 +192,29 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 
 ## Riesgos
 
-| Riesgo                                                                         | Mitigación                                                                                                                  |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Hasta conectar Resend, solo el equipo puede registrarse con correo             | Riesgo aceptado por el usuario. El mensaje de `email_address_not_authorized` ofrece Google, GitHub e invitado.              |
-| Google en modo de prueba solo admite a sus usuarios de prueba                  | Hasta publicar la pantalla de consentimiento, GitHub es la única vía de registro abierta a cualquiera.                      |
-| El límite por hora del correo integrado bloquea las pruebas                    | Agrupar las comprobaciones del paso 8. `over_email_send_rate_limit` tiene mensaje propio.                                   |
-| Un filtro de correo abre el enlace antes que el jugador y lo consume           | La cuenta queda confirmada igualmente. El jugador ve `?error=enlace` y puede iniciar sesión con su contraseña.              |
-| El enlace caduca                                                               | Iniciar sesión lleva a «REVISA TU CORREO», desde donde se reenvía.                                                          |
-| La pestaña original sigue en «REVISA TU CORREO» tras confirmar en otra pestaña | La sesión la crea el servidor, así que esa pestaña no se entera hasta recargar. Se acepta: la pestaña nueva ya está dentro. |
-| El enlace se abre en otro dispositivo y abre la sesión allí                    | Comportamiento esperado del `token_hash`. Con `localhost` solo funciona en el mismo equipo hasta desplegar.                 |
-| Las 3 cuentas existentes se crearon sin confirmación real                      | Se aceptan: son pocas y se conocen. El riesgo de apropiación de la SPEC 19 solo se cierra para las cuentas nuevas.          |
-| Registrarse con un correo ajeno envía un correo a esa persona                  | Inevitable con confirmación. El límite de Supabase lo acota y la cuenta no se activa sin pulsar el enlace.                  |
-| La plantilla sigue siendo la de por defecto                                    | El enlace pasaría por `/auth/v1/verify` y no por `/auth/confirm`. El paso 1 y sus criterios lo comprueban.                  |
+| Riesgo                                                                                                | Mitigación                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hasta conectar Resend, solo el equipo puede registrarse con correo                                    | Riesgo aceptado por el usuario. El mensaje de `email_address_not_authorized` ofrece Google, GitHub e invitado.                                                                           |
+| Google en modo de prueba solo admite a sus usuarios de prueba                                         | Hasta publicar la pantalla de consentimiento, GitHub es la única vía de registro abierta a cualquiera.                                                                                   |
+| El límite por hora del correo integrado bloquea las pruebas                                           | Agrupar las comprobaciones del paso 10. `over_email_send_rate_limit` tiene mensaje propio.                                                                                               |
+| Un filtro de correo abre el enlace antes que el jugador y lo consume                                  | La cuenta debería quedar confirmada igualmente. El jugador ve `?error=confirmacion` y puede iniciar sesión con su contraseña.                                                            |
+| El enlace caduca                                                                                      | Iniciar sesión lleva a «REVISA TU CORREO», desde donde se reenvía.                                                                                                                       |
+| La pestaña original sigue en «REVISA TU CORREO» tras confirmar en otra pestaña                        | La sesión la crea el servidor, así que esa pestaña no se entera hasta recargar. Se acepta: la pestaña nueva ya está dentro.                                                              |
+| El enlace se abre en otro navegador o dispositivo                                                     | PKCE necesita el mismo navegador, así que no abre la sesión: muestra `?error=confirmacion` y el jugador inicia sesión. Con `localhost` solo funciona en el mismo equipo hasta desplegar. |
+| Las 3 cuentas existentes se crearon sin confirmación real                                             | Se aceptan: son pocas y se conocen. El riesgo de apropiación de la SPEC 19 solo se cierra para las cuentas nuevas.                                                                       |
+| Registrarse con un correo ajeno envía un correo a esa persona                                         | Inevitable con confirmación. El límite de Supabase lo acota y la cuenta no se activa sin pulsar el enlace.                                                                               |
+| La vía de la plantilla por defecto no está documentada                                                | El paso 10 la prueba con correos reales. Si falla, se desactiva **Confirm email** y la spec vuelve a Aplazado.                                                                           |
+| La URL con `?origen=correo` no encaja en las redirecciones permitidas y Supabase vuelve a la Site URL | El paso 10 lo detecta porque no se abre la sesión. `http://localhost:3000/**` debería cubrirla.                                                                                          |
+| El correo llega en inglés                                                                             | Riesgo aceptado por el usuario hasta poder editar la plantilla.                                                                                                                          |
+| Registrarse y reenviar dejan varios verificadores PKCE y un enlace anterior puede fallar              | Se muestra `?error=confirmacion` y queda el enlace más reciente. El paso 10 comprueba el reenvío.                                                                                        |
 
 ---
 
 ## Qué **no** está en este spec
 
 - Conectar Resend, y comprar o verificar un dominio.
+- Traducir el correo de confirmación.
+- Pasar el enlace a `token_hash` y `/auth/confirm`.
 - Configuración de producción.
 - Ruta propia para la confirmación.
 - Código de 6 dígitos.
