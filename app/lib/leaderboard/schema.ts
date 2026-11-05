@@ -29,7 +29,7 @@ export function normalizarNombre(nombre: string): string {
     .trim()
     .toUpperCase();
 }
-// Nombre de una cuenta: `username` de sus metadatos, que puede faltar.
+// Nombre que se muestra de una cuenta: "" o sin definir mientras no lo elija.
 export function nombreDeCuenta(username: unknown): string {
   return typeof username === "string" && username ? username : "JUGADOR";
 }

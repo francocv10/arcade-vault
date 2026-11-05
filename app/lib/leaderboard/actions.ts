@@ -1,5 +1,6 @@
 "use server";
 import { updateTag } from "next/cache";
+import { tieneUsuario } from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/server";
 import {
   ETIQUETA_ACTIVIDAD,
@@ -9,13 +10,14 @@ import {
 } from "./queries";
 import {
   JUEGOS_CON_RANKING,
-  nombreDeCuenta,
   normalizarNombre,
   validarEnvio,
   type EnvioPuntuacion,
 } from "./schema";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Inténtalo de nuevo.";
+const ERROR_SIN_NOMBRE =
+  "[ERR] Elige tu nombre de jugador antes de guardar la puntuación.";
 export async function guardarPuntuacion(
   envio: EnvioPuntuacion,
 ): Promise<{ ok: boolean; error?: string }> {
@@ -24,10 +26,19 @@ export async function guardarPuntuacion(
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
     const claims = data?.claims;
-    // Con sesión decide el servidor: se ignora el nombre que envíe el cliente.
-    const entrada = claims
-      ? { ...envio, name: nombreDeCuenta(claims.user_metadata?.username) }
-      : envio;
+    let entrada = envio;
+    if (claims) {
+      // Con sesión decide el servidor: se ignora el nombre que envíe el cliente.
+      // getUser y no los claims: updateUser no renueva el JWT, así que el
+      // nombre recién elegido no estaría en el token hasta el siguiente refresco.
+      const { data: cuenta } = await supabase.auth.getUser();
+      if (!cuenta.user) return { ok: false, error: ERROR_GUARDADO };
+      const { username } = cuenta.user.user_metadata;
+      if (!tieneUsuario(username)) {
+        return { ok: false, error: ERROR_SIN_NOMBRE };
+      }
+      entrada = { ...envio, name: username };
+    }
     const resultado = validarEnvio(entrada);
     if (!resultado.ok) return { ok: false, error: resultado.error };
     game = resultado.envio.game;
