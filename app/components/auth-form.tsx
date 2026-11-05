@@ -1,7 +1,8 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
+import { flushSync } from "react-dom";
 import {
   mensajeAuth,
   validarAcceso,
@@ -11,13 +12,25 @@ import {
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 type Proveedor = "google" | "github";
+type ConfirmacionPendiente = {
+  correo: string;
+  motivo: "registro" | "acceso";
+};
 const AVISOS_URL = new Map([
   ["enlace", "[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo."],
   [
     "oauth",
     "[ERR] No se pudo iniciar sesión con el proveedor. Inténtalo de nuevo o usa tu correo.",
   ],
+  [
+    "confirmacion",
+    "[ERR] No pudimos abrir la sesión con este enlace. Inicia sesión: si tu cuenta aún no está confirmada, podrás pedir otro enlace.",
+  ],
 ]);
+// Solo se llama desde manejadores: `location` no existe al prerrenderizar.
+function urlConfirmacion() {
+  return `${location.origin}/auth/callback?origen=correo`;
+}
 // Lee la URL en su propio límite de Suspense para que el formulario se
 // prerrenderice: useSearchParams no se puede resolver en el HTML estático.
 function AvisoUrl() {
@@ -128,6 +141,94 @@ function RecuperarClave({
     </form>
   );
 }
+function RevisaCorreo({
+  pendiente,
+  onVolver,
+}: {
+  pendiente: ConfirmacionPendiente;
+  onVolver: () => void;
+}) {
+  const { correo, motivo } = pendiente;
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const botonReenviar = useRef<HTMLButtonElement>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [reenviado, setReenviado] = useState(false);
+  // Este estado sustituye al formulario: sin esto el foco se perdería con el
+  // botón que lo abrió y el teclado volvería al principio de la página.
+  useEffect(() => {
+    titulo.current?.focus();
+  }, []);
+  const reenviar = async () => {
+    setErrorGeneral(null);
+    setReenviado(false);
+    setEnviando(true);
+    try {
+      const { error } = await createClient().auth.resend({
+        type: "signup",
+        email: correo,
+        options: { emailRedirectTo: urlConfirmacion() },
+      });
+      if (error) setErrorGeneral(mensajeAuth(error.code));
+      else setReenviado(true);
+    } catch {
+      setErrorGeneral(mensajeAuth(undefined));
+    }
+    // Deshabilitar el botón le quita el foco. Síncrono porque no se puede
+    // enfocar hasta que vuelva a estar habilitado.
+    flushSync(() => setEnviando(false));
+    if (document.activeElement === document.body) {
+      botonReenviar.current?.focus();
+    }
+  };
+  return (
+    <>
+      <h3 className="auth-estado" ref={titulo} tabIndex={-1}>
+        REVISA TU CORREO
+      </h3>
+      <div role="status">
+        {reenviado ? (
+          <div className="auth-ok">
+            [OK] Enlace reenviado. Revisa también la carpeta de spam.
+          </div>
+        ) : motivo === "registro" ? (
+          <div className="auth-ok">
+            [OK] Te hemos enviado un enlace a {correo} para confirmar tu cuenta.
+            Si ese correo ya tiene cuenta, inicia sesión.
+          </div>
+        ) : (
+          <p className="auth-intro">
+            Tu cuenta aún no está confirmada. Pulsa REENVIAR ENLACE para recibir
+            otro en {correo}.
+          </p>
+        )}
+      </div>
+      {errorGeneral && (
+        <div className="terminal-error" role="alert">
+          <span className="err-tag">&gt;</span> {errorGeneral}
+        </div>
+      )}
+      <button
+        ref={botonReenviar}
+        className="btn lg"
+        type="button"
+        disabled={enviando}
+        style={{ width: "100%" }}
+        onClick={() => void reenviar()}
+      >
+        {enviando ? "REENVIANDO…" : "REENVIAR ENLACE"}
+      </button>
+      <button
+        className="btn ghost"
+        type="button"
+        style={{ width: "100%", marginTop: 10 }}
+        onClick={onVolver}
+      >
+        VOLVER A INICIAR SESIÓN
+      </button>
+    </>
+  );
+}
 export function AuthForm() {
   const router = useRouter();
   const { user: sesion, cargando, logout } = useAuth();
@@ -140,6 +241,13 @@ export function AuthForm() {
   const [enviando, setEnviando] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
   const [redirigiendo, setRedirigiendo] = useState(false);
+  const [pendiente, setPendiente] = useState<ConfirmacionPendiente | null>(
+    null,
+  );
+  const campoCorreo = useRef<HTMLInputElement>(null);
+  // <Activity> conserva este estado al navegar: sin esto reaparecería al cerrar
+  // sesión y volver a /acceso. Se ajusta en el render, sin un efecto.
+  if (sesion && pendiente) setPendiente(null);
   // Volver atrás desde el proveedor restaura la página tal como quedó, con los
   // botones deshabilitados: sin esto no se podría reintentar.
   useEffect(() => {
@@ -164,6 +272,14 @@ export function AuthForm() {
     setTab(siguiente);
     limpiarErrores();
   };
+  const volverDeConfirmacion = () => {
+    // Síncrono porque el campo aún no existe: RevisaCorreo ocupa su lugar.
+    flushSync(() => {
+      setPendiente(null);
+      cambiarTab("in");
+    });
+    campoCorreo.current?.focus();
+  };
   const abrirRecuperacion = () => {
     limpiarErrores();
     setRecuperando(true);
@@ -179,8 +295,15 @@ export function AuthForm() {
         email: email.trim(),
         password: pass,
       });
-      if (error) setErrorGeneral(mensajeAuth(error.code));
-      else setPass("");
+      if (error?.code === "email_not_confirmed") {
+        // No reenvía solo: intentar entrar no debe gastar el límite de correos.
+        setPass("");
+        setPendiente({ correo: email.trim(), motivo: "acceso" });
+      } else if (error) {
+        setErrorGeneral(mensajeAuth(error.code));
+      } else {
+        setPass("");
+      }
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }
@@ -200,11 +323,21 @@ export function AuthForm() {
       const { data, error } = await createClient().auth.signUp({
         email: email.trim(),
         password: pass,
-        options: { data: { username: user } },
+        options: {
+          data: { username: user },
+          emailRedirectTo: urlConfirmacion(),
+        },
       });
-      // Sin sesión y sin error, Confirm email sigue activo en Supabase.
-      if (error || !data.session) setErrorGeneral(mensajeAuth(error?.code));
-      else setPass("");
+      if (error) {
+        setErrorGeneral(mensajeAuth(error.code));
+      } else {
+        setPass("");
+        // Con Confirm email activo no hay sesión hasta pulsar el enlace. Un
+        // correo duplicado responde igual, así no se revela qué correos existen.
+        if (!data.session) {
+          setPendiente({ correo: email.trim(), motivo: "registro" });
+        }
+      }
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }
@@ -252,7 +385,9 @@ export function AuthForm() {
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
-        {recuperando ? (
+        {pendiente ? (
+          <RevisaCorreo pendiente={pendiente} onVolver={volverDeConfirmacion} />
+        ) : recuperando ? (
           <RecuperarClave
             correoInicial={email}
             onVolver={() => setRecuperando(false)}
@@ -301,6 +436,7 @@ export function AuthForm() {
               <div className="field">
                 <label htmlFor="acceso-correo">Correo electrónico</label>
                 <input
+                  ref={campoCorreo}
                   id="acceso-correo"
                   name="email"
                   type="email"
@@ -372,7 +508,7 @@ export function AuthForm() {
                     : "ENTRAR AL VAULT"
                   : enviando
                     ? "CREANDO CUENTA…"
-                    : "CREAR Y JUGAR"}
+                    : "CREAR CUENTA"}
               </button>
             </form>
             <button
