@@ -17,6 +17,16 @@ Con la confirmación desactivada, alguien puede registrar el correo de otra pers
 
 Cuentas existentes: la base tiene 3 cuentas y ninguna sin confirmar (consultado el 2026-11-04), así que activar la opción no bloquea a nadie.
 
+### Registro con Google y GitHub
+
+Google y GitHub siguen siendo una vía de registro, no solo de acceso: esta spec no los retira ni les añade pasos. Hasta conectar Resend, serán la única forma de crear cuenta para quien no pertenece al equipo. Lo que ocurre depende del correo que devuelve el proveedor:
+
+| Correo del proveedor              | Resultado                                                                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sin cuenta en `auth.users`        | Se crea una cuenta nueva sin enviar correo, y `/auth/callback` lleva a `/acceso/nombre`. No hay vinculación.                                                                               |
+| Con cuenta confirmada             | La identidad se vincula a esa cuenta, que conserva su nombre y sus puntuaciones.                                                                                                           |
+| Con cuenta pendiente de confirmar | Según la documentación de Supabase, la identidad se vincula y se elimina la identidad de correo sin confirmar, así que la contraseña elegida no debería servir. Se comprueba en el paso 8. |
+
 ---
 
 ## Alcance
@@ -39,7 +49,7 @@ Cuentas existentes: la base tiene 3 cuentas y ninguna sin confirmar (consultado 
 - Código de 6 dígitos como alternativa al enlace.
 - Reconfirmar las 3 cuentas existentes.
 - Cambiar de correo desde un perfil.
-- Cambios en OAuth: Google y GitHub ya verifican el correo y no pasan por este flujo.
+- Cambios en el código de OAuth: Google y GitHub ya verifican el correo y no pasan por este flujo, y siguen permitiendo registrarse (ver «Registro con Google y GitHub»).
 - CAPTCHA.
 
 ---
@@ -91,7 +101,7 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 5. **Registro.** En `registrar`, sin error y sin sesión, limpiar la contraseña y fijar `pendiente` con `motivo: "registro"`. Con sesión, conservar la rama actual. Con error, conservar el mensaje y lo escrito. Cambiar el texto del botón a «CREAR CUENTA» y «CREANDO CUENTA…». Verificación: `npx tsc --noEmit` sin errores.
 6. **Acceso sin confirmar.** En `entrar`, con `error.code === "email_not_confirmed"`, limpiar la contraseña y fijar `pendiente` con `motivo: "acceso"`, sin enviar nada. Verificación en el paso 8.
 7. **Limpieza.** VOLVER A INICIAR SESIÓN pone `pendiente` a `null` y deja la pestaña INICIAR SESIÓN con el correo escrito. Como `<Activity>` conserva el estado, `pendiente` también se limpia al detectar una sesión.
-8. **Activar (manual, en el panel).** Activar **Confirm email**. Recorrer el flujo con un correo del equipo y comprobar que una contraseña errónea sobre una cuenta sin confirmar da `invalid_credentials`, no `email_not_confirmed`. Si no fuera así, el acceso revelaría qué correos existen: parar y replantear el paso 6.
+8. **Activar (manual, en el panel).** Activar **Confirm email**. Recorrer el flujo con un correo del equipo y comprobar que una contraseña errónea sobre una cuenta sin confirmar da `invalid_credentials`, no `email_not_confirmed`. Si no fuera así, el acceso revelaría qué correos existen: parar y replantear el paso 6. Con la opción activa, repetir también el registro con Google y GitHub y entrar por OAuth con el correo de una cuenta pendiente de confirmar.
 9. **Documentación.** Actualizar en `CLAUDE.md` la lista de specs, `/auth/confirm`, `AuthForm`, la configuración de Auth, la limitación del correo sin dominio y el riesgo aceptado de la SPEC 19.
 
 ---
@@ -113,6 +123,8 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 - [ ] VOLVER A INICIAR SESIÓN regresa a la pestaña INICIAR SESIÓN con el correo escrito.
 - [ ] Tras confirmar, cerrar sesión y volver a `/acceso` no muestra «REVISA TU CORREO».
 - [ ] Las cuentas existentes inician sesión como antes.
+- [ ] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`.
+- [ ] Con **Confirm email** activo, entrar con Google o GitHub usando el correo de una cuenta pendiente de confirmar abre esa cuenta y la contraseña elegida al registrarse deja de funcionar.
 - [ ] Google, GitHub y la recuperación de contraseña funcionan como antes.
 - [ ] Los enlaces de `recovery` siguen llevando a `/acceso/nueva-clave`.
 - [ ] «REVISA TU CORREO» se usa solo con teclado y sin scroll horizontal a 320 px de ancho.
@@ -144,6 +156,7 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 | Riesgo                                                                         | Mitigación                                                                                                                  |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | Hasta conectar Resend, solo el equipo puede registrarse con correo             | Riesgo aceptado por el usuario. El mensaje de `email_address_not_authorized` ofrece Google, GitHub e invitado.              |
+| Google en modo de prueba solo admite a sus usuarios de prueba                  | Hasta publicar la pantalla de consentimiento, GitHub es la única vía de registro abierta a cualquiera.                      |
 | El límite por hora del correo integrado bloquea las pruebas                    | Agrupar las comprobaciones del paso 8. `over_email_send_rate_limit` tiene mensaje propio.                                   |
 | Un filtro de correo abre el enlace antes que el jugador y lo consume           | La cuenta queda confirmada igualmente. El jugador ve `?error=enlace` y puede iniciar sesión con su contraseña.              |
 | El enlace caduca                                                               | Iniciar sesión lleva a «REVISA TU CORREO», desde donde se reenvía.                                                          |
@@ -163,7 +176,7 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 - Código de 6 dígitos.
 - Reconfirmar las cuentas existentes.
 - Cambiar de correo desde un perfil.
-- Cambios en OAuth.
+- Cambios en el código de OAuth.
 - CAPTCHA.
 
 Cada uno de ellos, si se aborda, va en su propio spec.
