@@ -23,6 +23,10 @@ const AVISOS_URL = new Map([
     "[ERR] No se pudo iniciar sesión con el proveedor. Inténtalo de nuevo o usa tu correo.",
   ],
 ]);
+// Solo se llama desde manejadores: `location` no existe al prerrenderizar.
+function urlConfirmacion() {
+  return `${location.origin}/auth/callback?origen=correo`;
+}
 // Lee la URL en su propio límite de Suspense para que el formulario se
 // prerrenderice: useSearchParams no se puede resolver en el HTML estático.
 function AvisoUrl() {
@@ -158,6 +162,7 @@ function RevisaCorreo({
       const { error } = await createClient().auth.resend({
         type: "signup",
         email: correo,
+        options: { emailRedirectTo: urlConfirmacion() },
       });
       if (error) setErrorGeneral(mensajeAuth(error.code));
       else setReenviado(true);
@@ -307,7 +312,10 @@ export function AuthForm() {
       const { data, error } = await createClient().auth.signUp({
         email: email.trim(),
         password: pass,
-        options: { data: { username: user } },
+        options: {
+          data: { username: user },
+          emailRedirectTo: urlConfirmacion(),
+        },
       });
       if (error) {
         setErrorGeneral(mensajeAuth(error.code));
