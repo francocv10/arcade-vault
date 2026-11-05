@@ -151,9 +151,10 @@ export function AuthForm() {
   }, []);
   // Next oculta esta ruta con <Activity> al navegar, sin desmontarla: tras
   // entrar hay que limpiar la contraseña y el envío para que no reaparezcan.
-  // Única redirección tras entrar: también cubre a quien llega con sesión.
+  // Única redirección tras entrar: también cubre a quien llega con sesión. Una
+  // sesión sin nombre la lleva AuthProvider a /acceso/nombre.
   useEffect(() => {
-    if (!cargando && sesion) router.replace("/home");
+    if (!cargando && sesion && !sesion.sinNombre) router.replace("/home");
   }, [cargando, sesion, router]);
   const limpiarErrores = () => {
     setErrores({});
