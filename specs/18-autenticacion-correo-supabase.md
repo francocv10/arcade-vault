@@ -1,6 +1,6 @@
 # SPEC 18 — Registro, inicio de sesión y autenticación con correo (Supabase Auth)
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 05 (clientes de Supabase), SPEC 07 (tabla `scores` y `guardarPuntuacion`), SPEC 04 (`useDialog` y accesibilidad del menú móvil)
 > **Date:** 2026-11-03
 > **Objective:** Sustituir la sesión simulada de `localStorage` por Supabase Auth con registro sin confirmación de correo, inicio de sesión, recuperación de contraseña y cierre de sesión en `/acceso`, y asociar a la cuenta las puntuaciones que guarde cada jugador con sesión.
@@ -163,32 +163,32 @@ Antes de escribir código hay que leer en `node_modules/next/dist/docs/` la guí
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] Existe `proxy.ts` en la raíz y no se ejecuta sobre `_next/static`, `_next/image` ni `/games/*`.
-- [ ] No queda ninguna lectura ni escritura de `av_user` en `app/`, y un `av_user` previo se borra al cargar sin abrir sesión.
-- [ ] Registrarse con cualquier correo, también ajeno al equipo, abre la sesión al momento, lleva a `/home` y muestra `NOMBRE ▾` en la barra, con el nombre en sus mayúsculas y minúsculas originales.
-- [ ] Registrarse no envía ningún correo y no aparece ninguna pantalla «REVISA TU CORREO».
-- [ ] Registrarse con un correo ya registrado muestra `[ERR] Ya existe una cuenta con ese correo. Inicia sesión.` y no abre sesión.
-- [ ] Reutilizar o manipular el enlace de recuperación lleva a `/acceso?error=enlace` y muestra un aviso.
-- [ ] Solicitar la recuperación con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized` sin errores en consola ni pantalla rota.
-- [ ] `ab`, `abcdefghijk`, `con espacio` y `ñandú` son rechazados como usuario en el navegador; `Px_Kai` se acepta.
-- [ ] Una contraseña de 7 caracteres se rechaza y una de 8 se acepta.
-- [ ] Con credenciales erróneas se ve `[ERR] Correo o contraseña incorrectos.` y el correo escrito se conserva; el mensaje es el mismo si el correo no existe.
-- [ ] Recargar la página y abrir otra pestaña conservan la sesión, y cerrar la sesión en una pestaña la cierra en la otra.
-- [ ] Con la sesión abierta, entrar en `/acceso` redirige a `/home`.
-- [ ] Solicitar la recuperación con correos del equipo muestra el mismo mensaje tanto si tienen cuenta como si no.
-- [ ] El enlace de recuperación lleva a `/acceso/nueva-clave`; tras guardar, la contraseña anterior ya no sirve y la nueva sí.
-- [ ] `/acceso/nueva-clave` sin sesión muestra «ENLACE NO VÁLIDO».
-- [ ] CERRAR SESIÓN, en escritorio y en móvil, elimina la sesión, deja al jugador en la misma ruta y vuelve a mostrar «Iniciar Sesión».
-- [ ] El menú de cuenta funciona solo con teclado y devuelve el foco al botón al cerrarse.
-- [ ] Con sesión, guardar una puntuación real crea en `scores` una fila con `user_id` igual a la cuenta y `player_name` igual al `username` en mayúsculas, aunque la petición envíe otro `name`.
-- [ ] Con sesión, el campo del modal es de solo lectura.
-- [ ] Sin sesión, «JUGAR COMO INVITADO» lleva a `/home` y guardar crea una fila con `user_id` nulo y el nombre escrito.
-- [ ] Las maquetas siguen guardando en `av_scores` y `TU MEJOR MARCA` sigue funcionando con la cuenta.
-- [ ] GOOGLE y GITHUB aparecen deshabilitados.
-- [ ] `/acceso`, `/acceso/nueva-clave` y el menú de cuenta se usan sin scroll horizontal a 320 px de ancho.
-- [ ] No hay errores nuevos en consola en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` ni en `/juegos/asteroides/jugar`.
-- [ ] `CLAUDE.md` describe la autenticación real y la limitación del correo sin dominio.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] Existe `proxy.ts` en la raíz y no se ejecuta sobre `_next/static`, `_next/image` ni `/games/*`.
+- [x] No queda ninguna lectura ni escritura de `av_user` en `app/`, y un `av_user` previo se borra al cargar sin abrir sesión.
+- [x] Registrarse con cualquier correo, también ajeno al equipo, abre la sesión al momento, lleva a `/home` y muestra `NOMBRE ▾` en la barra, con el nombre en sus mayúsculas y minúsculas originales.
+- [x] Registrarse no envía ningún correo y no aparece ninguna pantalla «REVISA TU CORREO».
+- [x] Registrarse con un correo ya registrado muestra `[ERR] Ya existe una cuenta con ese correo. Inicia sesión.` y no abre sesión.
+- [x] Reutilizar o manipular el enlace de recuperación lleva a `/acceso?error=enlace` y muestra un aviso.
+- [ ] Solicitar la recuperación con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized` sin errores en consola ni pantalla rota. _Sin probar en pantalla: necesita un correo real ajeno al equipo. La SPEC 19 cambia el texto del mensaje._
+- [x] `ab`, `abcdefghijk`, `con espacio` y `ñandú` son rechazados como usuario en el navegador; `Px_Kai` se acepta.
+- [x] Una contraseña de 7 caracteres se rechaza y una de 8 se acepta.
+- [x] Con credenciales erróneas se ve `[ERR] Correo o contraseña incorrectos.` y el correo escrito se conserva; el mensaje es el mismo si el correo no existe.
+- [x] Recargar la página y abrir otra pestaña conservan la sesión, y cerrar la sesión en una pestaña la cierra en la otra.
+- [x] Con la sesión abierta, entrar en `/acceso` redirige a `/home`.
+- [x] Solicitar la recuperación con correos del equipo muestra el mismo mensaje tanto si tienen cuenta como si no.
+- [x] El enlace de recuperación lleva a `/acceso/nueva-clave`; tras guardar, la contraseña anterior ya no sirve y la nueva sí.
+- [x] `/acceso/nueva-clave` sin sesión muestra «ENLACE NO VÁLIDO».
+- [x] CERRAR SESIÓN, en escritorio y en móvil, elimina la sesión, deja al jugador en la misma ruta y vuelve a mostrar «Iniciar Sesión».
+- [x] El menú de cuenta funciona solo con teclado y devuelve el foco al botón al cerrarse.
+- [x] Con sesión, guardar una puntuación real crea en `scores` una fila con `user_id` igual a la cuenta y `player_name` igual al `username` en mayúsculas, aunque la petición envíe otro `name`.
+- [x] Con sesión, el campo del modal es de solo lectura.
+- [x] Sin sesión, «JUGAR COMO INVITADO» lleva a `/home` y guardar crea una fila con `user_id` nulo y el nombre escrito.
+- [x] Las maquetas siguen guardando en `av_scores` y `TU MEJOR MARCA` sigue funcionando con la cuenta.
+- [x] GOOGLE y GITHUB aparecen deshabilitados. _Cierto al cerrar esta spec; la SPEC 19 los activa._
+- [x] `/acceso`, `/acceso/nueva-clave` y el menú de cuenta se usan sin scroll horizontal a 320 px de ancho.
+- [x] No hay errores nuevos en consola en `/home`, `/biblioteca`, `/salon`, `/acceso`, `/about` ni en `/juegos/asteroides/jugar`.
+- [x] `CLAUDE.md` describe la autenticación real y la limitación del correo sin dominio.
 
 ---
 

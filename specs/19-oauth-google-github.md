@@ -1,6 +1,6 @@
 # SPEC 19 — Inicio de sesión con Google y GitHub
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 18 (sesión de Supabase, `proxy.ts`, `AuthProvider`, `/acceso` y reglas de `username`)
 > **Date:** 2026-11-03
 > **Objective:** Activar los botones GOOGLE y GITHUB de `/acceso` con OAuth de Supabase y pedir un nombre de jugador en el primer acceso a quien todavía no lo tenga.
@@ -94,19 +94,19 @@ Antes de escribir código hay que consultar con `search_docs` las guías vigente
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] GOOGLE y GITHUB están activos y llevan al proveedor correspondiente.
-- [ ] La primera entrada con cada proveedor lleva a `/acceso/nombre` con una sugerencia válida o con el campo vacío.
-- [ ] El nombre elegido sigue `PATRON_USUARIO`, se guarda en `user_metadata.username` y aparece en la barra.
-- [ ] Las siguientes entradas con el mismo proveedor llevan a `/home` y conservan el nombre elegido.
-- [ ] Con una sesión sin nombre, navegar a otra ruta redirige a `/acceso/nombre`.
-- [ ] Cancelar en el proveedor lleva a `/acceso?error=oauth` con un aviso legible.
-- [ ] `/auth/callback` sin código o con un código inválido lleva a `/acceso?error=oauth`.
-- [ ] Una puntuación guardada con una cuenta OAuth crea una fila con su `user_id` y su nombre en mayúsculas.
-- [ ] Entrar por OAuth con el correo de una cuenta existente abre esa misma cuenta y conserva su `username`.
-- [ ] En el repositorio no aparece ningún secreto de cliente OAuth.
-- [ ] No hay errores nuevos en consola en `/acceso`, `/acceso/nombre` y `/home`.
-- [ ] `CLAUDE.md` describe el callback, `/acceso/nombre` y `sinNombre`.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] GOOGLE y GITHUB están activos y llevan al proveedor correspondiente.
+- [x] La primera entrada con cada proveedor lleva a `/acceso/nombre` con una sugerencia válida o con el campo vacío.
+- [x] El nombre elegido sigue `PATRON_USUARIO`, se guarda en `user_metadata.username` y aparece en la barra.
+- [x] Las siguientes entradas con el mismo proveedor llevan a `/home` y conservan el nombre elegido.
+- [x] Con una sesión sin nombre, navegar a otra ruta redirige a `/acceso/nombre`.
+- [x] Cancelar en el proveedor lleva a `/acceso?error=oauth` con un aviso legible.
+- [x] `/auth/callback` sin código o con un código inválido lleva a `/acceso?error=oauth`.
+- [x] Una puntuación guardada con una cuenta OAuth crea una fila con su `user_id` y su nombre en mayúsculas.
+- [x] Entrar por OAuth con el correo de una cuenta existente abre esa misma cuenta y conserva su `username`.
+- [x] En el repositorio no aparece ningún secreto de cliente OAuth.
+- [x] No hay errores nuevos en consola en `/acceso`, `/acceso/nombre` y `/home`. _`/home` solo se revisó con sesión simulada; las otras dos, con sesión real._
+- [x] `CLAUDE.md` describe el callback, `/acceso/nombre` y `sinNombre`.
 
 ---
 

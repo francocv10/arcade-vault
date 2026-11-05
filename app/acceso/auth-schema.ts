@@ -16,7 +16,7 @@ const MENSAJES_AUTH = new Map<string, string>([
   ["email_exists", CORREO_DUPLICADO],
   [
     "email_address_not_authorized",
-    "[ERR] Aún no podemos enviar correos a esta dirección.",
+    "[ERR] Aún no podemos enviar correos a esta dirección. Entra con Google o GitHub, o juega como invitado.",
   ],
   [
     "email_address_invalid",
