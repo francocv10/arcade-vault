@@ -33,6 +33,10 @@ const MENSAJES_AUTH = new Map<string, string>([
     "[ERR] La contraseña nueva debe ser distinta de la anterior.",
   ],
 ]);
+// Una sesión OAuth nueva no tiene username hasta que elige su nombre.
+export function tieneUsuario(username: unknown): boolean {
+  return typeof username === "string" && username.length > 0;
+}
 export function validarCorreo(email: string): string | null {
   const correo = email.trim();
   if (!correo) return "El correo es obligatorio.";
