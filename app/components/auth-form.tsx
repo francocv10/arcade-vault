@@ -289,9 +289,16 @@ export function AuthForm() {
         password: pass,
         options: { data: { username: user } },
       });
-      // Sin sesión y sin error, Confirm email sigue activo en Supabase.
-      if (error || !data.session) setErrorGeneral(mensajeAuth(error?.code));
-      else setPass("");
+      if (error) {
+        setErrorGeneral(mensajeAuth(error.code));
+      } else {
+        setPass("");
+        // Con Confirm email activo no hay sesión hasta pulsar el enlace. Un
+        // correo duplicado responde igual, así no se revela qué correos existen.
+        if (!data.session) {
+          setPendiente({ correo: email.trim(), motivo: "registro" });
+        }
+      }
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }
@@ -464,7 +471,7 @@ export function AuthForm() {
                     : "ENTRAR AL VAULT"
                   : enviando
                     ? "CREANDO CUENTA…"
-                    : "CREAR Y JUGAR"}
+                    : "CREAR CUENTA"}
               </button>
             </form>
             <button
