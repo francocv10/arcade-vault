@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main`; faltan el paso 1 y los 8 criterios sin marcar, que necesitan el panel, enlaces reales del correo (2 por hora), cuentas de Google o GitHub, o un correo ajeno al equipo.
+> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main`; faltan el paso 1 y los 7 criterios sin marcar, que necesitan el panel, enlaces reales del correo (2 por hora), cuentas de Google o GitHub, o un correo ajeno al equipo.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -146,7 +146,7 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 - [x] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
 - [x] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
 - [x] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse. _El enlace real llegó a `/home`; `NOMBRE ▾` se vio con una cuenta de prueba confirmada por `/auth/confirm`._
-- [ ] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso.
+- [x] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso. _Contra el `/auth/v1/verify` real con un token inexistente, que da el mismo error que uno gastado, y con un código rechazado (`flow_state_not_found`) teniendo el verificador PKCE en el navegador._
 - [ ] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta.
 - [x] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
 - [x] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
