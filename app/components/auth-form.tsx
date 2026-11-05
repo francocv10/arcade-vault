@@ -2,6 +2,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
+import { flushSync } from "react-dom";
 import {
   mensajeAuth,
   validarAcceso,
@@ -227,6 +228,10 @@ export function AuthForm() {
   const [pendiente, setPendiente] = useState<ConfirmacionPendiente | null>(
     null,
   );
+  const campoCorreo = useRef<HTMLInputElement>(null);
+  // <Activity> conserva este estado al navegar: sin esto reaparecería al cerrar
+  // sesión y volver a /acceso. Se ajusta en el render, sin un efecto.
+  if (sesion && pendiente) setPendiente(null);
   // Volver atrás desde el proveedor restaura la página tal como quedó, con los
   // botones deshabilitados: sin esto no se podría reintentar.
   useEffect(() => {
@@ -251,6 +256,14 @@ export function AuthForm() {
     setTab(siguiente);
     limpiarErrores();
   };
+  const volverDeConfirmacion = () => {
+    // Síncrono porque el campo aún no existe: RevisaCorreo ocupa su lugar.
+    flushSync(() => {
+      setPendiente(null);
+      cambiarTab("in");
+    });
+    campoCorreo.current?.focus();
+  };
   const abrirRecuperacion = () => {
     limpiarErrores();
     setRecuperando(true);
@@ -266,8 +279,15 @@ export function AuthForm() {
         email: email.trim(),
         password: pass,
       });
-      if (error) setErrorGeneral(mensajeAuth(error.code));
-      else setPass("");
+      if (error?.code === "email_not_confirmed") {
+        // No reenvía solo: intentar entrar no debe gastar el límite de correos.
+        setPass("");
+        setPendiente({ correo: email.trim(), motivo: "acceso" });
+      } else if (error) {
+        setErrorGeneral(mensajeAuth(error.code));
+      } else {
+        setPass("");
+      }
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }
@@ -347,10 +367,7 @@ export function AuthForm() {
           </div>
         </div>
         {pendiente ? (
-          <RevisaCorreo
-            pendiente={pendiente}
-            onVolver={() => setPendiente(null)}
-          />
+          <RevisaCorreo pendiente={pendiente} onVolver={volverDeConfirmacion} />
         ) : recuperando ? (
           <RecuperarClave
             correoInicial={email}
@@ -400,6 +417,7 @@ export function AuthForm() {
               <div className="field">
                 <label htmlFor="acceso-correo">Correo electrónico</label>
                 <input
+                  ref={campoCorreo}
                   id="acceso-correo"
                   name="email"
                   type="email"
