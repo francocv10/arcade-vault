@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import {
   mensajeAuth,
@@ -11,6 +11,10 @@ import {
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 type Proveedor = "google" | "github";
+type ConfirmacionPendiente = {
+  correo: string;
+  motivo: "registro" | "acceso";
+};
 const AVISOS_URL = new Map([
   ["enlace", "[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo."],
   [
@@ -128,6 +132,86 @@ function RecuperarClave({
     </form>
   );
 }
+function RevisaCorreo({
+  pendiente,
+  onVolver,
+}: {
+  pendiente: ConfirmacionPendiente;
+  onVolver: () => void;
+}) {
+  const { correo, motivo } = pendiente;
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [reenviado, setReenviado] = useState(false);
+  // Este estado sustituye al formulario: sin esto el foco se perdería con el
+  // botón que lo abrió y el teclado volvería al principio de la página.
+  useEffect(() => {
+    titulo.current?.focus();
+  }, []);
+  const reenviar = async () => {
+    setErrorGeneral(null);
+    setReenviado(false);
+    setEnviando(true);
+    try {
+      const { error } = await createClient().auth.resend({
+        type: "signup",
+        email: correo,
+      });
+      if (error) setErrorGeneral(mensajeAuth(error.code));
+      else setReenviado(true);
+    } catch {
+      setErrorGeneral(mensajeAuth(undefined));
+    }
+    setEnviando(false);
+  };
+  return (
+    <>
+      <h3 className="auth-estado" ref={titulo} tabIndex={-1}>
+        REVISA TU CORREO
+      </h3>
+      <div role="status">
+        {reenviado ? (
+          <div className="auth-ok">
+            [OK] Enlace reenviado. Revisa también la carpeta de spam.
+          </div>
+        ) : motivo === "registro" ? (
+          <div className="auth-ok">
+            [OK] Te hemos enviado un enlace a {correo} para confirmar tu cuenta.
+            Si ese correo ya tiene cuenta, inicia sesión.
+          </div>
+        ) : (
+          <p className="auth-intro">
+            Tu cuenta aún no está confirmada. Pulsa REENVIAR ENLACE para recibir
+            otro en {correo}.
+          </p>
+        )}
+      </div>
+      {errorGeneral && (
+        <div className="terminal-error" role="alert">
+          <span className="err-tag">&gt;</span> {errorGeneral}
+        </div>
+      )}
+      <button
+        className="btn lg"
+        type="button"
+        disabled={enviando}
+        style={{ width: "100%" }}
+        onClick={() => void reenviar()}
+      >
+        {enviando ? "REENVIANDO…" : "REENVIAR ENLACE"}
+      </button>
+      <button
+        className="btn ghost"
+        type="button"
+        style={{ width: "100%", marginTop: 10 }}
+        onClick={onVolver}
+      >
+        VOLVER A INICIAR SESIÓN
+      </button>
+    </>
+  );
+}
 export function AuthForm() {
   const router = useRouter();
   const { user: sesion, cargando, logout } = useAuth();
@@ -140,6 +224,9 @@ export function AuthForm() {
   const [enviando, setEnviando] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
   const [redirigiendo, setRedirigiendo] = useState(false);
+  const [pendiente, setPendiente] = useState<ConfirmacionPendiente | null>(
+    null,
+  );
   // Volver atrás desde el proveedor restaura la página tal como quedó, con los
   // botones deshabilitados: sin esto no se podría reintentar.
   useEffect(() => {
@@ -252,7 +339,12 @@ export function AuthForm() {
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
-        {recuperando ? (
+        {pendiente ? (
+          <RevisaCorreo
+            pendiente={pendiente}
+            onVolver={() => setPendiente(null)}
+          />
+        ) : recuperando ? (
           <RecuperarClave
             correoInicial={email}
             onVolver={() => setRecuperando(false)}

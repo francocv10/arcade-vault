@@ -3895,6 +3895,22 @@ body:has(.av-player) .av-bg::before {
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink-dim);
+  overflow-wrap: anywhere;
+}
+.auth-estado {
+  margin: 0 0 14px;
+  font-family: var(--pixel);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: var(--cyan);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+}
+/* Solo recibe foco desde código, al sustituir al formulario. */
+.auth-estado:focus {
+  outline: none;
 }
 .auth-ok {
   background: #000;
@@ -3906,6 +3922,7 @@ body:has(.av-player) .av-bg::before {
   color: var(--green);
   padding: 12px 14px;
   margin-bottom: 14px;
+  overflow-wrap: anywhere;
 }
 .auth-link {
   display: block;
