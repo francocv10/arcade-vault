@@ -22,6 +22,10 @@ const AVISOS_URL = new Map([
     "oauth",
     "[ERR] No se pudo iniciar sesión con el proveedor. Inténtalo de nuevo o usa tu correo.",
   ],
+  [
+    "confirmacion",
+    "[ERR] No pudimos abrir la sesión con este enlace. Inicia sesión: si tu cuenta aún no está confirmada, podrás pedir otro enlace.",
+  ],
 ]);
 // Solo se llama desde manejadores: `location` no existe al prerrenderizar.
 function urlConfirmacion() {
