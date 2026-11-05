@@ -9,8 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { tieneUsuario } from "@/app/acceso/auth-schema";
 import type { PuntuacionGuardada, Usuario } from "@/app/data";
-import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { createClient } from "@/app/lib/supabase/client";
 // Clave de la sesión simulada anterior: solo se usa para borrarla.
 const USER_KEY_ANTIGUA = "av_user";
@@ -23,10 +23,13 @@ interface AuthContextValue {
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
 function aUsuario(cuenta: User): Usuario {
+  const { username } = cuenta.user_metadata;
+  const conNombre = tieneUsuario(username);
   return {
     id: cuenta.id,
-    name: nombreDeCuenta(cuenta.user_metadata.username),
+    name: conNombre ? username : "",
     email: cuenta.email ?? "",
+    sinNombre: !conNombre,
   };
 }
 function mismoUsuario(a: Usuario | null, b: Usuario | null): boolean {

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
+import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { AccountMenu } from "./account-menu";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
@@ -133,7 +134,7 @@ export function Nav() {
         {!cargando &&
           (user ? (
             <>
-              <div className="mobile-account">{user.name}</div>
+              <div className="mobile-account">{nombreDeCuenta(user.name)}</div>
               <button
                 type="button"
                 className="mobile-logout"

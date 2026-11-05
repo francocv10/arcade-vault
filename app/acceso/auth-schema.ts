@@ -37,6 +37,33 @@ const MENSAJES_AUTH = new Map<string, string>([
 export function tieneUsuario(username: unknown): boolean {
   return typeof username === "string" && username.length > 0;
 }
+// Metadatos del proveedor, en orden de preferencia.
+const CLAVES_SUGERENCIA = [
+  "user_name",
+  "preferred_username",
+  "name",
+  "full_name",
+] as const;
+// Propuesta para el campo de «Elige tu nombre»: conserva los caracteres válidos
+// y recorta a 10. Devuelve "" si quedan menos de 3.
+export function sugerirUsuario(metadatos: Record<string, unknown>): string {
+  for (const clave of CLAVES_SUGERENCIA) {
+    const valor = metadatos[clave];
+    if (typeof valor !== "string") continue;
+    const limpio = valor
+      .replace(/[^A-Za-z0-9_]/g, "")
+      .slice(0, LIMITES_AUTH.usuarioMax);
+    if (limpio.length >= LIMITES_AUTH.usuarioMin) return limpio;
+  }
+  return "";
+}
+export function validarUsuario(username: string): string | null {
+  if (!username) return "El usuario es obligatorio.";
+  if (!PATRON_USUARIO.test(username)) {
+    return `De ${LIMITES_AUTH.usuarioMin} a ${LIMITES_AUTH.usuarioMax} caracteres: letras sin acentos, números y _.`;
+  }
+  return null;
+}
 export function validarCorreo(email: string): string | null {
   const correo = email.trim();
   if (!correo) return "El correo es obligatorio.";
@@ -51,11 +78,8 @@ export function validarRegistro(datos: {
   password: string;
 }): Record<string, string> {
   const errores: Record<string, string> = {};
-  if (!datos.username) {
-    errores.username = "El usuario es obligatorio.";
-  } else if (!PATRON_USUARIO.test(datos.username)) {
-    errores.username = `De ${LIMITES_AUTH.usuarioMin} a ${LIMITES_AUTH.usuarioMax} caracteres: letras sin acentos, números y _.`;
-  }
+  const errorUsuario = validarUsuario(datos.username);
+  if (errorUsuario) errores.username = errorUsuario;
   const errorCorreo = validarCorreo(datos.email);
   if (errorCorreo) errores.email = errorCorreo;
   if (!datos.password) {

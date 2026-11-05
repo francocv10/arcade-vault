@@ -7,8 +7,9 @@ export interface PuntuacionRanking {
 }
 export interface Usuario {
   id: string; // auth.users.id
-  name: string; // user_metadata.username
+  name: string; // user_metadata.username; "" si aún no hay username
   email: string;
+  sinNombre: boolean; // sesión OAuth que no ha elegido nombre
 }
 export interface PuntuacionGuardada {
   game: string;

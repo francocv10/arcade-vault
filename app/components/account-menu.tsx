@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Usuario } from "@/app/data";
+import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 export function AccountMenu({
   user,
   onSalir,
@@ -51,7 +52,7 @@ export function AccountMenu({
         aria-controls={abierto ? idPanel : undefined}
         onClick={() => setAbierto((actual) => !actual)}
       >
-        {user.name} ▾
+        {nombreDeCuenta(user.name)} ▾
       </button>
       {abierto && (
         <div

@@ -6,7 +6,7 @@ import type { ReactNode, SubmitEvent } from "react";
 import { LIMITES_AUTH, mensajeAuth } from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
-function Tarjeta({
+export function Tarjeta({
   titulo,
   children,
 }: {
