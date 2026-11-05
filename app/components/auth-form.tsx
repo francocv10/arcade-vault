@@ -10,15 +10,23 @@ import {
 } from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
+type Proveedor = "google" | "github";
+const AVISOS_URL = new Map([
+  ["enlace", "[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo."],
+  [
+    "oauth",
+    "[ERR] No se pudo iniciar sesión con el proveedor. Inténtalo de nuevo o usa tu correo.",
+  ],
+]);
 // Lee la URL en su propio límite de Suspense para que el formulario se
 // prerrenderice: useSearchParams no se puede resolver en el HTML estático.
-function AvisoEnlace() {
+function AvisoUrl() {
   const parametros = useSearchParams();
-  if (parametros.get("error") !== "enlace") return null;
+  const aviso = AVISOS_URL.get(parametros.get("error") ?? "");
+  if (!aviso) return null;
   return (
     <div className="terminal-error" role="alert">
-      <span className="err-tag">&gt;</span> [ERR] El enlace ha caducado o ya se
-      usó. Solicita uno nuevo.
+      <span className="err-tag">&gt;</span> {aviso}
     </div>
   );
 }
@@ -131,6 +139,16 @@ export function AuthForm() {
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
+  const [redirigiendo, setRedirigiendo] = useState(false);
+  // Volver atrás desde el proveedor restaura la página tal como quedó, con los
+  // botones deshabilitados: sin esto no se podría reintentar.
+  useEffect(() => {
+    const alVolver = (e: PageTransitionEvent) => {
+      if (e.persisted) setRedirigiendo(false);
+    };
+    window.addEventListener("pageshow", alVolver);
+    return () => window.removeEventListener("pageshow", alVolver);
+  }, []);
   // Next oculta esta ruta con <Activity> al navegar, sin desmontarla: tras
   // entrar hay que limpiar la contraseña y el envío para que no reaparezcan.
   // Única redirección tras entrar: también cubre a quien llega con sesión.
@@ -194,6 +212,22 @@ export function AuthForm() {
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     void (tab === "in" ? entrar() : registrar());
+  };
+  const entrarConProveedor = async (provider: Proveedor) => {
+    limpiarErrores();
+    setRedirigiendo(true);
+    try {
+      const { error } = await createClient().auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${location.origin}/auth/callback` },
+      });
+      // Sin error el navegador ya va camino del proveedor.
+      if (!error) return;
+      setErrorGeneral(mensajeAuth(error.code));
+    } catch {
+      setErrorGeneral(mensajeAuth(undefined));
+    }
+    setRedirigiendo(false);
   };
   const playAsGuest = async () => {
     await logout();
@@ -322,7 +356,7 @@ export function AuthForm() {
                 </div>
               ) : (
                 <Suspense fallback={null}>
-                  <AvisoEnlace />
+                  <AvisoUrl />
                 </Suspense>
               )}
               <button
@@ -353,16 +387,16 @@ export function AuthForm() {
               <button
                 className="btn ghost"
                 type="button"
-                disabled
-                title="Próximamente"
+                disabled={redirigiendo}
+                onClick={() => void entrarConProveedor("google")}
               >
                 ◆ GOOGLE
               </button>
               <button
                 className="btn ghost"
                 type="button"
-                disabled
-                title="Próximamente"
+                disabled={redirigiendo}
+                onClick={() => void entrarConProveedor("github")}
               >
                 ▣ GITHUB
               </button>
