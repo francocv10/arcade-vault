@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main`; faltan el paso 1 y los 7 criterios sin marcar, que necesitan el panel, enlaces reales del correo (2 por hora), cuentas de Google o GitHub, o un correo ajeno al equipo.
+> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main` y el paso 1 está comprobado; faltan los 4 criterios sin marcar, que necesitan correos reales (límite de 2 por hora, aunque en la práctica conviene contar con 1), cuentas de Google o GitHub, o un correo ajeno al equipo.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -142,16 +142,16 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 ## Criterios de aceptación
 
 - [x] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`.
+- [x] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`. _Comprobado por el usuario en el panel; `mailer_autoconfirm` es `false` y el enlace real pasó por `/auth/v1/verify` y volvió a `/auth/callback?origen=correo`._
 - [x] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
 - [x] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
 - [x] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse. _El enlace real llegó a `/home`; `NOMBRE ▾` se vio con una cuenta de prueba confirmada por `/auth/confirm`._
 - [x] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso. _Contra el `/auth/v1/verify` real con un token inexistente, que da el mismo error que uno gastado, y con un código rechazado (`flow_state_not_found`) teniendo el verificador PKCE en el navegador._
-- [ ] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta.
+- [x] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta. _Con un correo real: `/verify` confirmó la cuenta sin abrir sesión, salió el aviso y la contraseña entró en `/home`._
 - [x] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
 - [x] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
 - [x] Iniciar sesión con una contraseña errónea en una cuenta sin confirmar muestra `[ERR] Correo o contraseña incorrectos.` _Contra Supabase real, que responde `invalid_credentials`, con una cuenta de prueba creada por SQL._
-- [ ] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta.
+- [x] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta. _Con un correo real, una hora después del registro._
 - [x] Reenviar por encima del límite muestra `[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.` sin romper la pantalla. _Con un 429 simulado en el reenvío; el límite real se vio en el registro._
 - [x] Registrarse con un correo que ya tiene cuenta muestra el mismo «REVISA TU CORREO» y no abre sesión ni envía correo. _Con una cuenta confirmada: el log da `user_repeated_signup`, sin `mail.send`._
 - [ ] Registrarse con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized`, conserva lo escrito y no deja una cuenta en `auth.users`. _Requiere un correo real ajeno al equipo, con permiso de su dueño._
