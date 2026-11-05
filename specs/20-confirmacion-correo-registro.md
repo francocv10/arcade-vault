@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Aprobado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están hechos en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; faltan el paso 1 y los criterios sin marcar del paso 10, limitados por los 2 correos por hora del correo integrado.
+> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están hechos en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; faltan el paso 1 y los criterios sin marcar del paso 10, limitados por los 2 correos por hora del correo integrado.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
