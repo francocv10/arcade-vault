@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Aprobado
+> **Status:** Aplazado (2026-11-05). Sin dominio ni SMTP propio, el panel de Supabase no dejó editar la plantilla «Confirm signup», y sin ella el enlace no pasa por `/auth/confirm` ni abre la sesión. **Confirm email** sigue desactivado, como en la SPEC 19. Los pasos 2 a 7 están en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; los pasos 8 y 9 quedan pendientes.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
