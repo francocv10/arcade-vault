@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Aprobado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** sigue desactivado hasta el paso 10. Los pasos 2 a 7 están en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; los pasos 1 y 8 a 11 quedan pendientes.
+> **Status:** Aprobado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están hechos en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; faltan el paso 1 y los criterios sin marcar del paso 10, limitados por los 2 correos por hora del correo integrado.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -141,30 +141,30 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
 - [ ] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`.
-- [ ] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
-- [ ] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
+- [x] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
+- [x] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
 - [ ] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse.
 - [ ] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso.
 - [ ] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta.
-- [ ] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
-- [ ] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
+- [x] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
+- [x] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
 - [ ] Iniciar sesión con una contraseña errónea en una cuenta sin confirmar muestra `[ERR] Correo o contraseña incorrectos.`
 - [ ] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta.
-- [ ] Reenviar por encima del límite muestra `[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.` sin romper la pantalla.
+- [x] Reenviar por encima del límite muestra `[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.` sin romper la pantalla. _Con un 429 simulado en el reenvío; el límite real se vio en el registro._
 - [ ] Registrarse con un correo que ya tiene cuenta muestra el mismo «REVISA TU CORREO» y no abre sesión ni envía correo.
 - [ ] Registrarse con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized`, conserva lo escrito y no deja una cuenta en `auth.users`. _Requiere un correo real ajeno al equipo, con permiso de su dueño._
-- [ ] VOLVER A INICIAR SESIÓN regresa a la pestaña INICIAR SESIÓN con el correo escrito.
+- [x] VOLVER A INICIAR SESIÓN regresa a la pestaña INICIAR SESIÓN con el correo escrito.
 - [ ] Tras confirmar, cerrar sesión y volver a `/acceso` no muestra «REVISA TU CORREO».
 - [ ] Las cuentas existentes inician sesión como antes.
 - [ ] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`.
 - [ ] Con **Confirm email** activo, entrar con Google o GitHub usando el correo de una cuenta pendiente de confirmar abre esa cuenta y la contraseña elegida al registrarse deja de funcionar.
 - [ ] Google, GitHub y la recuperación de contraseña funcionan como antes.
 - [ ] Los enlaces de `recovery` siguen llevando a `/acceso/nueva-clave`.
-- [ ] «REVISA TU CORREO» se usa solo con teclado y sin scroll horizontal a 320 px de ancho.
-- [ ] No hay errores nuevos en consola en `/acceso` ni en `/home`.
-- [ ] `CLAUDE.md` describe la confirmación de correo y quién puede registrarse hasta conectar Resend.
+- [x] «REVISA TU CORREO» se usa solo con teclado y sin scroll horizontal a 320 px de ancho.
+- [x] No hay errores nuevos en consola en `/acceso` ni en `/home`.
+- [x] `CLAUDE.md` describe la confirmación de correo y quién puede registrarse hasta conectar Resend.
 
 ---
 

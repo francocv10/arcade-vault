@@ -150,6 +150,7 @@ function RevisaCorreo({
 }) {
   const { correo, motivo } = pendiente;
   const titulo = useRef<HTMLHeadingElement>(null);
+  const botonReenviar = useRef<HTMLButtonElement>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [reenviado, setReenviado] = useState(false);
@@ -173,7 +174,12 @@ function RevisaCorreo({
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }
-    setEnviando(false);
+    // Deshabilitar el botón le quita el foco. Síncrono porque no se puede
+    // enfocar hasta que vuelva a estar habilitado.
+    flushSync(() => setEnviando(false));
+    if (document.activeElement === document.body) {
+      botonReenviar.current?.focus();
+    }
   };
   return (
     <>
@@ -203,6 +209,7 @@ function RevisaCorreo({
         </div>
       )}
       <button
+        ref={botonReenviar}
         className="btn lg"
         type="button"
         disabled={enviando}
