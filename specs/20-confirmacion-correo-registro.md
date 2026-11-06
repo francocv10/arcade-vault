@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están hechos en la rama `spec-20-confirmacion-correo-registro`, sin fusionar; faltan el paso 1 y los criterios sin marcar del paso 10, limitados por los 2 correos por hora del correo integrado.
+> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main` y el paso 1 está comprobado. Todos los criterios están marcados, pero el del registro con un correo ajeno al equipo se comprobó simulando la respuesta de Supabase: el rechazo real sigue sin verse.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -142,26 +142,26 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 ## Criterios de aceptación
 
 - [x] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`.
+- [x] **Confirm email** está activado y la plantilla «Confirm signup» conserva `{{ .ConfirmationURL }}`. _`mailer_autoconfirm` es `false`. La variable se vio en el HTML de la vista previa del panel, con el inspector del navegador (`<a href="{{ .ConfirmationURL }}">`), y el enlace real pasó por `/auth/v1/verify` y volvió a `/auth/callback?origen=correo`._
 - [x] Registrarse con un correo del equipo no abre sesión, muestra «REVISA TU CORREO» con ese correo y borra la contraseña escrita.
 - [x] El correo llega con el enlace de Supabase y, al pulsarlo, vuelve a `/auth/callback?origen=correo` con un `code`.
-- [ ] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse.
-- [ ] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso.
-- [ ] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta.
+- [x] Pulsar el enlace abre la sesión, lleva a `/home` y muestra `NOMBRE ▾` con el nombre elegido al registrarse. _El enlace real llegó a `/home`; `NOMBRE ▾` se vio con una cuenta de prueba confirmada por `/auth/confirm`._
+- [x] Reutilizar o manipular el enlace lleva a `/acceso?error=confirmacion` y muestra el aviso. _Contra el `/auth/v1/verify` real con un token inexistente, que da el mismo error que uno gastado, y con un código rechazado (`flow_state_not_found`) teniendo el verificador PKCE en el navegador._
+- [x] Abrir el enlace en otro navegador muestra el mismo aviso, y después iniciar sesión con la contraseña entra en la cuenta. _Con un correo real: `/verify` confirmó la cuenta sin abrir sesión, salió el aviso y la contraseña entró en `/home`._
 - [x] `/auth/callback` sin `origen=correo` y sin código sigue llevando a `/acceso?error=oauth`.
 - [x] Iniciar sesión con la contraseña correcta en una cuenta sin confirmar muestra «REVISA TU CORREO» con el texto de `acceso` y no abre sesión.
-- [ ] Iniciar sesión con una contraseña errónea en una cuenta sin confirmar muestra `[ERR] Correo o contraseña incorrectos.`
-- [ ] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta.
+- [x] Iniciar sesión con una contraseña errónea en una cuenta sin confirmar muestra `[ERR] Correo o contraseña incorrectos.` _Contra Supabase real, que responde `invalid_credentials`, con una cuenta de prueba creada por SQL._
+- [x] REENVIAR ENLACE envía un correo nuevo, y su enlace confirma la cuenta. _Con un correo real, una hora después del registro._
 - [x] Reenviar por encima del límite muestra `[ERR] Se ha alcanzado el límite de correos. Inténtalo dentro de un rato.` sin romper la pantalla. _Con un 429 simulado en el reenvío; el límite real se vio en el registro._
-- [ ] Registrarse con un correo que ya tiene cuenta muestra el mismo «REVISA TU CORREO» y no abre sesión ni envía correo.
-- [ ] Registrarse con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized`, conserva lo escrito y no deja una cuenta en `auth.users`. _Requiere un correo real ajeno al equipo, con permiso de su dueño._
+- [x] Registrarse con un correo que ya tiene cuenta muestra el mismo «REVISA TU CORREO» y no abre sesión ni envía correo. _Con una cuenta confirmada: el log da `user_repeated_signup`, sin `mail.send`._
+- [x] Registrarse con un correo ajeno al equipo muestra el mensaje de `email_address_not_authorized`, conserva lo escrito y no deja una cuenta en `auth.users`. _Simulado (2026-11-06): con un 400 de `email_address_not_authorized` en `/auth/v1/signup`, sale el mensaje y se conservan usuario, correo y contraseña. La petición no llegó a Supabase, así que no prueba que Supabase rechace la dirección ni que no quede la cuenta; ese rechazo real no se ha visto nunca. Los intentos reales con otro correo dieron 429 y no dejaron cuenta._
 - [x] VOLVER A INICIAR SESIÓN regresa a la pestaña INICIAR SESIÓN con el correo escrito.
-- [ ] Tras confirmar, cerrar sesión y volver a `/acceso` no muestra «REVISA TU CORREO».
-- [ ] Las cuentas existentes inician sesión como antes.
-- [ ] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`.
-- [ ] Con **Confirm email** activo, entrar con Google o GitHub usando el correo de una cuenta pendiente de confirmar abre esa cuenta y la contraseña elegida al registrarse deja de funcionar.
-- [ ] Google, GitHub y la recuperación de contraseña funcionan como antes.
-- [ ] Los enlaces de `recovery` siguen llevando a `/acceso/nueva-clave`.
+- [x] Tras confirmar, cerrar sesión y volver a `/acceso` no muestra «REVISA TU CORREO».
+- [x] Las cuentas existentes inician sesión como antes. _Con una cuenta de prueba confirmada: las 3 cuentas originales ya no existen._
+- [x] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`. _Comprobado con Google._
+- [x] Con **Confirm email** activo, entrar con Google o GitHub usando el correo de una cuenta pendiente de confirmar abre esa cuenta y la contraseña elegida al registrarse deja de funcionar. _Con Google real y una cuenta pendiente creada por SQL, que respondía `email_not_confirmed`: Supabase conservó el id, eliminó la identidad `email`, la contraseña y `username`, así que se pide nombre en `/acceso/nombre`, y la contraseña pasó a dar `invalid_credentials`._
+- [x] Google, GitHub y la recuperación de contraseña funcionan como antes. _Con Google, GitHub y un correo real. La recuperación estaba rota: sin `redirectTo` el enlace volvía a la Site URL y perdía el `code`; se corrigió con `origen=recuperacion` en `/auth/callback`, y solo funciona en el navegador donde se pidió el enlace._
+- [x] Los enlaces de `recovery` siguen llevando a `/acceso/nueva-clave`. _Con un token de prueba creado por SQL, sin enviar correo._
 - [x] «REVISA TU CORREO» se usa solo con teclado y sin scroll horizontal a 320 px de ancho.
 - [x] No hay errores nuevos en consola en `/acceso` ni en `/home`.
 - [x] `CLAUDE.md` describe la confirmación de correo y quién puede registrarse hasta conectar Resend.
