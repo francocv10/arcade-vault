@@ -1,6 +1,6 @@
 # SPEC 20 — Confirmación de correo al crear una cuenta
 
-> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main` y el paso 1 está comprobado; faltan los 4 criterios sin marcar, que necesitan correos reales (límite de 2 por hora, aunque en la práctica conviene contar con 1), cuentas de Google o GitHub, o un correo ajeno al equipo.
+> **Status:** Implementado (reabierta el 2026-11-05 con la plantilla por defecto). **Confirm email** ya está activo y el enlace abre la sesión, comprobado con un correo real. Los pasos 2 a 9 y 11 están fusionados en `main` y el paso 1 está comprobado; faltan los 2 criterios sin marcar: una cuenta pendiente con OAuth (1 correo real; límite de 2 por hora, aunque en la práctica conviene contar con 1) y un correo ajeno al equipo.
 > **Depends on:** SPEC 18 (registro, `AuthForm`, `/auth/confirm` y `mensajeAuth`), SPEC 19 (vinculación de identidades y `ExigirNombre`)
 > **Date:** 2026-11-04
 > **Objective:** Exigir que quien crea una cuenta con correo y contraseña la confirme con un enlace enviado a ese correo antes de poder entrar.
@@ -158,9 +158,9 @@ El orden importa: **Confirm email** se activa al final. Si se activara antes, `s
 - [x] VOLVER A INICIAR SESIÓN regresa a la pestaña INICIAR SESIÓN con el correo escrito.
 - [x] Tras confirmar, cerrar sesión y volver a `/acceso` no muestra «REVISA TU CORREO».
 - [x] Las cuentas existentes inician sesión como antes. _Con una cuenta de prueba confirmada: las 3 cuentas originales ya no existen._
-- [ ] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`.
+- [x] Con **Confirm email** activo, registrarse con Google o con GitHub usando un correo sin cuenta crea la cuenta sin enviar correo y lleva a `/acceso/nombre`. _Comprobado con Google._
 - [ ] Con **Confirm email** activo, entrar con Google o GitHub usando el correo de una cuenta pendiente de confirmar abre esa cuenta y la contraseña elegida al registrarse deja de funcionar.
-- [ ] Google, GitHub y la recuperación de contraseña funcionan como antes.
+- [x] Google, GitHub y la recuperación de contraseña funcionan como antes. _Con Google, GitHub y un correo real. La recuperación estaba rota: sin `redirectTo` el enlace volvía a la Site URL y perdía el `code`; se corrigió con `origen=recuperacion` en `/auth/callback`, y solo funciona en el navegador donde se pidió el enlace._
 - [x] Los enlaces de `recovery` siguen llevando a `/acceso/nueva-clave`. _Con un token de prueba creado por SQL, sin enviar correo._
 - [x] «REVISA TU CORREO» se usa solo con teclado y sin scroll horizontal a 320 px de ancho.
 - [x] No hay errores nuevos en consola en `/acceso` ni en `/home`.
