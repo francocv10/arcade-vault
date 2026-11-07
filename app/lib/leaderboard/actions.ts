@@ -1,6 +1,7 @@
 "use server";
 import { updateTag } from "next/cache";
 import { tieneUsuario } from "@/app/acceso/auth-schema";
+import { createAdminClient } from "@/app/lib/supabase/admin";
 import { createClient } from "@/app/lib/supabase/server";
 import {
   ETIQUETA_ACTIVIDAD,
@@ -11,6 +12,7 @@ import {
 import {
   JUEGOS_CON_RANKING,
   normalizarNombre,
+  PARTIDA_MAX_SEGUNDOS,
   validarEnvio,
   type EnvioPuntuacion,
 } from "./schema";
@@ -18,6 +20,52 @@ const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Inténtalo de nuevo.";
 const ERROR_SIN_NOMBRE =
   "[ERR] Elige tu nombre de jugador antes de guardar la puntuación.";
+// Abre una partida de una cuenta (spec 22). Es un endpoint público: la sesión
+// sale de las cookies, nunca de un parámetro, y el juego se valida aquí. Solo
+// devuelve el id; `guardarPuntuacion` lo exige para publicar.
+export async function iniciarPartida(
+  game: string,
+): Promise<{ ok: boolean; partidaId?: string }> {
+  if (typeof game !== "string" || !JUEGOS_CON_RANKING.includes(game)) {
+    return { ok: false };
+  }
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const userId = data?.claims?.sub;
+    if (!userId) return { ok: false };
+    const admin = createAdminClient();
+    // Partidas de esta cuenta que ya no podrían publicar. Las abiertas en otras
+    // pestañas siguen vivas: no se invalida la partida anterior.
+    const caducidad = new Date(
+      Date.now() - PARTIDA_MAX_SEGUNDOS * 1000,
+    ).toISOString();
+    const { error: errorLimpieza } = await admin
+      .from("partidas")
+      .delete()
+      .eq("user_id", userId)
+      .lt("iniciada_en", caducidad);
+    if (errorLimpieza) {
+      console.warn(
+        "iniciarPartida: no se limpiaron las caducadas",
+        errorLimpieza.message,
+      );
+    }
+    const { data: partida, error } = await admin
+      .from("partidas")
+      .insert({ game_id: game, user_id: userId })
+      .select("id")
+      .single();
+    if (error || !partida) {
+      console.error("iniciarPartida: error de Supabase", error?.message);
+      return { ok: false };
+    }
+    return { ok: true, partidaId: partida.id };
+  } catch (error) {
+    console.error("iniciarPartida: fallo inesperado", error);
+    return { ok: false };
+  }
+}
 export async function guardarPuntuacion(
   envio: EnvioPuntuacion,
 ): Promise<{ ok: boolean; error?: string }> {
