@@ -21,3 +21,11 @@ export function supabaseEnv() {
     ),
   };
 }
+// Solo servidor: sin prefijo NEXT_PUBLIC_, Next no la incluye en el bundle del
+// navegador. Únicamente la llama app/lib/supabase/admin.ts (`server-only`).
+export function supabaseSecretKey(): string {
+  if (typeof window !== "undefined") {
+    throw new Error("SUPABASE_SECRET_KEY solo se puede leer en el servidor.");
+  }
+  return requerida("SUPABASE_SECRET_KEY", process.env.SUPABASE_SECRET_KEY);
+}
