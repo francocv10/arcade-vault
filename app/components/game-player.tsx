@@ -431,7 +431,21 @@ export function GamePlayer({
             <h2 id={titleId}>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
+            {esReal && !user ? (
+              // Invitado en un juego real (spec 22): solo las cuentas publican.
+              // Sin input, useDialog enfoca el primer enlace: va antes de JUGAR DE NUEVO.
+              <div className="ranking-lock">
+                <p className="ranking-lock-msg">
+                  INICIA SESIÓN PARA ENTRAR EN EL RANKING
+                </p>
+                <p className="ranking-lock-note">
+                  Esta partida no se guardará en el ranking.
+                </p>
+                <Link href="/acceso" className="btn yellow ranking-lock-cta">
+                  INICIAR SESIÓN
+                </Link>
+              </div>
+            ) : !saved ? (
               <div className="input-row">
                 <input
                   aria-label="Iniciales"
