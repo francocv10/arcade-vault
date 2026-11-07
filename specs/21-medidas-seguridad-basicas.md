@@ -39,6 +39,27 @@ Estado consultado el 2026-11-06:
 - Migración que crea un índice sobre `scores.user_id`.
 - Revisión de **Authentication > Rate Limits** (paso manual del usuario).
 - Actualizar `references/security/security-checklist.md` y `CLAUDE.md`.
+- Protección de rutas con Proxy Next.js. Información aquí:
+https://nextjs.org/docs/app/getting-started/proxy
+
+Ejemplo: proxy.ts
+```ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// This function can be marked `async` if using `await` inside
+export function proxy(request: NextRequest) {
+  return NextResponse.redirect(new URL('/home', request.url))
+}
+
+// Alternatively, you can use a default export:
+// export default function proxy(request: NextRequest) { ... }
+
+export const config = {
+  matcher: '/about/:path*',
+}
+```
+
 
 **Out of scope (para futuros specs):**
 
@@ -125,7 +146,8 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 6. **Índice.** Aplicar `add_scores_user_id_index` con `apply_migration`. Verificación: guardar una puntuación sigue funcionando y `get_advisors` de rendimiento ya no lista `scores_user_id_fkey`.
 7. **Contraseña en el panel (manual).** En **Authentication > Providers > Email**, fijar **Minimum password length** en 8 y **Password Requirements** en minúsculas, mayúsculas, dígitos y símbolos. Verificación: un `POST` directo a `/auth/v1/signup` con la clave publishable y la contraseña `abcdefgh` responde `weak_password`, no crea la cuenta ni gasta un correo.
 8. **Límites (manual).** Revisar **Authentication > Rate Limits** sin cambiar nada y pasar los valores que muestra. Si existe un límite por IP para registros, comprobar que está activo.
-9. **Documentación.** Marcar `references/security/security-checklist.md`, dejando sin marcar la protección de contraseñas filtradas con su motivo, y anotar los valores del paso 8. Actualizar en `CLAUDE.md` la lista de specs, la regla de contraseña, las cabeceras y la configuración de Auth.
+9. **Proteccion de rutas con Proxy Next.js**
+10. **Documentación.** Marcar `references/security/security-checklist.md`, dejando sin marcar la protección de contraseñas filtradas con su motivo, y anotar los valores del paso 8. Actualizar en `CLAUDE.md` la lista de specs, la regla de contraseña, las cabeceras y la configuración de Auth.
 
 ---
 
