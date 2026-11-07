@@ -1,6 +1,6 @@
 # SPEC 22 — Puntuaciones validadas en servidor
 
-> **Status:** Borrador
+> **Status:** Aprobado
 > **Depends on:** SPEC 07 (`scores`, `leaderboard` y `guardarPuntuacion`), SPEC 18 (sesión y `user_metadata.username`), SPEC 19 (cuentas sin nombre)
 > **Date:** 2026-11-06
 > **Objective:** Impedir que una llamada directa a la API publique una puntuación: solo el servidor escribe en `scores`, solo para cuentas y solo con una partida iniciada cuyos puntos sean posibles para el tiempo jugado.
