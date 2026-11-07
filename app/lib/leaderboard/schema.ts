@@ -61,3 +61,34 @@ export function validarEnvio(entrada: unknown): ResultadoEnvio {
   }
   return { ok: true, envio: { game, name: nombre, score } };
 }
+// Límites por juego (spec 22). Son techos sobre las constantes de cada motor,
+// no estimaciones: un límite ajustado rechazaría a jugadores reales. Un juego
+// nuevo con ranking necesita su entrada aquí o no podrá publicar.
+export const LIMITES_POR_JUEGO: Record<
+  string,
+  { puntosMax: number; puntosPorSegundo: number }
+> = {
+  asteroides: { puntosMax: 1_000_000, puntosPorSegundo: 500 },
+  tetris: { puntosMax: 1_000_000, puntosPorSegundo: 2_000 },
+  arkanoid: { puntosMax: 2_080, puntosPorSegundo: 200 },
+  snake: { puntosMax: 1_000_000, puntosPorSegundo: 160 },
+  frogger: { puntosMax: 1_000_000, puntosPorSegundo: 300 },
+};
+// El motor arranca antes de que llegue la respuesta de `iniciarPartida`.
+export const GRACIA_SEGUNDOS = 5;
+export const PARTIDA_MAX_SEGUNDOS = 6 * 60 * 60;
+// `segundos` es el tiempo total desde `partidas.iniciada_en`, pausas incluidas.
+export function puntuacionPosible(
+  game: string,
+  score: number,
+  segundos: number,
+): boolean {
+  if (!Object.hasOwn(LIMITES_POR_JUEGO, game)) return false;
+  if (!Number.isFinite(score) || !Number.isFinite(segundos)) return false;
+  const { puntosMax, puntosPorSegundo } = LIMITES_POR_JUEGO[game];
+  return (
+    score <= puntosMax &&
+    segundos <= PARTIDA_MAX_SEGUNDOS &&
+    score <= (segundos + GRACIA_SEGUNDOS) * puntosPorSegundo
+  );
+}
