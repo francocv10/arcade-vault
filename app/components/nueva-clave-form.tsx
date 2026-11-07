@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode, SubmitEvent } from "react";
-import { LIMITES_AUTH, mensajeAuth } from "@/app/acceso/auth-schema";
+import { mensajeAuth, validarClaveNueva } from "@/app/acceso/auth-schema";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 export function Tarjeta({
@@ -34,10 +34,7 @@ export function NuevaClaveForm() {
   const [enviando, setEnviando] = useState(false);
   const submit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const encontrado =
-      clave.length < LIMITES_AUTH.claveMin
-        ? `Mínimo ${LIMITES_AUTH.claveMin} caracteres.`
-        : null;
+    const encontrado = validarClaveNueva(clave);
     setErrorClave(encontrado);
     setErrorGeneral(null);
     if (encontrado) return;
