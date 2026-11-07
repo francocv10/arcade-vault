@@ -13,13 +13,22 @@ import {
   JUEGOS_CON_RANKING,
   normalizarNombre,
   PARTIDA_MAX_SEGUNDOS,
-  validarEnvio,
-  type EnvioPuntuacion,
+  puntuacionPosible,
 } from "./schema";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Inténtalo de nuevo.";
 const ERROR_SIN_NOMBRE =
   "[ERR] Elige tu nombre de jugador antes de guardar la puntuación.";
+const ERROR_SIN_SESION = "[ERR] Inicia sesión para entrar en el ranking.";
+const ERROR_VALIDACION = "[ERR] No se pudo validar esta puntuación.";
+const FORMATO_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Rechazo por validación: el motivo va al log, sin datos de la cuenta, y el
+// cliente recibe siempre el mismo mensaje para no ayudar a afinar una cifra.
+function rechazar(motivo: string): { ok: false; error: string } {
+  console.warn(`guardarPuntuacion: rechazada, ${motivo}`);
+  return { ok: false, error: ERROR_VALIDACION };
+}
 // Abre una partida de una cuenta (spec 22). Es un endpoint público: la sesión
 // sale de las cookies, nunca de un parámetro, y el juego se valida aquí. Solo
 // devuelve el id; `guardarPuntuacion` lo exige para publicar.
@@ -66,36 +75,72 @@ export async function iniciarPartida(
     return { ok: false };
   }
 }
-export async function guardarPuntuacion(
-  envio: EnvioPuntuacion,
-): Promise<{ ok: boolean; error?: string }> {
+// Publica la puntuación de una partida abierta con `iniciarPartida` (spec 22).
+// El juego sale de la partida y el nombre de la cuenta: el cliente solo envía
+// el id y la cifra. Los rechazos por validación dan siempre el mismo mensaje
+// genérico, y el motivo solo queda en el log del servidor.
+export async function guardarPuntuacion(envio: {
+  partidaId: string;
+  score: number;
+}): Promise<{ ok: boolean; error?: string }> {
   let game: string;
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getClaims();
-    const claims = data?.claims;
-    let entrada = envio;
-    if (claims) {
-      // Con sesión decide el servidor: se ignora el nombre que envíe el cliente.
-      // getUser y no los claims: updateUser no renueva el JWT, así que el
-      // nombre recién elegido no estaría en el token hasta el siguiente refresco.
-      const { data: cuenta } = await supabase.auth.getUser();
-      if (!cuenta.user) return { ok: false, error: ERROR_GUARDADO };
-      const { username } = cuenta.user.user_metadata;
-      if (!tieneUsuario(username)) {
-        return { ok: false, error: ERROR_SIN_NOMBRE };
-      }
-      entrada = { ...envio, name: username };
+    const userId = data?.claims?.sub;
+    if (!userId) return { ok: false, error: ERROR_SIN_SESION };
+    // getUser y no los claims: updateUser no renueva el JWT, así que el
+    // nombre recién elegido no estaría en el token hasta el siguiente refresco.
+    const { data: cuenta } = await supabase.auth.getUser();
+    if (!cuenta.user) return { ok: false, error: ERROR_GUARDADO };
+    const { username } = cuenta.user.user_metadata;
+    if (!tieneUsuario(username)) {
+      return { ok: false, error: ERROR_SIN_NOMBRE };
     }
-    const resultado = validarEnvio(entrada);
-    if (!resultado.ok) return { ok: false, error: resultado.error };
-    game = resultado.envio.game;
-    const { error } = await supabase.from("scores").insert({
+    const { partidaId, score } = (envio ?? {}) as Record<string, unknown>;
+    if (
+      typeof partidaId !== "string" ||
+      !FORMATO_UUID.test(partidaId) ||
+      typeof score !== "number" ||
+      !Number.isInteger(score) ||
+      score < 0
+    ) {
+      return rechazar("envío mal formado");
+    }
+    const admin = createAdminClient();
+    const { data: partida, error: errorPartida } = await admin
+      .from("partidas")
+      .select("game_id, iniciada_en")
+      .eq("id", partidaId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (errorPartida) {
+      console.error(
+        "guardarPuntuacion: error de Supabase al leer la partida",
+        errorPartida.message,
+      );
+      return { ok: false, error: ERROR_GUARDADO };
+    }
+    if (!partida) return rechazar("partida inexistente o de otra cuenta");
+    game = partida.game_id;
+    // Tiempo total desde que se abrió la partida, pausas incluidas.
+    const segundos = Math.max(
+      0,
+      (Date.now() - new Date(partida.iniciada_en).getTime()) / 1000,
+    );
+    if (!puntuacionPosible(game, score, segundos)) {
+      return rechazar(
+        `puntuación imposible (${game}: ${score} en ${Math.round(segundos)} s)`,
+      );
+    }
+    const { error } = await admin.from("scores").insert({
       game_id: game,
-      player_name: resultado.envio.name,
-      score: resultado.envio.score,
-      user_id: claims?.sub ?? null,
+      player_name: normalizarNombre(username),
+      score,
+      user_id: userId,
+      partida_id: partidaId,
     });
+    if (error?.code === "23505") return rechazar("partida ya publicada");
     if (error) {
       console.error("guardarPuntuacion: error de Supabase", error.message);
       return { ok: false, error: ERROR_GUARDADO };

@@ -33,9 +33,11 @@ const MENSAJES_AUTH = new Map<string, string>([
     "[ERR] La contraseña nueva debe ser distinta de la anterior.",
   ],
 ]);
-// Una sesión OAuth nueva no tiene username hasta que elige su nombre.
-export function tieneUsuario(username: unknown): boolean {
-  return typeof username === "string" && username.length > 0;
+// Una sesión OAuth nueva no tiene username hasta que elige su nombre. Exige
+// también PATRON_USUARIO (spec 22): `updateUser` por API puede fijar cualquier
+// valor sin pasar por `validarUsuario`, y esa cuenta debe volver a elegirlo.
+export function tieneUsuario(username: unknown): username is string {
+  return typeof username === "string" && PATRON_USUARIO.test(username);
 }
 // Metadatos del proveedor, en orden de preferencia.
 const CLAVES_SUGERENCIA = [

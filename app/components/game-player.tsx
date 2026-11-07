@@ -263,7 +263,11 @@ export function GamePlayer({
     setSaving(true);
     setErrorGuardado(null);
     try {
-      const res = await guardarPuntuacion({ game: gameId, name, score });
+      // Sin partida (iniciarPartida falló) el servidor rechaza con su mensaje.
+      const res = await guardarPuntuacion({
+        partidaId: partidaRef.current ?? "",
+        score,
+      });
       if (res.ok) setSaved(true);
       else setErrorGuardado(res.error ?? ERROR_GUARDADO);
     } catch {
