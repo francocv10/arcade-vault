@@ -39,27 +39,27 @@ Estado consultado el 2026-11-06:
 - Migración que crea un índice sobre `scores.user_id`.
 - Revisión de **Authentication > Rate Limits** (paso manual del usuario).
 - Actualizar `references/security/security-checklist.md` y `CLAUDE.md`.
-- Protección de rutas con Proxy Next.js. Información aquí:
-https://nextjs.org/docs/app/getting-started/proxy
+- Protección de `/acceso/nombre`, `/acceso/nueva-clave` y `/acceso` con Proxy Next.js (ver «Protección de rutas»). Información aquí:
+  https://nextjs.org/docs/app/getting-started/proxy
 
 Ejemplo: proxy.ts
+
 ```ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // This function can be marked `async` if using `await` inside
 export function proxy(request: NextRequest) {
-  return NextResponse.redirect(new URL('/home', request.url))
+  return NextResponse.redirect(new URL("/home", request.url));
 }
 
 // Alternatively, you can use a default export:
 // export default function proxy(request: NextRequest) { ... }
 
 export const config = {
-  matcher: '/about/:path*',
-}
+  matcher: "/about/:path*",
+};
 ```
-
 
 **Out of scope (para futuros specs):**
 
@@ -130,6 +130,18 @@ Se aplican con `source: "/(.*)"` en la función `headers` de `next.config.ts`.
 
 `rls_auto_enable` es la función del event trigger `ensure_rls`, que activa RLS en cada tabla nueva de `public`. `postgres` y `service_role` conservan `EXECUTE`.
 
+### Protección de rutas
+
+| Ruta                  | Sesión | Redirige a             |
+| --------------------- | ------ | ---------------------- |
+| `/acceso/nombre`      | No     | `/acceso`              |
+| `/acceso/nueva-clave` | No     | `/acceso?error=enlace` |
+| `/acceso`             | Sí     | `/home`                |
+
+Las demás rutas no cambian: jugar y guardar puntuaciones siguen abiertos a invitados (SPEC 07). `/acceso/nueva-clave` conserva su pantalla «ENLACE NO VÁLIDO» y `/acceso/nombre` y `AuthForm` sus redirecciones en cliente, porque la sesión también puede cambiar sin una petición nueva, por ejemplo al cerrar sesión desde la barra.
+
+La regla se aplica en `actualizarSesion` (`app/lib/supabase/proxy.ts`), con el resultado de `getClaims()`. Los destinos son fijos. La redirección copia las cookies y las cabeceras anti-caché de la respuesta, para no perder una sesión recién refrescada. El `matcher` de `proxy.ts` ya cubre las tres rutas y no cambia.
+
 ---
 
 ## Plan de implementación
@@ -146,8 +158,8 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 6. **Índice.** Aplicar `add_scores_user_id_index` con `apply_migration`. Verificación: guardar una puntuación sigue funcionando y `get_advisors` de rendimiento ya no lista `scores_user_id_fkey`.
 7. **Contraseña en el panel (manual).** En **Authentication > Providers > Email**, fijar **Minimum password length** en 8 y **Password Requirements** en minúsculas, mayúsculas, dígitos y símbolos. Verificación: un `POST` directo a `/auth/v1/signup` con la clave publishable y la contraseña `abcdefgh` responde `weak_password`, no crea la cuenta ni gasta un correo.
 8. **Límites (manual).** Revisar **Authentication > Rate Limits** sin cambiar nada y pasar los valores que muestra. Si existe un límite por IP para registros, comprobar que está activo.
-9. **Proteccion de rutas con Proxy Next.js**
-10. **Documentación.** Marcar `references/security/security-checklist.md`, dejando sin marcar la protección de contraseñas filtradas con su motivo, y anotar los valores del paso 8. Actualizar en `CLAUDE.md` la lista de specs, la regla de contraseña, las cabeceras y la configuración de Auth.
+9. **Protección de rutas con Proxy.** Leer `node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md` y aplicar la tabla de «Protección de rutas» en `actualizarSesion`, sin añadir código entre `createServerClient` y `getClaims()`. Verificación: con `curl -I` y sin cookies, `/acceso/nombre` y `/acceso/nueva-clave` devuelven una redirección a su destino, y `/acceso` y `/home` devuelven 200. Con Playwright y sesión real, `/acceso` lleva a `/home`, y el enlace de recuperación sigue llegando a `/acceso/nueva-clave`.
+10. **Documentación.** Reescribir `references/security/security-checklist.md`, que hoy solo contiene la tabla de avisos del asesor, como una lista de casillas con cada fila de la tabla inicial de esta spec y la protección de rutas. Dejar sin marcar la protección de contraseñas filtradas con su motivo, anotar los valores del paso 8 y conservar al final la tabla de avisos, indicando que se corrigieron. Actualizar en `CLAUDE.md` la lista de specs, la regla de contraseña, las cabeceras, la protección de rutas y la configuración de Auth.
 
 ---
 
@@ -170,9 +182,15 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 - [ ] `get_advisors` de seguridad no lista `rls_auto_enable`.
 - [ ] `get_advisors` de rendimiento no lista `scores_user_id_fkey`.
 - [ ] `games` y `scores` tienen `relrowsecurity = true`.
+- [ ] Sin sesión, `/acceso/nombre` redirige a `/acceso`.
+- [ ] Sin sesión, `/acceso/nueva-clave` redirige a `/acceso?error=enlace`, que muestra `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.`
+- [ ] Con sesión, `/acceso` redirige a `/home`.
+- [ ] Con sesión, `/acceso/nombre` y `/acceso/nueva-clave` no redirigen desde el proxy.
+- [ ] Sin sesión, `/home`, `/biblioteca`, `/salon`, `/about`, `/juegos/asteroides` y `/juegos/asteroides/jugar` siguen abriéndose.
+- [ ] El enlace de recuperación sigue llegando a `/acceso/nueva-clave`, y el flujo OAuth con cuenta sin nombre a `/acceso/nombre`.
 - [ ] Los valores de **Authentication > Rate Limits** están anotados en `references/security/security-checklist.md`.
 - [ ] `references/security/security-checklist.md` tiene todos sus puntos marcados, salvo la protección de contraseñas filtradas, que indica su motivo.
-- [ ] `CLAUDE.md` describe la regla de contraseña, las cabeceras y la configuración del panel.
+- [ ] `CLAUDE.md` describe la regla de contraseña, las cabeceras, la protección de rutas y la configuración del panel.
 
 ---
 
@@ -193,6 +211,10 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 - **Sí:** solo los límites del panel contra bots (decisión del usuario). **No:** CAPTCHA, que necesita una cuenta externa y cambios en `AuthForm`.
 - **Sí:** el paso de límites no cambia ningún valor. Bajarlos sin datos de uso podría bloquear a jugadores legítimos.
 - **No:** añadir una pista fija con los requisitos bajo el campo. El mensaje al enviar ya los indica.
+- **Sí:** exigir sesión en `/acceso/nombre` y `/acceso/nueva-clave`, y sacar de `/acceso` a quien ya la tiene (decisión del usuario). **No:** exigirla para jugar, porque los invitados pueden jugar y puntuar.
+- **Sí:** mandar a `/acceso?error=enlace` desde `/acceso/nueva-clave` (decisión del usuario). Reutiliza el aviso existente y explica por qué no se pudo entrar.
+- **Sí:** mantener las redirecciones en cliente. El proxy solo actúa en las peticiones, no cuando la sesión cambia en una página ya abierta.
+- **No:** comprobar en el proxy si falta el nombre. `ExigirNombre` ya lo hace, y `updateUser` no renueva el JWT, así que los claims podrían no traer el nombre recién elegido.
 
 ---
 
@@ -209,6 +231,7 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 | `X-Frame-Options` o `Referrer-Policy` afectan a OAuth o a la confirmación de correo | Los flujos usan redirecciones de nivel superior, no marcos. Un criterio los comprueba.                                                                                     |
 | El cupo de 2 correos por hora limita la prueba del registro válido                  | Agrupar esa prueba y hacerla una sola vez. `over_email_send_rate_limit` ya tiene mensaje propio.                                                                           |
 | La política `INSERT` de `scores` permite publicar puntuaciones falsas contra la API | Lo resuelve la SPEC 22. Hasta entonces, RLS impide suplantar un `user_id`, pero no valida el valor de `score`.                                                             |
+| La protección de rutas rompe la recuperación de contraseña o el primer acceso OAuth | Los dos flujos fijan la sesión en un Route Handler antes de redirigir. Un criterio los comprueba.                                                                          |
 
 ---
 

@@ -72,6 +72,29 @@ export function validarCorreo(email: string): string | null {
   }
   return null;
 }
+// Los símbolos son los de Password Requirements en Supabase, y las letras solo
+// cuentan si son ASCII: así cliente y servidor aplican la misma regla.
+const REQUISITOS_CLAVE = [
+  { patron: /[a-z]/, falta: "una minúscula" },
+  { patron: /[A-Z]/, falta: "una mayúscula" },
+  { patron: /[0-9]/, falta: "un dígito" },
+  { patron: /[!@#$%^&*()_+\-=[\]{};'\\:"|<>?,./`~]/, falta: "un símbolo" },
+] as const;
+const LISTA_ES = new Intl.ListFormat("es", {
+  style: "long",
+  type: "conjunction",
+});
+// null si la contraseña es válida; si no, el texto de .field-error.
+export function validarClaveNueva(password: string): string | null {
+  if (!password) return "La contraseña es obligatoria.";
+  const faltan: string[] = REQUISITOS_CLAVE.filter(
+    ({ patron }) => !patron.test(password),
+  ).map(({ falta }) => falta);
+  if (password.length < LIMITES_AUTH.claveMin) {
+    faltan.unshift(`al menos ${LIMITES_AUTH.claveMin} caracteres`);
+  }
+  return faltan.length ? `Falta: ${LISTA_ES.format(faltan)}.` : null;
+}
 export function validarRegistro(datos: {
   username: string;
   email: string;
