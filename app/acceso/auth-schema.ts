@@ -105,11 +105,8 @@ export function validarRegistro(datos: {
   if (errorUsuario) errores.username = errorUsuario;
   const errorCorreo = validarCorreo(datos.email);
   if (errorCorreo) errores.email = errorCorreo;
-  if (!datos.password) {
-    errores.password = "La contraseña es obligatoria.";
-  } else if (datos.password.length < LIMITES_AUTH.claveMin) {
-    errores.password = `Mínimo ${LIMITES_AUTH.claveMin} caracteres.`;
-  }
+  const errorClave = validarClaveNueva(datos.password);
+  if (errorClave) errores.password = errorClave;
   return errores;
 }
 // Sin longitud mínima de contraseña: al iniciar sesión solo Supabase decide si
