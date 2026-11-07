@@ -33,7 +33,7 @@ El panel no tiene un interruptor para el límite de registros: se considera acti
 
 ## Avisos corregidos
 
-La tabla de abajo es la exportación del asesor de seguridad del 2026-11-06. Los dos avisos se corrigieron con `revoke_rls_auto_enable_execute`, y `get_advisors` de seguridad ya no devuelve ninguno.
+La tabla de abajo es la exportación del asesor de seguridad del 2026-11-06. Los dos avisos se corrigieron con `revoke_rls_auto_enable_execute` y `get_advisors` de seguridad ya no los devuelve. Sí devuelve `auth_leaked_password_protection`, el riesgo aceptado de «Contraseñas filtradas» (comprobado el 2026-11-07).
 
 El aviso INFO de rendimiento por `scores_user_id_fkey` se corrigió con `add_scores_user_id_index`. Queda un aviso INFO `unused_index` sobre `scores_user_id_idx`, aceptado: ninguna consulta filtra hoy por `user_id` y el índice sirve para la clave foránea.
 

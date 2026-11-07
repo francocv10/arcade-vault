@@ -39,6 +39,8 @@ No bloquea a quien abra una partida real, espere y envíe una cifra creíble. Ce
 - Modal de fin de juego para invitados con aviso y enlace a `/acceso`.
 - Borrar las 2 puntuaciones de invitado que hay en `scores`.
 - Quitar `scores_insert_public` y los permisos de escritura de `anon` y `authenticated` en `scores`.
+- Lectura pública de `scores` sin `user_id` ni `partida_id` (SEG-008 de `references/security/security-review.md`).
+- `tieneUsuario` exige `PATRON_USUARIO`, para que el servidor rechace un `username` escrito por API (SEG-002).
 - Actualizar `.env.example`, `CLAUDE.md` y `.claude/skills/new-game/puntos-de-integracion.md`.
 
 **Out of scope (para futuros specs):**
@@ -80,7 +82,17 @@ alter table public.scores
 - `user_id` sigue admitiendo nulos, porque `ON DELETE SET NULL` conserva la puntuación al borrar una cuenta.
 - Se elimina `scores_insert_public`.
 - Se revoca `INSERT`, `UPDATE`, `DELETE` y `TRUNCATE` a `anon` y `authenticated`.
-- `SELECT` y la vista `leaderboard` no cambian.
+- `SELECT` pasa a ser por columnas, sin `id`, `user_id` ni `partida_id`:
+
+```sql
+revoke select on public.scores from anon, authenticated;
+grant select (game_id, player_name, score, created_at)
+  on public.scores to anon, authenticated;
+```
+
+- La política de `SELECT` no cambia. La vista `leaderboard` tampoco: con `security_invoker` solo necesita esas cuatro columnas.
+- `queries.ts` y `obtenerMejorMarca` no cambian, porque solo leen esas columnas. La clave secreta no se ve afectada.
+- `select=*` sobre `scores` pasa a fallar con la clave publishable, y la vista `leaderboard` lo sigue admitiendo.
 
 Hay que regenerar `app/lib/supabase/database.types.ts`.
 
@@ -147,7 +159,7 @@ Se aplican en este orden, antes de insertar:
 | Comprobación                                    | Si falla                                                 |
 | ----------------------------------------------- | -------------------------------------------------------- |
 | Hay sesión                                      | `[ERR] Inicia sesión para entrar en el ranking.`         |
-| La cuenta tiene `username`                      | `ERROR_SIN_NOMBRE`, el mensaje actual                    |
+| La cuenta tiene un `username` válido            | `ERROR_SIN_NOMBRE`, el mensaje actual                    |
 | `partidaId` es un UUID y `score` un entero >= 0 | `[ERR] No se pudo validar esta puntuación.`              |
 | La partida existe y es de esta cuenta           | `[ERR] No se pudo validar esta puntuación.`              |
 | `puntuacionPosible` devuelve `true`             | `[ERR] No se pudo validar esta puntuación.`              |
@@ -155,6 +167,18 @@ Se aplican en este orden, antes de insertar:
 | El `insert` no da otro error                    | `ERROR_GUARDADO`, el mensaje actual: se puede reintentar |
 
 Cada rechazo por validación se registra con `console.warn` en el servidor, con el motivo y sin datos de la cuenta. El mensaje del cliente nunca explica el motivo.
+
+### Nombre válido
+
+Cada cuenta puede cambiar `user_metadata.username` con una llamada directa a `updateUser`, sin pasar por `validarUsuario`. Por eso `tieneUsuario`, en `app/acceso/auth-schema.ts`, pasa a comprobar también `PATRON_USUARIO`:
+
+```ts
+export function tieneUsuario(username: unknown): boolean {
+  return typeof username === "string" && PATRON_USUARIO.test(username);
+}
+```
+
+El cambio llega a sus tres usos sin tocarlos. `guardarPuntuacion` devuelve `ERROR_SIN_NOMBRE`, y tanto `AuthProvider` (`sinNombre`) como `/auth/callback` llevan esa cuenta a `/acceso/nombre`, donde elige un nombre válido.
 
 ### Variable de entorno
 
@@ -178,10 +202,10 @@ El orden importa: la escritura directa se cierra al final. Si se cerrara antes, 
 4. **Límites.** Añadir `LIMITES_POR_JUEGO`, `GRACIA_SEGUNDOS`, `PARTIDA_MAX_SEGUNDOS` y `puntuacionPosible` a `schema.ts`. Verificación: con un script temporal fuera del repositorio, `puntuacionPosible("snake", 801, 0)` da `false` y `puntuacionPosible("snake", 800, 0)` da `true`, porque la gracia permite 5 × 160 puntos.
 5. **`iniciarPartida`.** Añadirla a `app/lib/leaderboard/actions.ts`. Exige sesión y un juego de `JUEGOS_CON_RANKING`, borra las partidas de esa cuenta más antiguas que `PARTIDA_MAX_SEGUNDOS` e inserta la nueva con el cliente secreto. Verificación: `npx tsc --noEmit` sin errores.
 6. **`GamePlayer`.** Guardar el id en `partidaRef`, un `useRef` porque no se pinta. Pedirlo en un efecto que depende de `esReal`, `user?.id` y `restartKey`, ignorando la respuesta si el efecto ya se limpió. Si falla, la partida se juega igual y al guardar sale el error. Verificación: cada reinicio crea una fila en `partidas`.
-7. **`guardarPuntuacion`.** Cambiar la firma, aplicar la tabla de «Comprobaciones» e insertar con el cliente secreto, incluyendo `partida_id`. Actualizar la llamada de `guardar` en `GamePlayer`. Verificación: una partida real con sesión aparece en `/salon`.
+7. **`guardarPuntuacion`.** Cambiar `tieneUsuario` como indica «Nombre válido». Cambiar la firma, aplicar la tabla de «Comprobaciones» e insertar con el cliente secreto, incluyendo `partida_id`. Actualizar la llamada de `guardar` en `GamePlayer`. Verificación: una partida real con sesión aparece en `/salon`.
 8. **Modal del invitado.** En `game-player.tsx`, con `esReal && !user`, sustituir el campo de nombre y GUARDAR por «INICIA SESIÓN PARA ENTRAR EN EL RANKING» y un enlace a `/acceso`, conservando JUGAR DE NUEVO. Sin `input`, `use-dialog.ts` enfoca el primer elemento enfocable, así que el enlace debe ir antes que JUGAR DE NUEVO. Las maquetas no cambian. Verificación: sin sesión, el modal se usa con teclado a 320 px.
-9. **Migración `close_scores_writes`.** Borrar las filas con `user_id` nulo, eliminar `scores_insert_public` y revocar los permisos de escritura. Verificación: un `POST` a `/rest/v1/scores` con la clave publishable falla, y `get_advisors` no da avisos nuevos de seguridad sobre `scores` ni `partidas`.
-10. **Documentación.** Actualizar en `CLAUDE.md` la lista de specs, `app/lib/leaderboard/`, la RLS y las variables de entorno, indicando lo que esta spec no garantiza. Añadir en `.claude/skills/new-game/puntos-de-integracion.md` que un juego nuevo necesita su entrada en `LIMITES_POR_JUEGO`.
+9. **Migración `close_scores_writes`.** Borrar las filas con `user_id` nulo, eliminar `scores_insert_public`, revocar los permisos de escritura y dejar `SELECT` por columnas. Verificación: un `POST` a `/rest/v1/scores` con la clave publishable falla, un `GET` con `select=user_id` falla, `/salon` y `/home` siguen mostrando datos, y `get_advisors` no da avisos nuevos de seguridad sobre `scores` ni `partidas`.
+10. **Documentación.** Actualizar en `CLAUDE.md` la lista de specs, `app/lib/leaderboard/`, la RLS (incluido el `SELECT` por columnas de `scores`), la regla de `tieneUsuario` y las variables de entorno, indicando lo que esta spec no garantiza. Añadir en `.claude/skills/new-game/puntos-de-integracion.md` que un juego nuevo necesita su entrada en `LIMITES_POR_JUEGO`.
 
 ---
 
@@ -193,6 +217,8 @@ El orden importa: la escritura directa se cierra al final. Si se cerrara antes, 
 - [ ] Un `POST` a `/rest/v1/scores` con el token de una cuenta real falla y no crea ninguna fila.
 - [ ] Un `PATCH` o un `DELETE` a `/rest/v1/scores` con la clave publishable no cambia ninguna fila.
 - [ ] `GET`, `POST` y `DELETE` a `/rest/v1/partidas` no devuelven ni cambian ninguna fila, con o sin token de cuenta.
+- [ ] Un `GET` a `/rest/v1/scores` con `select=user_id`, `select=partida_id` o `select=*` falla, con la clave publishable y con el token de una cuenta real.
+- [ ] Un `GET` a `/rest/v1/scores` con `select=game_id,player_name,score,created_at` devuelve filas.
 - [ ] `/salon`, `/juegos/asteroides` y `/home` siguen mostrando los rankings.
 - [ ] `scores` no tiene filas con `user_id` nulo tras la migración.
 - [ ] Con sesión, terminar una partida y guardar funciona en los 5 juegos, y la puntuación aparece en `/salon`.
@@ -205,6 +231,8 @@ El orden importa: la escritura directa se cierra al final. Si se cerrara antes, 
 - [ ] El nombre publicado es siempre el `username` de la cuenta.
 - [ ] `puntuacionPosible` da `false` con una partida de más de 6 horas.
 - [ ] Una cuenta sin `username` recibe `ERROR_SIN_NOMBRE` y no publica.
+- [ ] Una cuenta con un `username` fuera de `PATRON_USUARIO`, fijado con una llamada directa a `updateUser`, recibe `ERROR_SIN_NOMBRE`, no publica y la app la lleva a `/acceso/nombre`.
+- [ ] Una cuenta con un nombre válido no ve `/acceso/nombre` al entrar por correo, Google o GitHub.
 - [ ] Un fallo de red al guardar conserva el modal, y pulsar de nuevo el botón de guardar publica la puntuación con la misma partida.
 - [ ] Sin sesión, los 5 juegos se pueden jugar y el modal muestra la puntuación, «INICIA SESIÓN PARA ENTRAR EN EL RANKING», el enlace a `/acceso` y JUGAR DE NUEVO.
 - [ ] Sin sesión, terminar una partida no llama a `guardarPuntuacion` ni a `iniciarPartida`.
@@ -234,25 +262,30 @@ El orden importa: la escritura directa se cierra al final. Si se cerrara antes, 
 - **No:** limitar cuántas partidas abre una cuenta. `leaderboard` solo muestra la mejor de cada jugador, así que publicar muchas no da ventaja.
 - **No:** invalidar la partida anterior al abrir otra, que fallaría con dos pestañas abiertas.
 - **No:** quitar `user_id` nulo de `scores`, porque borrar una cuenta lo pone a `NULL`.
+- **Sí:** `SELECT` por columnas en `scores` (SEG-008). **No:** una vista pública nueva, que obligaría a cambiar `queries.ts` y no cerraría la lectura directa de la tabla. Sin este cambio, al publicar solo las cuentas cada fila expondría su `user_id`.
+- **Sí:** comprobar `PATRON_USUARIO` dentro de `tieneUsuario` (SEG-002). **No:** comprobarlo solo en `guardarPuntuacion`, porque la app trataría ese nombre como válido y la cuenta no podría corregirlo: `ExigirNombre` no la llevaría a `/acceso/nombre`.
 
 ---
 
 ## Riesgos
 
-| Riesgo                                                                                     | Mitigación                                                                                                                                                                    |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Alguien inicia una partida real, espera y envía una cifra creíble                          | Riesgo aceptado por el usuario. Queda escrito en `CLAUDE.md` para no darlo por resuelto.                                                                                      |
-| Un límite rechaza a un jugador real                                                        | Los límites son techos sobre las constantes de cada motor. Un criterio prueba una partida normal por juego. Los rechazos quedan en el log del servidor para poder ajustarlos. |
-| Se filtra `SUPABASE_SECRET_KEY`, que salta la RLS                                          | Sin prefijo `NEXT_PUBLIC_`, con `import "server-only"` y un criterio que la busca en `.next/static`. Si se filtra, se revoca en el panel y se crea otra.                      |
-| La clave secreta se combina con las cookies y la sesión del usuario sustituye sus permisos | `admin.ts` no lee cookies ni persiste sesión. La lectura de la sesión sigue en el cliente de `server.ts`.                                                                     |
-| Cerrar la escritura rompe el guardado                                                      | El paso 9 va después de que todo escriba con la clave secreta. La migración se puede revertir volviendo a crear la política.                                                  |
-| Una cuenta nueva por partida esquiva cualquier límite por cuenta                           | No hay límite por cuenta que esquivar, y cada partida sigue sujeta al límite de tiempo.                                                                                       |
-| Un invitado que inicia sesión al terminar pierde esa partida                               | Riesgo aceptado: es el coste de exigir una partida validada. El aviso del modal aparece antes de salir de la pantalla.                                                        |
-| Quien inicia sesión a media partida la abre con el reloj en ese momento                    | El efecto crea una partida nueva al cambiar `user?.id`. El límite resulta más estricto, y esa ruta exige salir del juego, así que solo pasaría con otra pestaña.              |
-| `partidas` acumula filas                                                                   | `iniciarPartida` borra las caducadas de esa cuenta. Quedan las de cuentas que no vuelven, un volumen despreciable.                                                            |
-| Un juego nuevo no tiene entrada en `LIMITES_POR_JUEGO`                                     | `puntuacionPosible` devuelve `false` si falta. `puntos-de-integracion.md` lo indica.                                                                                          |
-| En desarrollo, Strict Mode pide dos partidas al montar                                     | El efecto ignora la respuesta limpiada y la fila sobrante caduca sola.                                                                                                        |
-| Al desplegar falta la variable                                                             | `env.ts` lanza un error que la nombra. La configuración de producción está fuera de esta spec.                                                                                |
+| Riesgo                                                                                       | Mitigación                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alguien inicia una partida real, espera y envía una cifra creíble                            | Riesgo aceptado por el usuario. Queda escrito en `CLAUDE.md` para no darlo por resuelto.                                                                                      |
+| Un límite rechaza a un jugador real                                                          | Los límites son techos sobre las constantes de cada motor. Un criterio prueba una partida normal por juego. Los rechazos quedan en el log del servidor para poder ajustarlos. |
+| Se filtra `SUPABASE_SECRET_KEY`, que salta la RLS                                            | Sin prefijo `NEXT_PUBLIC_`, con `import "server-only"` y un criterio que la busca en `.next/static`. Si se filtra, se revoca en el panel y se crea otra.                      |
+| La clave secreta se combina con las cookies y la sesión del usuario sustituye sus permisos   | `admin.ts` no lee cookies ni persiste sesión. La lectura de la sesión sigue en el cliente de `server.ts`.                                                                     |
+| Cerrar la escritura rompe el guardado                                                        | El paso 9 va después de que todo escriba con la clave secreta. La migración se puede revertir volviendo a crear la política.                                                  |
+| Una cuenta nueva por partida esquiva cualquier límite por cuenta                             | No hay límite por cuenta que esquivar, y cada partida sigue sujeta al límite de tiempo.                                                                                       |
+| Un invitado que inicia sesión al terminar pierde esa partida                                 | Riesgo aceptado: es el coste de exigir una partida validada. El aviso del modal aparece antes de salir de la pantalla.                                                        |
+| Quien inicia sesión a media partida la abre con el reloj en ese momento                      | El efecto crea una partida nueva al cambiar `user?.id`. El límite resulta más estricto, y esa ruta exige salir del juego, así que solo pasaría con otra pestaña.              |
+| `partidas` acumula filas                                                                     | `iniciarPartida` borra las caducadas de esa cuenta. Quedan las de cuentas que no vuelven, un volumen despreciable.                                                            |
+| Un juego nuevo no tiene entrada en `LIMITES_POR_JUEGO`                                       | `puntuacionPosible` devuelve `false` si falta. `puntos-de-integracion.md` lo indica.                                                                                          |
+| En desarrollo, Strict Mode pide dos partidas al montar                                       | El efecto ignora la respuesta limpiada y la fila sobrante caduca sola.                                                                                                        |
+| Al desplegar falta la variable                                                               | `env.ts` lanza un error que la nombra. La configuración de producción está fuera de esta spec.                                                                                |
+| Un `GRANT SELECT` futuro sobre toda la tabla reabre `user_id`                                | Un permiso de tabla anula los de columna. `CLAUDE.md` lo indica y un criterio comprueba el `GET` con `select=user_id`.                                                        |
+| El `SELECT` por columnas rompe una lectura de `scores`                                       | `queries.ts` y `leaderboard` solo usan las cuatro columnas concedidas, comprobado en el código y en la definición de la vista. El paso 9 revisa `/salon` y `/home`.           |
+| `tieneUsuario` es más estricto y manda a `/acceso/nombre` a una cuenta con un nombre antiguo | `validarUsuario` aplica el mismo patrón desde la SPEC 18. Si alguna cuenta no lo cumple, elige un nombre válido y conserva sus puntuaciones.                                  |
 
 ---
 
