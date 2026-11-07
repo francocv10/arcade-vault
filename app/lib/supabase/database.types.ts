@@ -34,11 +34,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      partidas: {
+        Row: {
+          game_id: string;
+          id: string;
+          iniciada_en: string;
+          user_id: string;
+        };
+        Insert: {
+          game_id: string;
+          id?: string;
+          iniciada_en?: string;
+          user_id: string;
+        };
+        Update: {
+          game_id?: string;
+          id?: string;
+          iniciada_en?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "partidas_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       scores: {
         Row: {
           created_at: string;
           game_id: string;
           id: string;
+          partida_id: string | null;
           player_name: string;
           score: number;
           user_id: string | null;
@@ -47,6 +77,7 @@ export type Database = {
           created_at?: string;
           game_id: string;
           id?: string;
+          partida_id?: string | null;
           player_name: string;
           score: number;
           user_id?: string | null;
@@ -55,6 +86,7 @@ export type Database = {
           created_at?: string;
           game_id?: string;
           id?: string;
+          partida_id?: string | null;
           player_name?: string;
           score?: number;
           user_id?: string | null;
@@ -65,6 +97,13 @@ export type Database = {
             columns: ["game_id"];
             isOneToOne: false;
             referencedRelation: "games";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "scores_partida_id_fkey";
+            columns: ["partida_id"];
+            isOneToOne: true;
+            referencedRelation: "partidas";
             referencedColumns: ["id"];
           },
         ];
