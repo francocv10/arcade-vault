@@ -1,6 +1,6 @@
 # SPEC 21 — Medidas de seguridad básicas
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 07 (tablas `games` y `scores`), SPEC 18 (`AuthForm`, `NuevaClaveForm` y `mensajeAuth`), SPEC 20 (registro con confirmación de correo)
 > **Date:** 2026-11-06
 > **Objective:** Cerrar el checklist de seguridad básico con contraseñas robustas en cliente y en Supabase, cabeceras de seguridad en Next.js y la corrección de los avisos del panel de Supabase.
@@ -165,32 +165,32 @@ El orden importa: la regla del cliente va antes que la del panel, para que nadie
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] Cada fila de «Mensajes de `validarClaveNueva`» produce exactamente el texto indicado.
-- [ ] Registrarse con una contraseña inválida muestra el mensaje bajo el campo, conserva lo escrito y no llama a `/auth/v1/signup`.
-- [ ] Guardar una contraseña inválida en `/acceso/nueva-clave` muestra el mensaje bajo el campo y no llama a `/auth/v1/user`.
-- [ ] Registrarse con una contraseña válida llega a «REVISA TU CORREO».
-- [ ] Guardar una contraseña válida en `/acceso/nueva-clave` lleva a `/home`.
-- [ ] Iniciar sesión con una contraseña que no cumple la regla no muestra `Falta:`, llega a Supabase y responde `[ERR] Correo o contraseña incorrectos.`
-- [ ] Un `POST` directo a `/auth/v1/signup` con `abcdefgh` responde `weak_password` y no crea la cuenta.
-- [ ] Un `POST` directo a `/auth/v1/signup` con `Abc1!` responde `weak_password` y no crea la cuenta.
-- [ ] Una respuesta `weak_password` del servidor se muestra en el formulario como `[ERR] La contraseña es demasiado débil.`
-- [ ] Con `npm run start`, `curl -I` devuelve las 3 cabeceras con su valor exacto en `/home`, `/acceso`, `/auth/callback` y `/games/snake/fruits.png`.
-- [ ] La app funciona con las cabeceras: los juegos, el acceso con OAuth y la confirmación de correo no muestran errores nuevos en consola.
-- [ ] `has_function_privilege` da `false` para `anon` y `authenticated` sobre `public.rls_auto_enable()`.
-- [ ] Una tabla nueva en `public` sigue recibiendo RLS de `ensure_rls`.
-- [ ] `get_advisors` de seguridad no lista `rls_auto_enable`.
-- [ ] `get_advisors` de rendimiento no lista `scores_user_id_fkey`.
-- [ ] `games` y `scores` tienen `relrowsecurity = true`.
-- [ ] Sin sesión, `/acceso/nombre` redirige a `/acceso`.
-- [ ] Sin sesión, `/acceso/nueva-clave` redirige a `/acceso?error=enlace`, que muestra `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.`
-- [ ] Con sesión, `/acceso` redirige a `/home`.
-- [ ] Con sesión, `/acceso/nombre` y `/acceso/nueva-clave` no redirigen desde el proxy.
-- [ ] Sin sesión, `/home`, `/biblioteca`, `/salon`, `/about`, `/juegos/asteroides` y `/juegos/asteroides/jugar` siguen abriéndose.
-- [ ] El enlace de recuperación sigue llegando a `/acceso/nueva-clave`, y el flujo OAuth con cuenta sin nombre a `/acceso/nombre`.
-- [ ] Los valores de **Authentication > Rate Limits** están anotados en `references/security/security-checklist.md`.
-- [ ] `references/security/security-checklist.md` tiene todos sus puntos marcados, salvo la protección de contraseñas filtradas, que indica su motivo.
-- [ ] `CLAUDE.md` describe la regla de contraseña, las cabeceras, la protección de rutas y la configuración del panel.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] Cada fila de «Mensajes de `validarClaveNueva`» produce exactamente el texto indicado.
+- [x] Registrarse con una contraseña inválida muestra el mensaje bajo el campo, conserva lo escrito y no llama a `/auth/v1/signup`.
+- [x] Guardar una contraseña inválida en `/acceso/nueva-clave` muestra el mensaje bajo el campo y no llama a `/auth/v1/user`.
+- [x] Registrarse con una contraseña válida llega a «REVISA TU CORREO».
+- [x] Guardar una contraseña válida en `/acceso/nueva-clave` lleva a `/home`.
+- [x] Iniciar sesión con una contraseña que no cumple la regla no muestra `Falta:`, llega a Supabase y responde `[ERR] Correo o contraseña incorrectos.`
+- [x] Un `POST` directo a `/auth/v1/signup` con `abcdefgh` responde `weak_password` y no crea la cuenta.
+- [x] Un `POST` directo a `/auth/v1/signup` con `Abc1!` responde `weak_password` y no crea la cuenta.
+- [x] Una respuesta `weak_password` del servidor se muestra en el formulario como `[ERR] La contraseña es demasiado débil.`
+- [x] Con `npm run start`, `curl -I` devuelve las 3 cabeceras con su valor exacto en `/home`, `/acceso`, `/auth/callback` y `/games/snake/fruits.png`.
+- [x] La app funciona con las cabeceras: los juegos, el acceso con OAuth y la confirmación de correo no muestran errores nuevos en consola.
+- [x] `has_function_privilege` da `false` para `anon` y `authenticated` sobre `public.rls_auto_enable()`.
+- [x] Una tabla nueva en `public` sigue recibiendo RLS de `ensure_rls`.
+- [x] `get_advisors` de seguridad no lista `rls_auto_enable`.
+- [x] `get_advisors` de rendimiento no lista `scores_user_id_fkey`.
+- [x] `games` y `scores` tienen `relrowsecurity = true`.
+- [x] Sin sesión, `/acceso/nombre` redirige a `/acceso`.
+- [x] Sin sesión, `/acceso/nueva-clave` redirige a `/acceso?error=enlace`, que muestra `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.`
+- [x] Con sesión, `/acceso` redirige a `/home`.
+- [x] Con sesión, `/acceso/nombre` y `/acceso/nueva-clave` no redirigen desde el proxy.
+- [x] Sin sesión, `/home`, `/biblioteca`, `/salon`, `/about`, `/juegos/asteroides` y `/juegos/asteroides/jugar` siguen abriéndose.
+- [x] El enlace de recuperación sigue llegando a `/acceso/nueva-clave`, y el flujo OAuth con cuenta sin nombre a `/acceso/nombre`.
+- [x] Los valores de **Authentication > Rate Limits** están anotados en `references/security/security-checklist.md`.
+- [x] `references/security/security-checklist.md` tiene todos sus puntos marcados, salvo la protección de contraseñas filtradas, que indica su motivo.
+- [x] `CLAUDE.md` describe la regla de contraseña, las cabeceras, la protección de rutas y la configuración del panel.
 
 ---
 
