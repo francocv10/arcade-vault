@@ -19,7 +19,10 @@ import { FroggerCanvas } from "./frogger-canvas";
 import { SnakeCanvas } from "./snake-canvas";
 import { TetrisCanvas } from "./tetris-canvas";
 import { TouchControls } from "./touch-controls";
-import { guardarPuntuacion } from "@/app/lib/leaderboard/actions";
+import {
+  guardarPuntuacion,
+  iniciarPartida,
+} from "@/app/lib/leaderboard/actions";
 import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { useAuth } from "./auth-provider";
 import { useDialog } from "./use-dialog";
@@ -81,6 +84,9 @@ export function GamePlayer({
   const saveRef = useRef<HTMLButtonElement>(null);
   const enviandoRef = useRef(false);
   const restartRef = useRef<HTMLButtonElement>(null);
+  // Id de la partida abierta en el servidor (spec 22). Ref y no estado: no se pinta.
+  const partidaRef = useRef<string | null>(null);
+  const userId = user?.id;
   const titleId = useId();
   // En los juegos reales el modal también se abre solo al terminar la partida
   // (`win` solo existe en Arkanoid).
@@ -206,6 +212,27 @@ export function GamePlayer({
   useEffect(() => {
     if (errorGuardado) saveRef.current?.focus();
   }, [errorGuardado]);
+  // Cada partida real con sesión abre una partida en el servidor: al montar, al
+  // reiniciar y al cambiar de cuenta. Los invitados no la piden. Si falla, se
+  // juega igual y el error aparece al guardar. Una respuesta que llega tras la
+  // limpieza (reinicio, Strict Mode) se ignora y esa fila caduca sola.
+  useEffect(() => {
+    partidaRef.current = null;
+    if (!esReal || !userId) return;
+    let vigente = true;
+    iniciarPartida(gameId)
+      .then((res) => {
+        if (vigente && res.ok && res.partidaId) {
+          partidaRef.current = res.partidaId;
+        }
+      })
+      .catch(() => {
+        // Red caída: sin partida, `guardarPuntuacion` responderá con su error.
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [esReal, userId, restartKey, gameId]);
   useEffect(() => {
     if (esReal || gameOver || paused) return;
     const t = setInterval(
@@ -236,7 +263,11 @@ export function GamePlayer({
     setSaving(true);
     setErrorGuardado(null);
     try {
-      const res = await guardarPuntuacion({ game: gameId, name, score });
+      // Sin partida (iniciarPartida falló) el servidor rechaza con su mensaje.
+      const res = await guardarPuntuacion({
+        partidaId: partidaRef.current ?? "",
+        score,
+      });
       if (res.ok) setSaved(true);
       else setErrorGuardado(res.error ?? ERROR_GUARDADO);
     } catch {
@@ -400,7 +431,21 @@ export function GamePlayer({
             <h2 id={titleId}>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
+            {esReal && !user ? (
+              // Invitado en un juego real (spec 22): solo las cuentas publican.
+              // Sin input, useDialog enfoca el primer enlace: va antes de JUGAR DE NUEVO.
+              <div className="ranking-lock">
+                <p className="ranking-lock-msg">
+                  INICIA SESIÓN PARA ENTRAR EN EL RANKING
+                </p>
+                <p className="ranking-lock-note">
+                  Esta partida no se guardará en el ranking.
+                </p>
+                <Link href="/acceso" className="btn yellow ranking-lock-cta">
+                  INICIAR SESIÓN
+                </Link>
+              </div>
+            ) : !saved ? (
               <div className="input-row">
                 <input
                   aria-label="Iniciales"

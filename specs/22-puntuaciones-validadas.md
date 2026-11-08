@@ -1,6 +1,6 @@
 # SPEC 22 — Puntuaciones validadas en servidor
 
-> **Status:** Borrador
+> **Status:** Implementado
 > **Depends on:** SPEC 07 (`scores`, `leaderboard` y `guardarPuntuacion`), SPEC 18 (sesión y `user_metadata.username`), SPEC 19 (cuentas sin nombre)
 > **Date:** 2026-11-06
 > **Objective:** Impedir que una llamada directa a la API publique una puntuación: solo el servidor escribe en `scores`, solo para cuentas y solo con una partida iniciada cuyos puntos sean posibles para el tiempo jugado.
@@ -211,36 +211,36 @@ El orden importa: la escritura directa se cierra al final. Si se cerrara antes, 
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] `sb_secret` no aparece en `.next/static` ni en la respuesta de ninguna página.
-- [ ] Un `POST` a `/rest/v1/scores` con la clave publishable, sin sesión, falla y no crea ninguna fila.
-- [ ] Un `POST` a `/rest/v1/scores` con el token de una cuenta real falla y no crea ninguna fila.
-- [ ] Un `PATCH` o un `DELETE` a `/rest/v1/scores` con la clave publishable no cambia ninguna fila.
-- [ ] `GET`, `POST` y `DELETE` a `/rest/v1/partidas` no devuelven ni cambian ninguna fila, con o sin token de cuenta.
-- [ ] Un `GET` a `/rest/v1/scores` con `select=user_id`, `select=partida_id` o `select=*` falla, con la clave publishable y con el token de una cuenta real.
-- [ ] Un `GET` a `/rest/v1/scores` con `select=game_id,player_name,score,created_at` devuelve filas.
-- [ ] `/salon`, `/juegos/asteroides` y `/home` siguen mostrando los rankings.
-- [ ] `scores` no tiene filas con `user_id` nulo tras la migración.
-- [ ] Con sesión, terminar una partida y guardar funciona en los 5 juegos, y la puntuación aparece en `/salon`.
-- [ ] Reenviar la petición de `guardarPuntuacion` de esa partida responde `[ERR] No se pudo validar esta puntuación.` y no crea otra fila.
-- [ ] Llamar a `guardarPuntuacion` con un `partidaId` inventado responde con ese mismo mensaje.
-- [ ] Llamar a `guardarPuntuacion` con la partida de otra cuenta responde con ese mismo mensaje.
-- [ ] Llamar a `guardarPuntuacion` sin sesión responde `[ERR] Inicia sesión para entrar en el ranking.` y no crea ninguna fila.
-- [ ] Modificar el `score` de una petición real a 999.999 en una partida de pocos segundos responde `[ERR] No se pudo validar esta puntuación.`
-- [ ] Una puntuación de Arkanoid superior a 2.080 se rechaza aunque haya pasado mucho tiempo.
-- [ ] El nombre publicado es siempre el `username` de la cuenta.
-- [ ] `puntuacionPosible` da `false` con una partida de más de 6 horas.
-- [ ] Una cuenta sin `username` recibe `ERROR_SIN_NOMBRE` y no publica.
-- [ ] Una cuenta con un `username` fuera de `PATRON_USUARIO`, fijado con una llamada directa a `updateUser`, recibe `ERROR_SIN_NOMBRE`, no publica y la app la lleva a `/acceso/nombre`.
-- [ ] Una cuenta con un nombre válido no ve `/acceso/nombre` al entrar por correo, Google o GitHub.
-- [ ] Un fallo de red al guardar conserva el modal, y pulsar de nuevo el botón de guardar publica la puntuación con la misma partida.
-- [ ] Sin sesión, los 5 juegos se pueden jugar y el modal muestra la puntuación, «INICIA SESIÓN PARA ENTRAR EN EL RANKING», el enlace a `/acceso` y JUGAR DE NUEVO.
-- [ ] Sin sesión, terminar una partida no llama a `guardarPuntuacion` ni a `iniciarPartida`.
-- [ ] El modal del invitado se usa solo con teclado y sin scroll horizontal a 320 px.
-- [ ] Las 8 maquetas siguen guardando en `localStorage` con su campo de nombre.
-- [ ] Una partida normal de cada juego real no se rechaza, incluida una con pausas.
-- [ ] No hay errores nuevos en consola en `/juegos/[id]/jugar`, `/salon` ni `/home`.
-- [ ] `CLAUDE.md` describe el flujo, la variable `SUPABASE_SECRET_KEY` y lo que esta spec no garantiza.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] `sb_secret` no aparece en `.next/static` ni en la respuesta de ninguna página. _(El valor de la clave aparece en 0 archivos de `.next/static` y en 0 de 9 páginas. El texto `sb_secret` sí sale en un chunk: es la comprobación `startsWith("sb_secret_")` de `@supabase/supabase-js`, no la clave.)_
+- [x] Un `POST` a `/rest/v1/scores` con la clave publishable, sin sesión, falla y no crea ninguna fila.
+- [x] Un `POST` a `/rest/v1/scores` con el token de una cuenta real falla y no crea ninguna fila.
+- [x] Un `PATCH` o un `DELETE` a `/rest/v1/scores` con la clave publishable no cambia ninguna fila.
+- [x] `GET`, `POST` y `DELETE` a `/rest/v1/partidas` no devuelven ni cambian ninguna fila, con o sin token de cuenta.
+- [x] Un `GET` a `/rest/v1/scores` con `select=user_id`, `select=partida_id` o `select=*` falla, con la clave publishable y con el token de una cuenta real.
+- [x] Un `GET` a `/rest/v1/scores` con `select=game_id,player_name,score,created_at` devuelve filas.
+- [x] `/salon`, `/juegos/asteroides` y `/home` siguen mostrando los rankings.
+- [x] `scores` no tiene filas con `user_id` nulo tras la migración.
+- [x] Con sesión, terminar una partida y guardar funciona en los 5 juegos, y la puntuación aparece en `/salon`.
+- [x] Reenviar la petición de `guardarPuntuacion` de esa partida responde `[ERR] No se pudo validar esta puntuación.` y no crea otra fila.
+- [x] Llamar a `guardarPuntuacion` con un `partidaId` inventado responde con ese mismo mensaje.
+- [x] Llamar a `guardarPuntuacion` con la partida de otra cuenta responde con ese mismo mensaje.
+- [x] Llamar a `guardarPuntuacion` sin sesión responde `[ERR] Inicia sesión para entrar en el ranking.` y no crea ninguna fila.
+- [x] Modificar el `score` de una petición real a 999.999 en una partida de pocos segundos responde `[ERR] No se pudo validar esta puntuación.`
+- [x] Una puntuación de Arkanoid superior a 2.080 se rechaza aunque haya pasado mucho tiempo.
+- [x] El nombre publicado es siempre el `username` de la cuenta.
+- [x] `puntuacionPosible` da `false` con una partida de más de 6 horas.
+- [x] Una cuenta sin `username` recibe `ERROR_SIN_NOMBRE` y no publica.
+- [x] Una cuenta con un `username` fuera de `PATRON_USUARIO`, fijado con una llamada directa a `updateUser`, recibe `ERROR_SIN_NOMBRE`, no publica y la app la lleva a `/acceso/nombre`. _(El servidor la rechaza al instante. Una sesión abierta en otro navegador conserva el nombre antiguo en su JWT y solo va a `/acceso/nombre` al refrescar el token o al volver a entrar, comprobado con una cuenta de prueba; el navegador que hace la llamada se entera en el momento.)_
+- [ ] Una cuenta con un nombre válido no ve `/acceso/nombre` al entrar por correo, Google o GitHub. _(Correo comprobado con una cuenta de prueba; Google y GitHub, pendientes.)_
+- [x] Un fallo de red al guardar conserva el modal, y pulsar de nuevo el botón de guardar publica la puntuación con la misma partida.
+- [x] Sin sesión, los 5 juegos se pueden jugar y el modal muestra la puntuación, «INICIA SESIÓN PARA ENTRAR EN EL RANKING», el enlace a `/acceso` y JUGAR DE NUEVO.
+- [x] Sin sesión, terminar una partida no llama a `guardarPuntuacion` ni a `iniciarPartida`.
+- [x] El modal del invitado se usa solo con teclado y sin scroll horizontal a 320 px.
+- [x] Las 8 maquetas siguen guardando en `localStorage` con su campo de nombre. _(Probado en CAÍDA; las 8 comparten la misma rama de `GamePlayer`, que esta spec no cambia.)_
+- [x] Una partida normal de cada juego real no se rechaza, incluida una con pausas.
+- [x] No hay errores nuevos en consola en `/juegos/[id]/jugar`, `/salon` ni `/home`. _(Solo aparece `ERR_CACHE_OPERATION_NOT_SUPPORTED` de `ball-bounce.mp3` en Arkanoid, que no depende de esta spec.)_
+- [x] `CLAUDE.md` describe el flujo, la variable `SUPABASE_SECRET_KEY` y lo que esta spec no garantiza.
 
 ---
 

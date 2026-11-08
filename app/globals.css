@@ -2181,6 +2181,36 @@ body:has(.av-player) .av-bg::before {
   margin-top: 18px;
   flex-wrap: wrap;
 }
+/* Modal de fin de juego del invitado (spec 22): ranura «ranking cerrado». */
+.modal .ranking-lock {
+  margin: 22px 0 12px;
+  padding: 18px 16px 16px;
+  background: #000;
+  border: 1px solid var(--cyan);
+  box-shadow: inset 0 0 14px rgba(0, 245, 255, 0.16);
+}
+.modal .ranking-lock-msg {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: clamp(10px, 2.6vw, 12px);
+  line-height: 1.8;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.55);
+  overflow-wrap: anywhere;
+}
+.modal .ranking-lock-note {
+  margin: 10px 0 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.modal .ranking-lock-cta {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
 .toast-saved {
   font-family: var(--pixel);
   font-size: 11px;
