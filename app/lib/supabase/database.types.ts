@@ -34,6 +34,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      jugadores: {
+        Row: {
+          creado_en: string;
+          id: string;
+          user_id: string | null;
+          username: string;
+        };
+        Insert: {
+          creado_en?: string;
+          id?: string;
+          user_id?: string | null;
+          username: string;
+        };
+        Update: {
+          creado_en?: string;
+          id?: string;
+          user_id?: string | null;
+          username?: string;
+        };
+        Relationships: [];
+      };
       partidas: {
         Row: {
           game_id: string;

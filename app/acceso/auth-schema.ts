@@ -88,6 +88,18 @@ export function validarUsuario(username: string): string | null {
   }
   return null;
 }
+// Nombres que ninguna cuenta puede elegir (spec 24): JUGADOR es lo que se ve sin
+// nombre e INVITADO el de las maquetas sin sesión. El check de `jugadores` los
+// repite en la base de datos.
+export const NOMBRES_RESERVADOS = ["JUGADOR", "INVITADO", "ADMIN"] as const;
+// El mismo texto para un nombre ocupado y para uno reservado.
+export const ERROR_NOMBRE_NO_DISPONIBLE =
+  "Ese nombre no está disponible. Elige otro.";
+// true si el nombre, sin distinguir mayúsculas, está en NOMBRES_RESERVADOS.
+export function nombreReservado(username: string): boolean {
+  const mayusculas = username.toUpperCase();
+  return NOMBRES_RESERVADOS.some((reservado) => reservado === mayusculas);
+}
 export function validarCorreo(email: string): string | null {
   const correo = email.trim();
   if (!correo) return "El correo es obligatorio.";
