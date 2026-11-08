@@ -32,7 +32,29 @@ const MENSAJES_AUTH = new Map<string, string>([
     "same_password",
     "[ERR] La contraseña nueva debe ser distinta de la anterior.",
   ],
+  [
+    "reauthentication_needed",
+    "[ERR] Por seguridad, solicita un enlace nuevo para cambiar la contraseña.",
+  ],
 ]);
+// Solo una sesión abierta con el enlace de recuperación hace como mucho estos
+// segundos puede cambiar la contraseña (spec 23).
+export const VENTANA_RECUPERACION_SEGUNDOS = 600;
+// true si `amr` tiene una entrada `recovery` de hace como mucho la ventana.
+// Recibe `unknown` porque los claims vienen de fuera.
+export function esRecuperacionReciente(
+  amr: unknown,
+  ahoraSegundos: number,
+): boolean {
+  if (!Array.isArray(amr)) return false;
+  return amr.some((entrada: unknown) => {
+    if (typeof entrada !== "object" || entrada === null) return false;
+    const { method, timestamp } = entrada as Record<string, unknown>;
+    if (method !== "recovery" || typeof timestamp !== "number") return false;
+    const edad = ahoraSegundos - timestamp;
+    return edad >= 0 && edad <= VENTANA_RECUPERACION_SEGUNDOS;
+  });
+}
 // Una sesión OAuth nueva no tiene username hasta que elige su nombre. Exige
 // también PATRON_USUARIO (spec 22): `updateUser` por API puede fijar cualquier
 // valor sin pasar por `validarUsuario`, y esa cuenta debe volver a elegirlo.
