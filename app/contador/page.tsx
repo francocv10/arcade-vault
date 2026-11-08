@@ -7,12 +7,10 @@ export const metadata: Metadata = {
 };
 export default function ContadorPage() {
   return (
-    <div className="contador fade-in">
-      <section className="contador-hero">
-        <div className="kicker pixel neon-yellow">▸ CONTADOR</div>
-        <h1 className="about-title">CONTADOR POKÉMON</h1>
-        <PokemonCounter />
-      </section>
-    </div>
+    <section className="contador-hero fade-in">
+      <div className="kicker pixel neon-yellow">▸ CONTADOR</div>
+      <h1 className="about-title">CONTADOR POKÉMON</h1>
+      <PokemonCounter />
+    </section>
   );
 }
