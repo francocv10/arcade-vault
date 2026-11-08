@@ -211,6 +211,7 @@ El paso 1 va primero porque todo el punto 2 depende de que Supabase escriba `rec
 - **Sí:** si el recuento falla, se inserta igual. Un fallo de la base de datos no debe dejar sin ranking a todos los jugadores.
 - **Sí:** HSTS de 1 año con `includeSubDomains` y sin `preload` (decisión del usuario). Aún no hay dominio definitivo, y salir de la lista `preload` de los navegadores tarda meses.
 - **Sí:** `Permissions-Policy` que bloquea cámara, micrófono, ubicación, pago y USB. Ningún juego los usa. **No:** bloquear `fullscreen` o `gamepad`, que un juego futuro podría querer.
+- **Sí (añadido durante la implementación, decisión del usuario):** `logging: { serverFunctions: false }` en `next.config.ts`. `next dev` registra por defecto cada Server Action con sus argumentos, y la primera prueba real escribió en la terminal la contraseña que recibía `cambiarClave`. Desactivarlo es la opción documentada en `01-app/03-api-reference/05-config/01-next-config-js/logging.md` y protege también los datos de `enviarContacto`. **No:** pasar la contraseña de otra forma, sin garantía de que el registro no la muestre. **No:** aceptarlo por ser solo de desarrollo, que incumple «Ningún log del servidor contiene la contraseña».
 
 ---
 
