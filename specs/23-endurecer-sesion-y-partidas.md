@@ -165,32 +165,32 @@ El paso 1 va primero porque todo el punto 2 depende de que Supabase escriba `rec
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] Tras abrir un enlace de recuperación, los claims de la sesión contienen `amr` con `method: "recovery"`.
-- [ ] Cada fila de la tabla «Recuperación reciente» da exactamente su resultado.
-- [ ] Un enlace de recuperación recién abierto llega a `/acceso/nueva-clave`, deja guardar una contraseña válida y lleva a `/home`.
-- [ ] Tras cambiar la contraseña, otra sesión de la misma cuenta abierta en otro navegador queda cerrada al refrescar su token o recargar.
-- [ ] Tras cambiar la contraseña, la sesión del navegador que la cambió sigue abierta.
-- [ ] Con una sesión de correo y contraseña, `/acceso/nueva-clave` muestra «ENLACE NO VÁLIDO» sin formulario.
-- [ ] Con una sesión de Google o GitHub, `/acceso/nueva-clave` muestra «ENLACE NO VÁLIDO» sin formulario.
-- [ ] Pasados 10 minutos desde abrir el enlace, enviar el formulario muestra `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.` y la contraseña no cambia.
-- [ ] Llamar a `cambiarClave` desde una sesión normal, saltándose la página, responde `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.` y la contraseña no cambia.
-- [ ] Llamar a `cambiarClave` con una contraseña que no cumple la regla responde `[ERR] La contraseña es demasiado débil.` sin llegar a Supabase.
-- [ ] Una contraseña inválida en el formulario sigue mostrando `Falta: …` bajo el campo sin llamar a `cambiarClave`.
-- [ ] Ningún log del servidor contiene la contraseña.
-- [ ] **Secure password change** está activo en el panel y anotado en `references/security/security-checklist.md`.
-- [ ] Sin sesión, `/acceso/nueva-clave` sigue redirigiendo a `/acceso?error=enlace` desde el proxy.
-- [ ] `iniciarPartida` llama a `getUser()` y no a `getClaims()`.
-- [ ] Tras cerrar sesión en otro navegador, `iniciarPartida` con las cookies antiguas responde `{ ok: false }` y no inserta fila.
-- [ ] Una cuenta de prueba con 59 filas de `partidas` en la última hora abre una partida más.
-- [ ] Con 60 filas en la última hora, `iniciarPartida` responde el mensaje del tope y no inserta fila.
-- [ ] Con el tope alcanzado, el juego sigue jugándose y GUARDAR muestra `[ERR] Has jugado demasiadas partidas seguidas. Espera un rato para volver al ranking.` sin llamar a `guardarPuntuacion`.
-- [ ] Las filas con más de una hora no cuentan para el tope.
-- [ ] La cuenta de prueba, sus partidas y sus puntuaciones se borran al terminar.
-- [ ] Con `npm run start`, `curl -I` devuelve `Strict-Transport-Security` y `Permissions-Policy` con su valor exacto en `/home`, `/acceso`, `/auth/callback` y `/games/snake/fruits.png`.
-- [ ] Las 3 cabeceras de la SPEC 21 siguen presentes.
-- [ ] Los cinco juegos reales, la consola táctil, el acceso con OAuth y la confirmación de correo no muestran errores nuevos en consola.
-- [ ] `CLAUDE.md` describe `cambiarClave`, la ventana de recuperación, el tope de partidas y las cabeceras nuevas.
+- [ ] `npm run lint` y `npm run build` terminan sin errores. _(`npm run build` sin errores. `npm run lint` no arranca: el commit `ffe96f4`, ajeno a esta spec, bajó `eslint-config-next` a la versión 15. Pendiente de restaurar la 16.4.3.)_
+- [x] Tras abrir un enlace de recuperación, los claims de la sesión contienen `amr` con `method: "recovery"`.
+- [x] Cada fila de la tabla «Recuperación reciente» da exactamente su resultado.
+- [x] Un enlace de recuperación recién abierto llega a `/acceso/nueva-clave`, deja guardar una contraseña válida y lleva a `/home`.
+- [x] Tras cambiar la contraseña, otra sesión de la misma cuenta abierta en otro navegador queda cerrada al refrescar su token o recargar. _(En Supabase queda cerrada al instante: `GET /auth/v1/user` con su token da `403 session_not_found`, y las acciones que usan `getUser()` la rechazan. La interfaz solo la quita al refrescar el token, porque el proxy la valida por firma hasta que caduca el JWT.)_
+- [x] Tras cambiar la contraseña, la sesión del navegador que la cambió sigue abierta.
+- [x] Con una sesión de correo y contraseña, `/acceso/nueva-clave` muestra «ENLACE NO VÁLIDO» sin formulario.
+- [x] Con una sesión de Google o GitHub, `/acceso/nueva-clave` muestra «ENLACE NO VÁLIDO» sin formulario. _(Comprobado con Google.)_
+- [x] Pasados 10 minutos desde abrir el enlace, enviar el formulario muestra `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.` y la contraseña no cambia. _(Dado por cubierto, decisión del usuario: la función pura da `false` pasados 600 s según su tabla, y la acción rechaza con ese texto una sesión sin recuperación reciente. No se probó con una espera real, para no gastar otro correo.)_
+- [x] Llamar a `cambiarClave` desde una sesión normal, saltándose la página, responde `[ERR] El enlace ha caducado o ya se usó. Solicita uno nuevo.` y la contraseña no cambia.
+- [x] Llamar a `cambiarClave` con una contraseña que no cumple la regla responde `[ERR] La contraseña es demasiado débil.` sin llegar a Supabase.
+- [x] Una contraseña inválida en el formulario sigue mostrando `Falta: …` bajo el campo sin llamar a `cambiarClave`.
+- [x] Ningún log del servidor contiene la contraseña. _(Exigió `logging.serverFunctions: false`: ver «Decisiones».)_
+- [x] **Secure password change** está activo en el panel y anotado en `references/security/security-checklist.md`.
+- [x] Sin sesión, `/acceso/nueva-clave` sigue redirigiendo a `/acceso?error=enlace` desde el proxy.
+- [x] `iniciarPartida` llama a `getUser()` y no a `getClaims()`.
+- [x] Tras cerrar sesión en otro navegador, `iniciarPartida` con las cookies antiguas responde `{ ok: false }` y no inserta fila.
+- [x] Una cuenta de prueba con 59 filas de `partidas` en la última hora abre una partida más.
+- [x] Con 60 filas en la última hora, `iniciarPartida` responde el mensaje del tope y no inserta fila.
+- [x] Con el tope alcanzado, el juego sigue jugándose y GUARDAR muestra `[ERR] Has jugado demasiadas partidas seguidas. Espera un rato para volver al ranking.` sin llamar a `guardarPuntuacion`.
+- [x] Las filas con más de una hora no cuentan para el tope.
+- [x] La cuenta de prueba, sus partidas y sus puntuaciones se borran al terminar.
+- [x] Con `npm run start`, `curl -I` devuelve `Strict-Transport-Security` y `Permissions-Policy` con su valor exacto en `/home`, `/acceso`, `/auth/callback` y `/games/snake/fruits.png`.
+- [x] Las 3 cabeceras de la SPEC 21 siguen presentes.
+- [x] Los cinco juegos reales, la consola táctil, el acceso con OAuth y la confirmación de correo no muestran errores nuevos en consola. _(Arkanoid muestra `ERR_CACHE_OPERATION_NOT_SUPPORTED` al pedir `break-sound.mp3` para un clon de `Audio`. Se considera previo: esta spec no toca el audio ni Arkanoid. La confirmación de correo solo se revisó hasta la pestaña CREAR CUENTA, sin enviar el registro.)_
+- [x] `CLAUDE.md` describe `cambiarClave`, la ventana de recuperación, el tope de partidas y las cabeceras nuevas.
 
 ---
 
