@@ -1,6 +1,6 @@
 # SPEC 23 — Endurecer la sesión, el cambio de contraseña y las partidas
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 18 (`NuevaClaveForm` y recuperación de contraseña), SPEC 21 (regla de contraseña, cabeceras y protección de rutas), SPEC 22 (`partidas`, `iniciarPartida` y `guardarPuntuacion`)
 > **Date:** 2026-11-08
 > **Objective:** Que solo una recuperación reciente pueda cambiar la contraseña y cierre las demás sesiones, que `iniciarPartida` valide la sesión contra Supabase y limite las partidas por hora, y añadir las cabeceras HSTS y `Permissions-Policy`.
@@ -165,7 +165,7 @@ El paso 1 va primero porque todo el punto 2 depende de que Supabase escriba `rec
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores. _(`npm run build` sin errores. `npm run lint` no arranca: el commit `ffe96f4`, ajeno a esta spec, bajó `eslint-config-next` a la versión 15. Pendiente de restaurar la 16.4.3.)_
+- [x] `npm run lint` y `npm run build` terminan sin errores. _(`npm run lint` no arrancaba porque el commit `ffe96f4`, ajeno a esta spec, bajó `eslint-config-next` a la versión 15. Pasa sin errores tras restaurar la 16.4.3 en `main`.)_
 - [x] Tras abrir un enlace de recuperación, los claims de la sesión contienen `amr` con `method: "recovery"`.
 - [x] Cada fila de la tabla «Recuperación reciente» da exactamente su resultado.
 - [x] Un enlace de recuperación recién abierto llega a `/acceso/nueva-clave`, deja guardar una contraseña válida y lleva a `/home`.
