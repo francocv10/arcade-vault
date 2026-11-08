@@ -40,8 +40,10 @@ export async function iniciarPartida(
   }
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
-    const userId = data?.claims?.sub;
+    // getUser y no getClaims (spec 23): getClaims acepta una sesión ya cerrada
+    // hasta que caduca el JWT; getUser pregunta a Supabase.
+    const { data } = await supabase.auth.getUser();
+    const userId = data.user?.id;
     if (!userId) return { ok: false };
     const admin = createAdminClient();
     // Partidas de esta cuenta que ya no podrían publicar. Las abiertas en otras

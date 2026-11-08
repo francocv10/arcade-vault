@@ -1,9 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode, SubmitEvent } from "react";
-import { mensajeAuth, validarClaveNueva } from "@/app/acceso/auth-schema";
+import {
+  esRecuperacionReciente,
+  mensajeAuth,
+  validarClaveNueva,
+} from "@/app/acceso/auth-schema";
+import { cambiarClave } from "@/app/acceso/nueva-clave/actions";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 export function Tarjeta({
@@ -32,6 +37,33 @@ export function NuevaClaveForm() {
   const [errorClave, setErrorClave] = useState<string | null>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // Resultado de comprobar `amr` para una cuenta (spec 23). Si el id no
+  // coincide con la sesión actual, la comprobación sigue pendiente. Solo decide
+  // qué se muestra: quien impide el cambio es `cambiarClave`.
+  const [recuperacion, setRecuperacion] = useState<{
+    userId: string;
+    valida: boolean;
+  } | null>(null);
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    let activo = true;
+    createClient()
+      .auth.getClaims()
+      .then(({ data }) => {
+        const valida = esRecuperacionReciente(
+          data?.claims?.amr,
+          Math.floor(Date.now() / 1000),
+        );
+        if (activo) setRecuperacion({ userId, valida });
+      })
+      .catch(() => {
+        if (activo) setRecuperacion({ userId, valida: false });
+      });
+    return () => {
+      activo = false;
+    };
+  }, [userId]);
   const submit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const encontrado = validarClaveNueva(clave);
@@ -40,11 +72,9 @@ export function NuevaClaveForm() {
     if (encontrado) return;
     setEnviando(true);
     try {
-      const { error } = await createClient().auth.updateUser({
-        password: clave,
-      });
-      if (error) {
-        setErrorGeneral(mensajeAuth(error.code));
+      const resultado = await cambiarClave(clave);
+      if (!resultado.ok) {
+        setErrorGeneral(resultado.error);
       } else {
         // <Activity> conserva esta ruta oculta: no debe guardar la contraseña.
         setClave("");
@@ -55,7 +85,8 @@ export function NuevaClaveForm() {
     }
     setEnviando(false);
   };
-  if (cargando) {
+  const comprobando = cargando || (!!user && recuperacion?.userId !== user.id);
+  if (comprobando) {
     return (
       <Tarjeta titulo="NUEVA CONTRASEÑA">
         <p className="auth-intro" role="status">
@@ -64,7 +95,7 @@ export function NuevaClaveForm() {
       </Tarjeta>
     );
   }
-  if (!user) {
+  if (!user || !recuperacion?.valida) {
     return (
       <Tarjeta titulo="ENLACE NO VÁLIDO">
         <p className="auth-intro">
