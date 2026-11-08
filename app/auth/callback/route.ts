@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { tieneUsuario } from "@/app/acceso/auth-schema";
+import { sincronizarNombre } from "@/app/lib/jugadores/servidor";
 import { createClient } from "@/app/lib/supabase/server";
 // Destinos cerrados: nunca salen de un parámetro de la URL, así este enlace no
 // puede usarse como redirección abierta.
@@ -35,9 +36,25 @@ export async function GET(request: NextRequest) {
     return redirigir(DESTINO_RECUPERACION, request);
   }
   return redirigir(
-    tieneUsuario(data.user.user_metadata.username)
+    (await nombreTrasSincronizar(data.user))
       ? DESTINO_CON_NOMBRE
       : DESTINO_SIN_NOMBRE,
     request,
   );
+}
+// Reserva el nombre de los metadatos o copia el de `jugadores` (spec 24) antes
+// de decidir el destino. Si falla, decide con los metadatos como antes:
+// AuthProvider vuelve a sincronizar con asegurarNombre al cargar la app, y
+// guardarPuntuacion exige la fila de todos modos.
+async function nombreTrasSincronizar(usuario: {
+  id: string;
+  user_metadata: Record<string, unknown>;
+}): Promise<boolean> {
+  try {
+    const { nombre } = await sincronizarNombre(usuario);
+    return nombre !== null;
+  } catch (error) {
+    console.error("auth/callback: no se sincronizó el nombre", error);
+    return tieneUsuario(usuario.user_metadata.username);
+  }
 }
