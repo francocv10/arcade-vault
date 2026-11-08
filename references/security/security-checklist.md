@@ -9,9 +9,24 @@ Medidas mínimas antes de abrir la app. La SPEC 21 (`specs/21-medidas-seguridad-
 - [x] **Composición de contraseña.** El panel y `validarClaveNueva` exigen minúscula, mayúscula, dígito y símbolo. Un `POST` directo a `/auth/v1/signup` con `abcdefgh` o `Abc1!` responde `weak_password`.
 - [ ] **Contraseñas filtradas.** Sin activar: Supabase la reserva al plan Pro. La composición no la sustituye, porque `Password1!` cumple la regla y está en cualquier lista de filtradas. Es un riesgo aceptado.
 - [x] **Límite de registros.** Revisado sin cambiar nada: 30 peticiones cada 5 minutos por IP (ver «Rate Limits»).
-- [x] **Cabeceras en Next.js.** `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Policy` en todas las rutas, desde `next.config.ts`.
+- [x] **Cabeceras en Next.js.** `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Policy` en todas las rutas, desde `next.config.ts`. La SPEC 23 añade HSTS y `Permissions-Policy` (ver abajo).
 - [x] **Avisos del panel.** Corregidos con las migraciones `revoke_rls_auto_enable_execute` y `add_scores_user_id_index` (ver «Avisos corregidos»).
 - [x] **Protección de rutas.** `proxy.ts` exige sesión en `/acceso/nombre` y `/acceso/nueva-clave`, y saca de `/acceso` a quien ya la tiene.
+
+## SPEC 23: sesión, contraseña y partidas
+
+Comprobado el 2026-11-08 (`specs/23-endurecer-sesion-y-partidas.md`).
+
+- [x] **Cambiar la contraseña cierra las demás sesiones.** `cambiarClave` llama a `signOut({ scope: "others" })` tras `updateUser`. Comprobado con una sesión abierta en otro navegador: `GET /auth/v1/user` con su token responde `403 session_not_found`. La sesión que cambia la contraseña sigue abierta. La otra solo desaparece de la interfaz al refrescar su token: hasta que caduca (como mucho 1 h), el proxy y la barra la siguen aceptando por firma, aunque las Server Actions que usan `getUser()` ya la rechazan.
+- [x] **Solo una recuperación reciente cambia la contraseña.** `/acceso/nueva-clave` y la Server Action `cambiarClave` exigen en el claim `amr` una entrada `recovery` de hace como mucho 600 s (`esRecuperacionReciente`). Con una sesión de correo y contraseña la página muestra «ENLACE NO VÁLIDO». Una llamada directa a `cambiarClave` desde una sesión normal responde «El enlace ha caducado» y la contraseña no cambia. El caso de esperar más de 10 minutos con el enlace abierto está cubierto por el código y la función pura, pero no se ha probado con una espera real.
+- [x] **Secure password change activo** en **Authentication > Providers > Email**. Un enlace de recuperación recién abierto sigue cambiando la contraseña sin pedir código.
+- [x] **Tope de partidas.** `iniciarPartida` rechaza con mensaje propio a partir de 60 partidas de una cuenta en la última hora (`PARTIDAS_POR_HORA`), publicadas o no. Comprobado con una cuenta de prueba ya borrada.
+- [x] **Sesión validada en `iniciarPartida`.** Usa `getUser()` en lugar de `getClaims()`: una sesión cerrada en otro navegador ya no abre partidas aunque su JWT siga sin caducar.
+- [x] **HSTS y `Permissions-Policy`.** `Strict-Transport-Security: max-age=31536000; includeSubDomains` (sin `preload`) y `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()` en todas las rutas, desde `next.config.ts`. Antes de desplegar en un dominio propio hay que comprobar que todos sus subdominios sirven HTTPS.
+- [x] **Sin argumentos de Server Actions en el log de desarrollo.** `next dev` registraba cada Server Action con sus argumentos, contraseña de `cambiarClave` incluida. `logging.serverFunctions: false` en `next.config.ts` lo desactiva. En producción Next no registra esos argumentos.
+- [ ] **`username` único y no modificable.** Pendiente para la SPEC 24.
+
+**Lo que no garantiza:** el navegador puede llamar a `PUT /auth/v1/user` directamente con su token, sin pasar por la app. **Secure password change** solo exige reautenticación a las sesiones de más de 24 h, así que una sesión robada con menos de 24 h todavía podría cambiar la contraseña por API. Es un riesgo aceptado: cerrarlo exige que Supabase permita restringir `updateUser` por método de acceso.
 
 ## Rate Limits
 

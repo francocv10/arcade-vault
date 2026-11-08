@@ -13,8 +13,11 @@ import {
   JUEGOS_CON_RANKING,
   normalizarNombre,
   PARTIDA_MAX_SEGUNDOS,
+  PARTIDAS_POR_HORA,
   puntuacionPosible,
 } from "./schema";
+const ERROR_TOPE_PARTIDAS =
+  "[ERR] Has jugado demasiadas partidas seguidas. Espera un rato para volver al ranking.";
 const ERROR_GUARDADO =
   "[ERR] No se pudo guardar la puntuación. Inténtalo de nuevo.";
 const ERROR_SIN_NOMBRE =
@@ -31,17 +34,20 @@ function rechazar(motivo: string): { ok: false; error: string } {
 }
 // Abre una partida de una cuenta (spec 22). Es un endpoint público: la sesión
 // sale de las cookies, nunca de un parámetro, y el juego se valida aquí. Solo
-// devuelve el id; `guardarPuntuacion` lo exige para publicar.
+// devuelve el id; `guardarPuntuacion` lo exige para publicar. Solo el tope de
+// PARTIDAS_POR_HORA (spec 23) devuelve `error`: los demás fallos van sin texto.
 export async function iniciarPartida(
   game: string,
-): Promise<{ ok: boolean; partidaId?: string }> {
+): Promise<{ ok: boolean; partidaId?: string; error?: string }> {
   if (typeof game !== "string" || !JUEGOS_CON_RANKING.includes(game)) {
     return { ok: false };
   }
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
-    const userId = data?.claims?.sub;
+    // getUser y no getClaims (spec 23): getClaims acepta una sesión ya cerrada
+    // hasta que caduca el JWT; getUser pregunta a Supabase.
+    const { data } = await supabase.auth.getUser();
+    const userId = data.user?.id;
     if (!userId) return { ok: false };
     const admin = createAdminClient();
     // Partidas de esta cuenta que ya no podrían publicar. Las abiertas en otras
@@ -59,6 +65,23 @@ export async function iniciarPartida(
         "iniciarPartida: no se limpiaron las caducadas",
         errorLimpieza.message,
       );
+    }
+    // Tope por hora (spec 23): cuentan todas las filas de esa hora. Si el
+    // recuento falla se inserta igual, para no dejar sin ranking a nadie.
+    const haceUnaHora = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error: errorRecuento } = await admin
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("iniciada_en", haceUnaHora);
+    if (errorRecuento) {
+      console.warn(
+        "iniciarPartida: no se contaron las partidas recientes",
+        errorRecuento.message,
+      );
+    } else if ((count ?? 0) >= PARTIDAS_POR_HORA) {
+      console.warn("iniciarPartida: rechazada, tope de partidas por hora");
+      return { ok: false, error: ERROR_TOPE_PARTIDAS };
     }
     const { data: partida, error } = await admin
       .from("partidas")

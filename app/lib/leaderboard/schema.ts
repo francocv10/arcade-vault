@@ -77,6 +77,9 @@ export const LIMITES_POR_JUEGO: Record<
 // El motor arranca antes de que llegue la respuesta de `iniciarPartida`.
 export const GRACIA_SEGUNDOS = 5;
 export const PARTIDA_MAX_SEGUNDOS = 6 * 60 * 60;
+// Tope de partidas abiertas por cuenta en la última hora, publicadas o no
+// (spec 23). Una partida real dura más de un minuto.
+export const PARTIDAS_POR_HORA = 60;
 // `segundos` es el tiempo total desde `partidas.iniciada_en`, pausas incluidas.
 export function puntuacionPosible(
   game: string,

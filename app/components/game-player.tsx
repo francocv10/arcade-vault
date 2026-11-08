@@ -86,6 +86,9 @@ export function GamePlayer({
   const restartRef = useRef<HTMLButtonElement>(null);
   // Id de la partida abierta en el servidor (spec 22). Ref y no estado: no se pinta.
   const partidaRef = useRef<string | null>(null);
+  // Texto de `iniciarPartida` cuando rechaza la partida por el tope por hora
+  // (spec 23). Solo lo lee `guardar`, así que también va en un ref.
+  const errorPartidaRef = useRef<string | null>(null);
   const userId = user?.id;
   const titleId = useId();
   // En los juegos reales el modal también se abre solo al terminar la partida
@@ -218,13 +221,14 @@ export function GamePlayer({
   // limpieza (reinicio, Strict Mode) se ignora y esa fila caduca sola.
   useEffect(() => {
     partidaRef.current = null;
+    errorPartidaRef.current = null;
     if (!esReal || !userId) return;
     let vigente = true;
     iniciarPartida(gameId)
       .then((res) => {
-        if (vigente && res.ok && res.partidaId) {
-          partidaRef.current = res.partidaId;
-        }
+        if (!vigente) return;
+        if (res.ok && res.partidaId) partidaRef.current = res.partidaId;
+        else if (res.error) errorPartidaRef.current = res.error;
       })
       .catch(() => {
         // Red caída: sin partida, `guardarPuntuacion` responderá con su error.
@@ -255,6 +259,12 @@ export function GamePlayer({
     if (!esReal) {
       saveScore({ game: gameId, score, name });
       setSaved(true);
+      return;
+    }
+    // Tope de partidas por hora (spec 23): el servidor ya dijo por qué no hay
+    // partida, así que no se llama a `guardarPuntuacion`.
+    if (!partidaRef.current && errorPartidaRef.current) {
+      setErrorGuardado(errorPartidaRef.current);
       return;
     }
     // El ref bloquea al instante: `saving` no se actualiza hasta el siguiente render.

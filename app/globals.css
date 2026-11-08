@@ -3415,6 +3415,63 @@ body:has(.av-player) .av-bg::before {
   color: var(--ink-dim);
   line-height: 1.6;
 }
+/* ===== CONTADOR POKÉMON ===== */
+.contador-hero {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 64px 16px 48px;
+  text-align: center;
+}
+.contador-hero .kicker {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  margin-bottom: 18px;
+}
+.contador-panel {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.contador-numero {
+  font-size: clamp(40px, 10vw, 72px);
+  color: var(--yellow);
+  text-shadow: 0 0 18px rgba(255, 230, 0, 0.5);
+}
+.contador-imagen {
+  width: min(260px, 70vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--cyan);
+  background: rgba(0, 245, 255, 0.05);
+  box-shadow: 0 0 24px rgba(0, 245, 255, 0.25) inset;
+}
+.contador-imagen img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  image-rendering: auto;
+  animation: contador-pop 0.25s ease-out;
+}
+@keyframes contador-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+.contador-id {
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+}
+.contador-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 /* ===== ABOUT PAGE ===== */
 .about {
   position: relative;
