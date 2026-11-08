@@ -46,7 +46,7 @@ export async function reservarNombre(
 // Copia el nombre de la fila (o null) a `user_metadata.username`. Supabase
 // fusiona `user_metadata` en la actualización de administrador, así que los
 // demás campos (por ejemplo `full_name`) se conservan.
-async function copiarAMetadatos(
+export async function copiarAMetadatos(
   userId: string,
   username: string | null,
 ): Promise<void> {
