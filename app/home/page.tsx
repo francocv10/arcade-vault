@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { GAMES, HOME_STATS } from "@/app/data";
 import { EmptyBoard } from "@/app/components/empty-board";
+import { UnavailableBoard } from "@/app/components/unavailable-board";
 import { HomeSilhouettes } from "@/app/components/home-silhouettes";
 import {
   HomeFeatureIcon,
@@ -249,7 +250,9 @@ export default function HomePage() {
 // Las dos tarjetas de «ACTIVIDAD EN VIVO» leen de la base de datos (solo Asteroides
 // tiene ranking real) dentro de su propio Suspense: el resto del Home no espera.
 async function UltimasPuntuaciones() {
-  const actividad = (await obtenerActividadReciente(7)) ?? [];
+  // `null`: no se pudo leer (spec 28).
+  const actividad = await obtenerActividadReciente(7);
+  if (actividad === null) return <UnavailableBoard />;
   if (actividad.length === 0) return <EmptyBoard gameId="asteroides" />;
   return (
     <div className="ticker">
@@ -269,7 +272,8 @@ async function UltimasPuntuaciones() {
   );
 }
 async function TopJugadoresHoy() {
-  const top = (await obtenerTopDelDia(5)) ?? [];
+  const top = await obtenerTopDelDia(5);
+  if (top === null) return <UnavailableBoard />;
   if (top.length === 0) return <EmptyBoard gameId="asteroides" />;
   return (
     <div className="top-list">
