@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyBoard } from "@/app/components/empty-board";
+import { UnavailableBoard } from "@/app/components/unavailable-board";
 import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
 import {
   obtenerPartidasJugadas,
@@ -106,39 +107,30 @@ const ESTILO_MEJOR_GLOBAL = {
   color: "var(--magenta)",
   textShadow: "0 0 6px rgba(255,0,110,0.5)",
 } as const;
-// «Partidas» (spec 27): total de partidas iniciadas. Un fallo no tumba la
-// ficha: se registra y la celda muestra «—».
+// «Partidas» (spec 27): total de partidas iniciadas. Con `null` (la consulta
+// no pudo leer, spec 28; ya registró el fallo) la celda muestra «—».
 async function CeldaPartidas({ gameId }: { gameId: string }) {
-  let valor = "—";
-  try {
-    valor = ((await obtenerPartidasJugadas(gameId)) ?? 0).toLocaleString(
-      "es-ES",
-    );
-  } catch (error) {
-    console.error("CeldaPartidas: no se pudo leer el total", error);
-  }
+  const total = await obtenerPartidasJugadas(gameId);
+  const valor = total === null ? "—" : total.toLocaleString("es-ES");
   return <div className="v">{valor}</div>;
 }
 // «Mejor global» (spec 27): el puesto 1 del mismo ranking que pinta la ficha
-// (misma llamada, misma caché). Sin puntuaciones o con fallo, «—».
+// (misma llamada, misma caché). Sin puntuaciones o con `null`, «—».
 async function CeldaMejorGlobal({ gameId }: { gameId: string }) {
-  let valor = "—";
-  try {
-    const scores = (await obtenerRanking(gameId, 10)) ?? [];
-    const mejor = scores[0]?.score;
-    if (mejor !== undefined) valor = mejor.toLocaleString("es-ES");
-  } catch (error) {
-    console.error("CeldaMejorGlobal: no se pudo leer el ranking", error);
-  }
+  const scores = await obtenerRanking(gameId, 10);
+  const mejor = scores?.[0]?.score;
+  const valor = mejor === undefined ? "—" : mejor.toLocaleString("es-ES");
   return (
     <div className="v" style={ESTILO_MEJOR_GLOBAL}>
       {valor}
     </div>
   );
 }
-// Top 10 real (Supabase) con estado vacío.
+// Top 10 real (Supabase): `UnavailableBoard` si no se pudo leer (spec 28) y
+// `EmptyBoard` si no hay puntuaciones.
 async function RankingReal({ gameId }: { gameId: string }) {
-  const scores = (await obtenerRanking(gameId, 10)) ?? [];
+  const scores = await obtenerRanking(gameId, 10);
+  if (scores === null) return <UnavailableBoard />;
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;
   return <FilasRanking scores={scores} />;
 }
