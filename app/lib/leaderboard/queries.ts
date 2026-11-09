@@ -1,11 +1,16 @@
 // Consultas de solo lectura. Solo servidor: se llaman desde Server Components
 // y Server Actions. Van en funciones `'use cache'` con etiqueta, y la acción
 // `guardarPuntuacion` las invalida. Una función cacheada no puede leer
-// `cookies()`, así que usan un cliente público sin sesión (clave publishable).
+// `cookies()`, así que las de `scores` y `leaderboard` usan un cliente público
+// sin sesión (clave publishable). `obtenerPartidasJugadas` (spec 27) es la
+// excepción: `partidas` no tiene permisos para `anon` ni `authenticated`, así
+// que cuenta con la clave secreta (`createAdminClient`, `server-only`) y solo
+// devuelve un número, nunca filas.
 import { createClient } from "@supabase/supabase-js";
 import { cacheLife, cacheTag } from "next/cache";
 import { GAMES } from "@/app/data/games";
 import type { ActividadReciente, TopJugadorHoy } from "@/app/data/home";
+import { createAdminClient } from "@/app/lib/supabase/admin";
 import type { Database } from "@/app/lib/supabase/database.types";
 import { supabaseEnv } from "@/app/lib/supabase/env";
 export interface FilaRanking {
@@ -66,6 +71,20 @@ export async function obtenerRanking(
     });
   }
   return filas;
+}
+// Total de partidas iniciadas de un juego («Partidas» en la ficha, spec 27).
+// Sin etiqueta ni `updateTag`: unos minutos de retraso no importan en un
+// contador. Lanza si Supabase falla, para que el error no quede en caché.
+export async function obtenerPartidasJugadas(game: string): Promise<number> {
+  "use cache";
+  cacheLife("minutes");
+  const { count, error } = await createAdminClient()
+    .from("partidas")
+    .select("id", { count: "exact", head: true })
+    .eq("game_id", game);
+  if (error)
+    throw new Error(`No se pudieron contar las partidas: ${error.message}`);
+  return count ?? 0;
 }
 export async function obtenerActividadReciente(
   limit: number,
