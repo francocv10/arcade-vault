@@ -30,10 +30,10 @@ Desde la SPEC 22 solo publican las cuentas en juegos reales, y las maquetas son 
 - Quitar `VERSUS` del tipo `Categoria` y de `CATS`, que queda `TODOS`, `ARCADE`, `PUZZLE` y `SHOOTER`.
 - Quitar los campos `best` y `plays` de `Juego` y los huecos que los pintan: el `score-badge` de `GameCard` y las celdas «Partidas» y «Mejor global» de la ficha `/juegos/[id]`.
 - `HOME_STATS`: «12+ JUEGOS» pasa a «5 JUEGOS».
-- URLs de maquetas (`/juegos/<maqueta>` y `/juegos/<maqueta>/jugar`): 404 con `notFound()`. `generateStaticParams` solo genera los 5 reales.
+- URLs de maquetas (`/juegos/<maqueta>` y `/juegos/<maqueta>/jugar`): página 404 con `notFound()`. `generateStaticParams` solo genera los 5 reales. El estado HTTP es 200 (404 blando): `notFound()` corre dentro de `<Suspense>` y `dynamicParams` no es compatible con `cacheComponents`.
 - `/juegos/[id]`: siempre `RankingReal`, sin rama `seededScores`.
 - `/salon` (`HallOfFame`): sin `seededScores`, sin el rango y la puntuación inventados de «TU MEJOR MARCA» (`youRank`, `youScore`, fecha fija `11/05/2026`); la caja solo aparece si `obtenerMejorMarca` devuelve una marca. La pestaña por defecto es `GAMES[0]` (Asteroides).
-- `GamePlayer`: eliminar la rama de maqueta (`fakeScore`, el `setInterval`, `over`/`setOver` y el botón que la terminaba, `editedName`/`setEditedName` y la llamada a `saveScore`). Todo juego que llega a `GamePlayer` es real.
+- `GamePlayer`: eliminar la rama de maqueta (`fakeScore`, el `setInterval`, `editedName`/`setEditedName` y la llamada a `saveScore`). Todo juego que llega a `GamePlayer` es real. El botón FIN y su estado `over`/`setOver` se mantienen, porque también terminan las partidas de los juegos reales (decisión tomada al implementar).
 - Modal de fin de juego: invitado ve `.ranking-lock` (como hoy en juegos reales); con sesión, el nombre se muestra en el campo de solo lectura y GUARDAR llama a `guardarPuntuacion`, como hoy.
 - `AuthProvider`: eliminar `saveScore` del contexto y borrar `av_scores` de `localStorage` al montar, igual que `av_user` (con `try/catch`).
 - `app/data/scores.ts`: eliminar `seededScores`, `PLAYERS` y `PuntuacionGuardada`; conservar `PuntuacionRanking` y `Usuario`.
@@ -99,7 +99,7 @@ interface AuthContexto {
 1. **Catálogo.** En `app/data/games.ts`, dejar los 5 reales en orden `asteroides`, `tetris`, `arkanoid`, `snake`, `frogger`, quitar `VERSUS` de `Categoria` y `CATS`, y quitar `best` y `plays` de `Juego` y de las 5 entradas. Ajustar `GameCard` (sin `score-badge`; el botón JUGAR se queda) y la ficha `/juegos/[id]` (sin «Partidas» ni «Mejor global»; «Dificultad» se queda). `npm run build` debe pasar: las rutas de maquetas ya no se generan.
 2. **404 en URLs antiguas.** Comprobar que `/juegos/[id]/page.tsx` y `/juegos/[id]/jugar/page.tsx` llaman a `notFound()` cuando `getGame(id)` es `undefined` (y, si no, añadirlo).
 3. **Ficha y Salón sin datos falsos.** En `/juegos/[id]`, renderizar siempre `RankingReal` y quitar `FilasRanking` con `seededScores` si deja de usarse. En `HallOfFame`, `rows = reales[tab]`, quitar `seededScores`, `youRank`, `youScore` y la fecha fija, y mostrar «TU MEJOR MARCA» solo con sesión y `mejorMarca`.
-4. **`GamePlayer` sin rama de maqueta.** Quitar `fakeScore`, el `setInterval`, `over`/`setOver` y su botón, `editedName`, el campo editable de iniciales y la rama que llama a `saveScore`. `score`, `lives` y `level` salen solo del snapshot. Si `esReal` queda siempre verdadero, simplificar las condiciones que lo usan.
+4. **`GamePlayer` sin rama de maqueta.** Quitar `fakeScore`, el `setInterval`, `editedName`, el campo editable de iniciales y la rama que llama a `saveScore` (FIN y `over` se quedan). `score`, `lives` y `level` salen solo del snapshot. Si `esReal` queda siempre verdadero, simplificar las condiciones que lo usan.
 5. **`AuthProvider` y datos.** Quitar `saveScore` y `SCORES_KEY` del provider; al montar, `localStorage.removeItem("av_scores")` en el mismo bloque que borra `av_user`. Quitar `seededScores`, `PLAYERS` y `PuntuacionGuardada` de `app/data/scores.ts`. Cambiar `HOME_STATS` a `{ n: "5", u: "JUEGOS", ... }` y el comentario `"Caída"` de `home.ts`.
 6. **CSS.** Borrar de `app/globals.css` las 8 portadas de maqueta y los comentarios que las nombran. Buscar después que ninguna clase borrada siga referenciada en `app/`.
 7. **Comentarios.** Actualizar el comentario de `NOMBRES_RESERVADOS` y los comentarios de `GamePlayer`, `HallOfFame`, `/juegos/[id]` y `games.ts` que hablen de maquetas o datos ficticios.
@@ -110,42 +110,44 @@ interface AuthContexto {
 
 ## Criterios de aceptación
 
-- [ ] `GAMES` tiene exactamente 5 entradas, en el orden `asteroides`, `tetris`, `arkanoid`, `snake`, `frogger`.
-- [ ] `Juego` no tiene `best` ni `plays`, y ninguna parte de `app/` los lee.
-- [ ] `Categoria` y `CATS` no contienen `VERSUS`; `/biblioteca` muestra los filtros TODOS, ARCADE, PUZZLE y SHOOTER, y cada uno lista al menos un juego.
-- [ ] `/biblioteca` con TODOS muestra 5 tarjetas, sin «MEJOR PUNTUACIÓN».
-- [ ] El carril «JUEGOS DISPONIBLES AHORA» de `/home` muestra los 5 juegos reales y ninguna maqueta.
-- [ ] `/home` muestra «5 JUEGOS» en lugar de «12+».
-- [ ] `/juegos/<id>` y `/juegos/<id>/jugar` responden 404 para los 8 ids de maqueta.
-- [ ] La ficha `/juegos/<id>` de los 5 reales muestra el ranking de Supabase (o `EmptyBoard`) y no muestra «Partidas» ni «Mejor global».
-- [ ] `/salon` abre en Asteroides y tiene exactamente 5 pestañas.
-- [ ] En `/salon`, «TU MEJOR MARCA» no aparece sin sesión ni con una sesión sin marca en ese juego, y con marca muestra el rango, la puntuación y la fecha que devuelve `obtenerMejorMarca`.
-- [ ] `GamePlayer` no contiene `setInterval`, `fakeScore`, `editedName` ni `saveScore`.
-- [ ] Al terminar una partida como invitado, el modal muestra `.ranking-lock`; con sesión, muestra el nombre en solo lectura y GUARDAR publica en Supabase como antes.
-- [ ] `useAuth()` no expone `saveScore`, y tras cargar cualquier página `localStorage.getItem("av_scores")` es `null`.
-- [ ] `app/data/scores.ts` no exporta `seededScores`, `PLAYERS` ni `PuntuacionGuardada`.
-- [ ] `app/globals.css` no contiene `.cover-bricks`, `.cover-tetro`, `.cover-snake` (sin sufijo), `.cover-glot`, `.cover-invaders`, `.cover-rocas`, `.cover-rana` ni `.cover-duelo`, y las portadas de los 5 reales se ven igual que antes.
-- [ ] Ningún archivo de `app/` contiene los ids `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria` ni `duelo-pixel`.
-- [ ] `NOMBRES_RESERVADOS` sigue siendo `JUGADOR`, `INVITADO` y `ADMIN`, y no hay migraciones nuevas en Supabase.
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] La consola del navegador no muestra errores nuevos en las rutas revisadas.
-- [ ] `CLAUDE.md` no describe maquetas como existentes e incluye esta spec en la lista; `references/game-suggestions-todo.md` y `references/mobile-review.md` están actualizados.
+- [x] `GAMES` tiene exactamente 5 entradas, en el orden `asteroides`, `tetris`, `arkanoid`, `snake`, `frogger`.
+- [x] `Juego` no tiene `best` ni `plays`, y ninguna parte de `app/` los lee.
+- [x] `Categoria` y `CATS` no contienen `VERSUS`; `/biblioteca` muestra los filtros TODOS, ARCADE, PUZZLE y SHOOTER, y cada uno lista al menos un juego.
+- [x] `/biblioteca` con TODOS muestra 5 tarjetas, sin «MEJOR PUNTUACIÓN».
+- [x] El carril «JUEGOS DISPONIBLES AHORA» de `/home` muestra los 5 juegos reales y ninguna maqueta.
+- [x] `/home` muestra «5 JUEGOS» en lugar de «12+».
+- [x] `/juegos/<id>` y `/juegos/<id>/jugar` muestran la página 404 para los 8 ids de maqueta (con estado HTTP 200: 404 blando aceptado, ver Decisiones).
+- [x] La ficha `/juegos/<id>` de los 5 reales muestra el ranking de Supabase (o `EmptyBoard`) y no muestra «Partidas» ni «Mejor global».
+- [x] `/salon` abre en Asteroides y tiene exactamente 5 pestañas.
+- [x] En `/salon`, «TU MEJOR MARCA» no aparece sin sesión ni con una sesión sin marca en ese juego, y con marca muestra el rango, la puntuación y la fecha que devuelve `obtenerMejorMarca`.
+- [x] `GamePlayer` no contiene `setInterval`, `fakeScore`, `editedName` ni `saveScore`.
+- [x] Al terminar una partida como invitado, el modal muestra `.ranking-lock`; con sesión, muestra el nombre en solo lectura y GUARDAR publica en Supabase como antes.
+- [x] `useAuth()` no expone `saveScore`, y tras cargar cualquier página `localStorage.getItem("av_scores")` es `null`.
+- [x] `app/data/scores.ts` no exporta `seededScores`, `PLAYERS` ni `PuntuacionGuardada`.
+- [x] `app/globals.css` no contiene `.cover-bricks`, `.cover-tetro`, `.cover-snake` (sin sufijo), `.cover-glot`, `.cover-invaders`, `.cover-rocas`, `.cover-rana` ni `.cover-duelo`, y las portadas de los 5 reales se ven igual que antes.
+- [x] Ningún archivo de `app/` contiene los ids `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria` ni `duelo-pixel`.
+- [x] `NOMBRES_RESERVADOS` sigue siendo `JUGADOR`, `INVITADO` y `ADMIN`, y no hay migraciones nuevas en Supabase.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] La consola del navegador no muestra errores nuevos en las rutas revisadas.
+- [x] `CLAUDE.md` no describe maquetas como existentes e incluye esta spec en la lista; `references/game-suggestions-todo.md` y `references/mobile-review.md` están actualizados.
 
 ---
 
 ## Decisiones tomadas y descartadas
 
-| Decisión                                             | Alternativa descartada                                | Por qué                                                                                                                               |
-| ---------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Eliminar todo el código que solo usaban las maquetas | Quitar solo las entradas del catálogo                 | El código sin uso (simulación, `saveScore`, `seededScores`) confunde y obliga a mantener ramas `esReal` que ya no tienen otra salida. |
-| 404 en las URLs antiguas                             | Redirigir a `/biblioteca` o al juego real equivalente | Las maquetas nunca tuvieron tráfico real que conservar, y `notFound()` no deja redirecciones que mantener.                            |
-| Quitar `best` y `plays`                              | Rellenarlos con datos reales de Supabase              | Hoy son cifras falsas o ceros; mostrar datos reales necesita consultas cacheadas nuevas y merece su propia spec.                      |
-| «5 JUEGOS» en `HOME_STATS`                           | Mantener «12+»                                        | El sitio no debe anunciar juegos que no tiene.                                                                                        |
-| Quitar `VERSUS`                                      | Quitar el filtro entero o dejar `VERSUS` vacío        | Un filtro que siempre da una lista vacía es un callejón sin salida; los otros tres sí tienen juegos.                                  |
-| Orden de porte (`asteroides` primero)                | Alfabético o más nuevo primero                        | Es el orden actual entre los reales y deja Asteroides como pestaña por defecto de `/salon`.                                           |
-| Borrar `av_scores` al montar                         | Dejar la clave huérfana                               | Sigue el patrón de `av_user` y no deja datos que nadie lee en el navegador.                                                           |
-| `INVITADO` sigue reservado                           | Liberarlo con una migración                           | No compensa tocar la base de datos; reservado no estorba y evita confusión con el texto de invitado.                                  |
-| No tocar las specs 01–25                             | Anotarlas                                             | Son histórico: describen lo que se hizo entonces.                                                                                     |
+| Decisión                                               | Alternativa descartada                                                    | Por qué                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Eliminar todo el código que solo usaban las maquetas   | Quitar solo las entradas del catálogo                                     | El código sin uso (simulación, `saveScore`, `seededScores`) confunde y obliga a mantener ramas `esReal` que ya no tienen otra salida.            |
+| 404 en las URLs antiguas                               | Redirigir a `/biblioteca` o al juego real equivalente                     | Las maquetas nunca tuvieron tráfico real que conservar, y `notFound()` no deja redirecciones que mantener.                                       |
+| Quitar `best` y `plays`                                | Rellenarlos con datos reales de Supabase                                  | Hoy son cifras falsas o ceros; mostrar datos reales necesita consultas cacheadas nuevas y merece su propia spec.                                 |
+| «5 JUEGOS» en `HOME_STATS`                             | Mantener «12+»                                                            | El sitio no debe anunciar juegos que no tiene.                                                                                                   |
+| Quitar `VERSUS`                                        | Quitar el filtro entero o dejar `VERSUS` vacío                            | Un filtro que siempre da una lista vacía es un callejón sin salida; los otros tres sí tienen juegos.                                             |
+| Orden de porte (`asteroides` primero)                  | Alfabético o más nuevo primero                                            | Es el orden actual entre los reales y deja Asteroides como pestaña por defecto de `/salon`.                                                      |
+| Borrar `av_scores` al montar                           | Dejar la clave huérfana                                                   | Sigue el patrón de `av_user` y no deja datos que nadie lee en el navegador.                                                                      |
+| `INVITADO` sigue reservado                             | Liberarlo con una migración                                               | No compensa tocar la base de datos; reservado no estorba y evita confusión con el texto de invitado.                                             |
+| Mantener FIN y `over` en `GamePlayer` (al implementar) | Quitarlos con la rama de maqueta                                          | FIN también termina las partidas de los juegos reales y permite guardar a mitad; quitarlo era un cambio de comportamiento fuera del objetivo.    |
+| Aceptar el 404 blando (al implementar)                 | Forzar un 404 real desde `proxy.ts` o leer `params` fuera de `<Suspense>` | `dynamicParams = false` rompe el build con `cacheComponents`; la página 404 se ve igual y las alternativas añaden código que la spec no preveía. |
+| No tocar las specs 01–25                               | Anotarlas                                                                 | Son histórico: describen lo que se hizo entonces.                                                                                                |
 
 ---
 
