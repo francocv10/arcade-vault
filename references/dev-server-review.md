@@ -9,7 +9,7 @@ Es el mismo en cada escenario.
 **Condiciones previas**
 
 1. Detener `next dev`, borrar `.next/dev` y arrancar `npm run dev` en segundo plano, con la salida en un log fuera del proyecto.
-2. Esperar a que `/acceso` responda `200`.
+2. Esperar a que `/acceso` y `/home` respondan `200`. Calentar `/home` se añadió tras la primera medición de B: sin ello, su primera carga en el guion se compila en frío y da un rebuild que no viene del vigilante. A se midió sin calentar `/home`, así que a sus 36 rebuilds les sobra como mucho esa compilación.
 3. No cambiar ningún archivo del proyecto durante la medición.
 4. Navegar como invitado, sin sesión. El perfil del navegador del MCP es persistente y puede conservar una sesión de pruebas anterior: antes del guion se borran sus cookies, `localStorage` y `sessionStorage`, y se cierra la página para que el recuento de consola empiece de cero. Estas acciones de preparación no cuentan.
 
@@ -51,7 +51,40 @@ Detalle:
 
 ## Escenario B — `--output-dir` fuera del proyecto
 
-_Pendiente (paso 2)._
+### Primera medición (sin calentar `/home`)
+
+- **Fecha:** 2026-11-08 (hora local; archivos del MCP en UTC, 2026-11-09T01:21–01:23).
+- **Configuración:** `args` de `playwright` en `~/.claude.json` (ámbito local del proyecto) con `--output-dir C:\Users\franc\AppData\Local\Temp\playwright-mcp-arcade-vault`, fuera del repositorio y de OneDrive. OneDrive activo. `.mcp.json` sin cambios.
+- **Comprobación previa:** un `browser_navigate` a `/acceso` dejó su `page-*.yml` y su `console-*.log` en la carpeta nueva, y `.playwright-mcp/` siguió en 360 archivos. `--output-dir` funciona con `@playwright/mcp@latest`.
+- **Arranque:** `✓ Ready in 427ms`, y `GET /acceso 200` en 2,6 s. El perfil no conservaba sesión; aun así se limpiaron cookies y almacenamiento y se cerró la página.
+
+| Métrica                               | Guion (20 acciones) | Capturas (3 + 3 esperas de 5 s) |
+| ------------------------------------- | ------------------- | ------------------------------- |
+| Líneas `Compiled in`                  | **0**               | **0**                           |
+| `[Fast Refresh] rebuilding`           | **1**               | **3**                           |
+| Archivos nuevos en `.playwright-mcp/` | **0** (360 → 360)   | **0** (360 → 360)               |
+
+Detalle:
+
+- **Rebuilds por carga del guion:** 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 (frente a 36 en A). El único es la primera carga de `/home`, la única ruta que se compila en frío durante el guion (`GET /home 200 in 2.6s`; las otras cargas tardan 100–250 ms): es la compilación bajo demanda de la ruta, no el vigilante. No se repite en las otras cuatro cargas de `/home`.
+- **Capturas:** exactamente **1 rebuild por captura** (a los 36,8 s, 48,1 s y 56,9 s del registro de consola, cada uno justo tras su `browser_take_screenshot`), y ninguno durante las esperas. El PNG en `.playwright-screenshots/dev-server/` está dentro del proyecto y el vigilante lo ve, pero sin la realimentación del registro de consola cada captura cuesta un rebuild de ~100–175 ms y no 28 como en A.
+- **Sin cola:** el registro de consola no crece tras la última herramienta.
+- **Terminal:** las 30 líneas nuevas son solo `GET /acceso`, `GET /home` y `GET /manifest.webmanifest`, todas `200`. Ninguna `Compiled in`.
+
+### Repetición (con `/home` calentada)
+
+- **Fecha:** 2026-11-08 (archivos del MCP en UTC, 2026-11-09T01:35–01:36). Misma configuración. `next dev` reiniciado con `.next/dev` borrado; `/acceso` (3,2 s) y `/home` (2,5 s) respondieron `200` antes del guion.
+- **Capturas:** no se repitieron. Calentar `/home` no les afecta, y la primera medición ya las separa del guion.
+
+| Métrica                               | Guion (20 acciones) |
+| ------------------------------------- | ------------------- |
+| Líneas `Compiled in`                  | **0**               |
+| `[Fast Refresh] rebuilding`           | **1**               |
+| Archivos nuevos en `.playwright-mcp/` | **0** (360 → 360)   |
+
+- **Rebuilds por carga:** 0, 0, 0, 1, 0, 0, 0, 0, 0, 0. El único está en la segunda carga de `/home` (acción 7), a los 283 ms de cargar y sin su `done`, con `GET /home 200 in 395ms (next.js: 146ms)`, algo más lento que las demás cargas de `/home` (~10–30 ms de `next.js`). Ya no es la compilación en frío de la ruta y no hay ninguna escritura del MCP dentro del proyecto. Queda sin explicar, y por eso se mide C.
+- **Terminal:** solo `GET` de `/acceso`, `/home` y `/manifest.webmanifest`, todos `200`.
+- **Resultado:** B no cumple el umbral estricto (1 rebuild), pero baja de 36 a 1 y elimina la cola y la realimentación de A.
 
 ## Escenario C — OneDrive en pausa
 

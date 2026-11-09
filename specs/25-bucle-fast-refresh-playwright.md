@@ -72,7 +72,7 @@ El servidor `playwright` está definido en `~/.claude.json`, en el ámbito local
 Las condiciones previas son las mismas en cada escenario:
 
 1. Detener `next dev`, borrar `.next/dev` y arrancar `npm run dev` en segundo plano.
-2. Esperar a que `/acceso` responda `200`.
+2. Esperar a que `/acceso` y `/home` respondan `200`, para que ninguna ruta del guion se compile en frío durante la medición (añadido al medir B: la primera visita a una ruta sin compilar da un `[Fast Refresh] rebuilding` que no viene del vigilante).
 3. No cambiar ningún archivo del proyecto durante la medición.
 4. Navegar como invitado, sin sesión.
 
