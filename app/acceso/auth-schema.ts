@@ -89,8 +89,8 @@ export function validarUsuario(username: string): string | null {
   return null;
 }
 // Nombres que ninguna cuenta puede elegir (spec 24): JUGADOR es lo que se ve sin
-// nombre e INVITADO el de las maquetas sin sesión. El check de `jugadores` los
-// repite en la base de datos.
+// nombre e INVITADO el que muestra el HUD de una partida sin sesión. El check de
+// `jugadores` los repite en la base de datos.
 export const NOMBRES_RESERVADOS = ["JUGADOR", "INVITADO", "ADMIN"] as const;
 // El mismo texto para un nombre ocupado y para uno reservado.
 export const ERROR_NOMBRE_NO_DISPONIBLE =

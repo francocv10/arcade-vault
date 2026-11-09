@@ -81,7 +81,7 @@ async function GameDetail({
     </div>
   );
 }
-// Top 10 real (Supabase) con estado vacío; los demás juegos usan datos falsos.
+// Top 10 real (Supabase) con estado vacío.
 async function RankingReal({ gameId }: { gameId: string }) {
   const scores = await obtenerRanking(gameId, 10);
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;

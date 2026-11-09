@@ -1,4 +1,4 @@
-// Puntuaciones y jugadores ficticios. Esta capa se sustituirá por una base de datos.
+// Tipos compartidos de rankings y de la cuenta de la sesión.
 export interface PuntuacionRanking {
   rank: number;
   name: string;

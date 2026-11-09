@@ -1,4 +1,5 @@
-// Juegos ficticios de Arcade Vault. Esta capa se sustituirá por una base de datos.
+// Catálogo de los juegos reales de Arcade Vault. La tabla `games` de Supabase
+// solo guarda `id`, `title` y `category`; el resto vive aquí.
 export type Categoria = "ARCADE" | "PUZZLE" | "SHOOTER";
 export type ColorBoton = "cyan" | "magenta" | "yellow" | "green";
 export interface Juego {

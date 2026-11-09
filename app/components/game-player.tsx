@@ -47,9 +47,8 @@ export function GamePlayer({
   const esTetris = gameId === "tetris";
   const esArkanoid = gameId === "arkanoid";
   const esSnake = gameId === "snake";
-  // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
   const esFrogger = gameId === "frogger";
-  // Snapshot que envía el motor de canvas (solo en los juegos reales).
+  // Snapshot que envía el motor de canvas.
   const [snap, setSnap] = useState<
     | SnapshotAsteroides
     | SnapshotTetris
@@ -73,7 +72,6 @@ export function GamePlayer({
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [saved, setSaved] = useState(false);
-  // Asteroides, Tetris, Arkanoid y Snake guardan en Supabase; el resto de juegos sigue en localStorage.
   const [saving, setSaving] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
@@ -87,8 +85,8 @@ export function GamePlayer({
   const errorPartidaRef = useRef<string | null>(null);
   const userId = user?.id;
   const titleId = useId();
-  // En los juegos reales el modal también se abre solo al terminar la partida
-  // (`win` solo existe en Arkanoid).
+  // El modal se abre con FIN o solo al terminar la partida (`win` solo existe
+  // en Arkanoid).
   const gameOver =
     over || snap?.status === "gameover" || snap?.status === "win";
   // Escape no cierra el modal: sin él no queda un estado coherente (partida terminada, sin HUD).
@@ -209,7 +207,7 @@ export function GamePlayer({
   useEffect(() => {
     if (errorGuardado) saveRef.current?.focus();
   }, [errorGuardado]);
-  // Cada partida real con sesión abre una partida en el servidor: al montar, al
+  // Cada partida con sesión abre una partida en el servidor: al montar, al
   // reiniciar y al cambiar de cuenta. Los invitados no la piden. Si falla, se
   // juega igual y el error aparece al guardar. Una respuesta que llega tras la
   // limpieza (reinicio, Strict Mode) se ignora y esa fila caduca sola.
@@ -414,7 +412,7 @@ export function GamePlayer({
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
             {!user ? (
-              // Invitado en un juego real (spec 22): solo las cuentas publican.
+              // Invitado (spec 22): solo las cuentas publican.
               // Sin input, useDialog enfoca el primer enlace: va antes de JUGAR DE NUEVO.
               <div className="ranking-lock">
                 <p className="ranking-lock-msg">

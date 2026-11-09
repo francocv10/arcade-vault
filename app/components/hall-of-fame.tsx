@@ -22,7 +22,7 @@ export function HallOfFame({
 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState(GAMES[0].id);
-  // Juegos con ranking real en Supabase; las demás pestañas siguen con datos falsos.
+  // Ranking de Supabase de cada juego, indexado por id.
   const reales = useMemo<Record<string, PuntuacionRanking[]>>(
     () => ({ asteroides, tetris, arkanoid, snake, frogger }),
     [asteroides, tetris, arkanoid, snake, frogger],
