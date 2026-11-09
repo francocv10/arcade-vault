@@ -6,6 +6,17 @@
 // excepción: `partidas` no tiene permisos para `anon` ni `authenticated`, así
 // que cuenta con la clave secreta (`createAdminClient`, `server-only`) y solo
 // devuelve un número, nunca filas.
+//
+// Contrato de fallo (spec 28): ninguna consulta lanza. Next 16 da por fallido
+// el prerender si una función `'use cache'` lanza, aunque quien la llama capture
+// el error, así que un fallo de Supabase (o la falta de `SUPABASE_SECRET_KEY`)
+// tumbaría `next build`. En su lugar, todo el cuerpo va en un `try/catch`: en
+// el éxito se usa la vida de siempre; en el fallo se registra el error (nombre
+// de la función y mensaje, sin claves ni datos de cuentas), se guarda con
+// `cacheLife("seconds")`, que lo deja fuera del prerender y se reintenta en la
+// siguiente petición, y se devuelve `null`. `null` significa «no se pudo leer»;
+// `[]` y `0` siguen significando «no hay datos». Cada invocación llama a
+// `cacheLife` una sola vez.
 import { createClient } from "@supabase/supabase-js";
 import { cacheLife, cacheTag } from "next/cache";
 import { GAMES } from "@/app/data/games";
@@ -31,6 +42,20 @@ function clientePublico() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
+// Rama de fallo común: registra, acorta la vida de la caché y devuelve `null`.
+// Solo se llama desde dentro de una función `'use cache'`, y nunca después de
+// otro `cacheLife` en la misma invocación.
+function fallo(consulta: string, causa: unknown): null {
+  const mensaje =
+    causa instanceof Error
+      ? causa.message
+      : typeof causa === "object" && causa !== null && "message" in causa
+        ? String(causa.message)
+        : String(causa);
+  console.error(`[queries] ${consulta} falló: ${mensaje}`);
+  cacheLife("seconds");
+  return null;
+}
 // dd/mm/aaaa en UTC, para que el servidor y el cliente muestren lo mismo.
 export function formatearFecha(iso: string): string {
   const d = new Date(iso);
@@ -47,93 +72,110 @@ function haceCuanto(iso: string, ahora: number): string {
 export async function obtenerRanking(
   game: string,
   limit: number,
-): Promise<FilaRanking[]> {
+): Promise<FilaRanking[] | null> {
   "use cache";
   cacheTag(etiquetaRanking(game));
-  cacheLife("minutes");
-  const { data, error } = await clientePublico()
-    .from("leaderboard")
-    .select("player_name, score, created_at")
-    .eq("game_id", game)
-    .order("score", { ascending: false })
-    .order("created_at", { ascending: true })
-    .limit(limit);
-  if (error) throw new Error(`No se pudo leer el ranking: ${error.message}`);
-  const filas: FilaRanking[] = [];
-  for (const fila of data) {
-    if (fila.player_name === null || fila.score === null) continue;
-    if (fila.created_at === null) continue;
-    filas.push({
-      rank: filas.length + 1,
-      name: fila.player_name,
-      score: fila.score,
-      date: formatearFecha(fila.created_at),
-    });
+  try {
+    const { data, error } = await clientePublico()
+      .from("leaderboard")
+      .select("player_name, score, created_at")
+      .eq("game_id", game)
+      .order("score", { ascending: false })
+      .order("created_at", { ascending: true })
+      .limit(limit);
+    if (error) return fallo("obtenerRanking", error);
+    const filas: FilaRanking[] = [];
+    for (const fila of data) {
+      if (fila.player_name === null || fila.score === null) continue;
+      if (fila.created_at === null) continue;
+      filas.push({
+        rank: filas.length + 1,
+        name: fila.player_name,
+        score: fila.score,
+        date: formatearFecha(fila.created_at),
+      });
+    }
+    cacheLife("minutes");
+    return filas;
+  } catch (e) {
+    return fallo("obtenerRanking", e);
   }
-  return filas;
 }
 // Total de partidas iniciadas de un juego («Partidas» en la ficha, spec 27).
 // Sin etiqueta ni `updateTag`: unos minutos de retraso no importan en un
-// contador. Lanza si Supabase falla, para que el error no quede en caché.
-export async function obtenerPartidasJugadas(game: string): Promise<number> {
+// contador.
+export async function obtenerPartidasJugadas(
+  game: string,
+): Promise<number | null> {
   "use cache";
-  cacheLife("minutes");
-  const { count, error } = await createAdminClient()
-    .from("partidas")
-    .select("id", { count: "exact", head: true })
-    .eq("game_id", game);
-  if (error)
-    throw new Error(`No se pudieron contar las partidas: ${error.message}`);
-  return count ?? 0;
+  try {
+    const { count, error } = await createAdminClient()
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", game);
+    if (error) return fallo("obtenerPartidasJugadas", error);
+    cacheLife("minutes");
+    return count ?? 0;
+  } catch (e) {
+    return fallo("obtenerPartidasJugadas", e);
+  }
 }
 export async function obtenerActividadReciente(
   limit: number,
-): Promise<ActividadReciente[]> {
+): Promise<ActividadReciente[] | null> {
   "use cache";
   cacheTag(ETIQUETA_ACTIVIDAD);
-  cacheLife("seconds");
-  const { data, error } = await clientePublico()
-    .from("scores")
-    .select("game_id, player_name, score, created_at")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error(`No se pudo leer la actividad: ${error.message}`);
-  const ahora = Date.now();
-  return data.map((fila) => {
-    const juego = GAMES.find((g) => g.id === fila.game_id);
-    return {
-      p: fila.player_name,
-      g: juego?.title ?? fila.game_id,
-      s: fila.score,
-      t: haceCuanto(fila.created_at, ahora),
-      c: juego?.color ?? "cyan",
-    };
-  });
+  try {
+    const { data, error } = await clientePublico()
+      .from("scores")
+      .select("game_id, player_name, score, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) return fallo("obtenerActividadReciente", error);
+    const ahora = Date.now();
+    const actividad: ActividadReciente[] = data.map((fila) => {
+      const juego = GAMES.find((g) => g.id === fila.game_id);
+      return {
+        p: fila.player_name,
+        g: juego?.title ?? fila.game_id,
+        s: fila.score,
+        t: haceCuanto(fila.created_at, ahora),
+        c: juego?.color ?? "cyan",
+      };
+    });
+    cacheLife("seconds");
+    return actividad;
+  } catch (e) {
+    return fallo("obtenerActividadReciente", e);
+  }
 }
 export async function obtenerTopDelDia(
   limit: number,
-): Promise<TopJugadorHoy[]> {
+): Promise<TopJugadorHoy[] | null> {
   "use cache";
   cacheTag(ETIQUETA_TOP_DIA);
-  cacheLife("seconds");
-  const desde = new Date(Date.now() - VENTANA_HOY_MS).toISOString();
-  const { data, error } = await clientePublico()
-    .from("scores")
-    .select("player_name, score")
-    .gte("created_at", desde)
-    .order("score", { ascending: false })
-    .limit(MARGEN_TOP_DIA);
-  if (error)
-    throw new Error(`No se pudo leer el top del día: ${error.message}`);
-  // Una fila por jugador: su mejor marca de las últimas 24 horas.
-  const vistos = new Set<string>();
-  const top: TopJugadorHoy[] = [];
-  for (const fila of data) {
-    const nombre = fila.player_name.toUpperCase();
-    if (vistos.has(nombre)) continue;
-    vistos.add(nombre);
-    top.push({ r: top.length + 1, p: nombre, s: fila.score });
-    if (top.length === limit) break;
+  try {
+    const desde = new Date(Date.now() - VENTANA_HOY_MS).toISOString();
+    const { data, error } = await clientePublico()
+      .from("scores")
+      .select("player_name, score")
+      .gte("created_at", desde)
+      .order("score", { ascending: false })
+      .limit(MARGEN_TOP_DIA);
+    if (error) return fallo("obtenerTopDelDia", error);
+    // Una fila por jugador: su mejor marca de las últimas 24 horas.
+    const vistos = new Set<string>();
+    const top: TopJugadorHoy[] = [];
+    for (const fila of data) {
+      const nombre = fila.player_name.toUpperCase();
+      if (vistos.has(nombre)) continue;
+      vistos.add(nombre);
+      top.push({ r: top.length + 1, p: nombre, s: fila.score });
+      if (top.length === limit) break;
+    }
+    cacheLife("seconds");
+    return top;
+  } catch (e) {
+    return fallo("obtenerTopDelDia", e);
   }
-  return top;
 }

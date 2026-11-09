@@ -111,7 +111,9 @@ const ESTILO_MEJOR_GLOBAL = {
 async function CeldaPartidas({ gameId }: { gameId: string }) {
   let valor = "—";
   try {
-    valor = (await obtenerPartidasJugadas(gameId)).toLocaleString("es-ES");
+    valor = ((await obtenerPartidasJugadas(gameId)) ?? 0).toLocaleString(
+      "es-ES",
+    );
   } catch (error) {
     console.error("CeldaPartidas: no se pudo leer el total", error);
   }
@@ -122,7 +124,7 @@ async function CeldaPartidas({ gameId }: { gameId: string }) {
 async function CeldaMejorGlobal({ gameId }: { gameId: string }) {
   let valor = "—";
   try {
-    const scores = await obtenerRanking(gameId, 10);
+    const scores = (await obtenerRanking(gameId, 10)) ?? [];
     const mejor = scores[0]?.score;
     if (mejor !== undefined) valor = mejor.toLocaleString("es-ES");
   } catch (error) {
@@ -136,7 +138,7 @@ async function CeldaMejorGlobal({ gameId }: { gameId: string }) {
 }
 // Top 10 real (Supabase) con estado vacío.
 async function RankingReal({ gameId }: { gameId: string }) {
-  const scores = await obtenerRanking(gameId, 10);
+  const scores = (await obtenerRanking(gameId, 10)) ?? [];
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;
   return <FilasRanking scores={scores} />;
 }

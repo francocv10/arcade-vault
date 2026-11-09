@@ -19,7 +19,7 @@ async function SalonConDatos() {
     obtenerRanking("arkanoid", 12),
     obtenerRanking("snake", 12),
     obtenerRanking("frogger", 12),
-  ]);
+  ]).then((rankings) => rankings.map((r) => r ?? []));
   return (
     <HallOfFame
       asteroides={asteroides}
