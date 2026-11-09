@@ -1,6 +1,6 @@
 # SPEC 24 — Nombres de jugador únicos y fijos
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 18 (registro con `username`), SPEC 19 (`/acceso/nombre`, `ExigirNombre` y `sinNombre`), SPEC 20 (confirmación por `/auth/callback?origen=correo`), SPEC 22 (`guardarPuntuacion`, `scores.player_name` y SEG-008), SPEC 23 (punto 3 de su revisión)
 > **Date:** 2026-11-08
 > **Objective:** Que cada nombre de jugador pertenezca a una sola cuenta para siempre, sin distinguir mayúsculas y sin poder cambiarse, para que el ranking no fusione ni deje suplantar a dos cuentas.
@@ -210,29 +210,29 @@ Antes de escribir código hay que leer en `node_modules/next/dist/docs/` la guí
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores.
-- [ ] `jugadores` existe con RLS activa, sin políticas y sin permisos para `anon` ni `authenticated`: leerla con la clave publishable falla con `42501`.
-- [ ] Tras la migración, la cuenta existente tiene su fila con el nombre de sus metadatos.
-- [ ] Insertar por SQL `ana` cuando existe `ANA` falla por `jugadores_username_lower_idx`.
-- [ ] Insertar por SQL `admin`, `Invitado` o `JUGADOR` falla por el `check` de reservados.
-- [ ] En `/acceso/nombre`, un nombre ocupado escrito con otras mayúsculas muestra `Ese nombre no está disponible. Elige otro.` bajo el campo y no crea fila.
-- [ ] En `/acceso/nombre`, `admin`, `Invitado` y `JUGADOR` muestran el mismo mensaje.
-- [ ] En `/acceso/nombre`, un nombre libre crea la fila, copia el nombre a los metadatos y lleva a `/home` con el nombre en la barra.
-- [ ] Llamar a `elegirNombre` desde una cuenta que ya tiene fila no cambia su nombre.
-- [ ] En el registro, un nombre ocupado o reservado muestra el mensaje bajo el campo y no llama a `signUp`.
-- [ ] En el registro, un nombre libre sigue mostrando «REVISA TU CORREO».
-- [ ] Con una cuenta sin fila cuyo nombre de los metadatos está libre, `/auth/callback` crea la fila y lleva a `/home`.
-- [ ] Con una cuenta sin fila cuyo nombre de los metadatos ya es de otra, `/auth/callback` vacía sus metadatos y lleva a `/acceso/nombre`.
-- [ ] Una cuenta sin fila que entra con contraseña, sin pasar por el callback, recibe su fila al cargar la app, o va a `/acceso/nombre` si su nombre está ocupado.
-- [ ] Una cuenta con fila cuyo `username` se cambió por API ve de nuevo su nombre real en la barra tras recargar.
-- [ ] Con los metadatos cambiados por API, `guardarPuntuacion` guarda la puntuación con el nombre de `jugadores`.
-- [ ] Una cuenta sin fila recibe `ERROR_SIN_NOMBRE` al guardar.
-- [ ] Borrar una cuenta de prueba deja su fila con `user_id` nulo, y otra cuenta no puede elegir ese nombre.
-- [ ] La vista `leaderboard`, `queries.ts` y los permisos de `scores` no cambian.
-- [ ] Entrar con Google con una cuenta que ya tiene nombre sigue llevando a `/home` sin pasar por `/acceso/nombre`.
-- [ ] Las cuentas de prueba, sus filas de `jugadores` (incluidas las de `user_id` nulo), sus partidas y sus puntuaciones se borran al terminar.
-- [ ] Los cinco juegos reales, `/salon` y `/acceso` no muestran errores nuevos en consola.
-- [ ] `CLAUDE.md` describe la tabla `jugadores`, las tres Server Actions, los nombres reservados y la copia en los metadatos.
+- [x] `npm run lint` y `npm run build` terminan sin errores.
+- [x] `jugadores` existe con RLS activa, sin políticas y sin permisos para `anon` ni `authenticated`: leerla con la clave publishable falla con `42501`.
+- [x] Tras la migración, la cuenta existente tiene su fila con el nombre de sus metadatos.
+- [x] Insertar por SQL `ana` cuando existe `ANA` falla por `jugadores_username_lower_idx`.
+- [x] Insertar por SQL `admin`, `Invitado` o `JUGADOR` falla por el `check` de reservados.
+- [x] En `/acceso/nombre`, un nombre ocupado escrito con otras mayúsculas muestra `Ese nombre no está disponible. Elige otro.` bajo el campo y no crea fila.
+- [x] En `/acceso/nombre`, `admin`, `Invitado` y `JUGADOR` muestran el mismo mensaje.
+- [x] En `/acceso/nombre`, un nombre libre crea la fila, copia el nombre a los metadatos y lleva a `/home` con el nombre en la barra.
+- [x] Llamar a `elegirNombre` desde una cuenta que ya tiene fila no cambia su nombre.
+- [x] En el registro, un nombre ocupado o reservado muestra el mensaje bajo el campo y no llama a `signUp`.
+- [x] En el registro, un nombre libre sigue mostrando «REVISA TU CORREO».
+- [x] Con una cuenta sin fila cuyo nombre de los metadatos está libre, `/auth/callback` crea la fila y lleva a `/home`.
+- [x] Con una cuenta sin fila cuyo nombre de los metadatos ya es de otra, `/auth/callback` vacía sus metadatos y lleva a `/acceso/nombre`.
+- [x] Una cuenta sin fila que entra con contraseña, sin pasar por el callback, recibe su fila al cargar la app, o va a `/acceso/nombre` si su nombre está ocupado.
+- [x] Una cuenta con fila cuyo `username` se cambió por API ve de nuevo su nombre real en la barra tras recargar.
+- [x] Con los metadatos cambiados por API, `guardarPuntuacion` guarda la puntuación con el nombre de `jugadores`.
+- [x] Una cuenta sin fila recibe `ERROR_SIN_NOMBRE` al guardar.
+- [x] Borrar una cuenta de prueba deja su fila con `user_id` nulo, y otra cuenta no puede elegir ese nombre.
+- [x] La vista `leaderboard`, `queries.ts` y los permisos de `scores` no cambian.
+- [x] Entrar con Google con una cuenta que ya tiene nombre sigue llevando a `/home` sin pasar por `/acceso/nombre`.
+- [x] Las cuentas de prueba, sus filas de `jugadores` (incluidas las de `user_id` nulo), sus partidas y sus puntuaciones se borran al terminar.
+- [x] Los cinco juegos reales, `/salon` y `/acceso` no muestran errores nuevos en consola.
+- [x] `CLAUDE.md` describe la tabla `jugadores`, las tres Server Actions, los nombres reservados y la copia en los metadatos.
 
 ---
 
