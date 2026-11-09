@@ -13,18 +13,17 @@ import {
   type ReactNode,
 } from "react";
 import { tieneUsuario } from "@/app/acceso/auth-schema";
-import type { PuntuacionGuardada, Usuario } from "@/app/data";
+import type { Usuario } from "@/app/data";
 import { asegurarNombre } from "@/app/lib/jugadores/actions";
 import { createClient } from "@/app/lib/supabase/client";
-// Clave de la sesión simulada anterior: solo se usa para borrarla.
+// Claves de la sesión y las puntuaciones simuladas anteriores (av_scores): solo
+// se usan para borrarlas.
 const USER_KEY_ANTIGUA = "av_user";
-const SCORES_KEY = "av_scores";
 const RUTA_NOMBRE = "/acceso/nombre";
 interface AuthContextValue {
   user: Usuario | null;
   cargando: boolean; // true hasta recibir la primera sesión
   logout: () => Promise<void>;
-  saveScore: (entry: Omit<PuntuacionGuardada, "at">) => void;
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
 function aUsuario(cuenta: User): Usuario {
@@ -59,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.removeItem(USER_KEY_ANTIGUA);
+      localStorage.removeItem("av_scores");
     } catch {}
     // El callback solo actualiza estado: llamar a Supabase dentro lo bloquearía.
     const {
@@ -100,18 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await createClient().auth.signOut();
   }, []);
-  const saveScore = useCallback((entry: Omit<PuntuacionGuardada, "at">) => {
-    try {
-      const all: PuntuacionGuardada[] = JSON.parse(
-        localStorage.getItem(SCORES_KEY) || "[]",
-      );
-      all.push({ ...entry, at: Date.now() });
-      localStorage.setItem(SCORES_KEY, JSON.stringify(all));
-    } catch {}
-  }, []);
   const value = useMemo(
-    () => ({ user, cargando, logout, saveScore }),
-    [user, cargando, logout, saveScore],
+    () => ({ user, cargando, logout }),
+    [user, cargando, logout],
   );
   return (
     <AuthContext.Provider value={value}>
