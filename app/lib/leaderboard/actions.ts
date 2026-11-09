@@ -1,6 +1,6 @@
 "use server";
 import { updateTag } from "next/cache";
-import { tieneUsuario } from "@/app/acceso/auth-schema";
+import { nombreDeJugador } from "@/app/lib/jugadores/servidor";
 import { createAdminClient } from "@/app/lib/supabase/admin";
 import { createClient } from "@/app/lib/supabase/server";
 import {
@@ -112,14 +112,12 @@ export async function guardarPuntuacion(envio: {
     const { data } = await supabase.auth.getClaims();
     const userId = data?.claims?.sub;
     if (!userId) return { ok: false, error: ERROR_SIN_SESION };
-    // getUser y no los claims: updateUser no renueva el JWT, así que el
-    // nombre recién elegido no estaría en el token hasta el siguiente refresco.
     const { data: cuenta } = await supabase.auth.getUser();
     if (!cuenta.user) return { ok: false, error: ERROR_GUARDADO };
-    const { username } = cuenta.user.user_metadata;
-    if (!tieneUsuario(username)) {
-      return { ok: false, error: ERROR_SIN_NOMBRE };
-    }
+    // El nombre sale de `jugadores` (spec 24), no de los metadatos, que la
+    // sesión puede reescribir por API: así nadie publica con un nombre ajeno.
+    const username = await nombreDeJugador(userId);
+    if (username === null) return { ok: false, error: ERROR_SIN_NOMBRE };
     const { partidaId, score } = (envio ?? {}) as Record<string, unknown>;
     if (
       typeof partidaId !== "string" ||

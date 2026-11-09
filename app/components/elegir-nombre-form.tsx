@@ -7,6 +7,7 @@ import {
   sugerirUsuario,
   validarUsuario,
 } from "@/app/acceso/auth-schema";
+import { elegirNombre } from "@/app/lib/jugadores/actions";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 import { Tarjeta } from "./nueva-clave-form";
@@ -52,10 +53,25 @@ export function ElegirNombreForm() {
     if (encontrado) return;
     setEnviando(true);
     try {
-      const { error } = await createClient().auth.updateUser({
-        data: { username },
-      });
-      if (error) setErrorGeneral(mensajeAuth(error.code));
+      // El servidor reserva el nombre en `jugadores` y lo copia a los
+      // metadatos (spec 24); updateUser desde aquí ya no basta.
+      const resultado = await elegirNombre(username);
+      if (!resultado.ok) {
+        // Los textos de campo (formato, ERROR_NOMBRE_NO_DISPONIBLE) van bajo el
+        // input; los de mensajeAuth empiezan por [ERR] y van al aviso general.
+        if (resultado.error.startsWith("[ERR]")) {
+          setErrorGeneral(resultado.error);
+        } else {
+          setErrorNombre(resultado.error);
+        }
+      } else {
+        // Los metadatos los escribió el servidor: el navegador solo los ve al
+        // refrescar la sesión. El nuevo `user` llega por onAuthStateChange y
+        // el efecto de arriba redirige. Reintentar es seguro: elegirNombre no
+        // cambia el nombre de una cuenta que ya tiene fila.
+        const { error } = await createClient().auth.refreshSession();
+        if (error) setErrorGeneral(mensajeAuth(error.code));
+      }
     } catch {
       setErrorGeneral(mensajeAuth(undefined));
     }

@@ -4,11 +4,13 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { flushSync } from "react-dom";
 import {
+  ERROR_NOMBRE_NO_DISPONIBLE,
   mensajeAuth,
   validarAcceso,
   validarCorreo,
   validarRegistro,
 } from "@/app/acceso/auth-schema";
+import { nombreDisponible } from "@/app/lib/jugadores/actions";
 import { createClient } from "@/app/lib/supabase/client";
 import { useAuth } from "./auth-provider";
 type Proveedor = "google" | "github";
@@ -324,6 +326,14 @@ export function AuthForm() {
     if (Object.keys(encontrados).length > 0) return;
     setEnviando(true);
     try {
+      // Nombres únicos (spec 24): se comprueba antes de crear la cuenta, pero
+      // solo se reserva al confirmar el correo, en /auth/callback. Si la
+      // consulta falla, el catch muestra el error genérico y no hay signUp.
+      if (!(await nombreDisponible(user))) {
+        setErrores({ username: ERROR_NOMBRE_NO_DISPONIBLE });
+        setEnviando(false);
+        return;
+      }
       const { data, error } = await createClient().auth.signUp({
         email: email.trim(),
         password: pass,
