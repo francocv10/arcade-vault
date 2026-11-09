@@ -88,8 +88,32 @@ Detalle:
 
 ## Escenario C — OneDrive en pausa
 
-_Pendiente (paso 3; solo si B no cumple el umbral)._
+Se mide porque B no cumplió el umbral estricto (1 rebuild en el guion).
+
+- **Fecha:** 2026-11-08 (archivos del MCP en UTC, 2026-11-09T01:39–01:40).
+- **Configuración:** la de B (`--output-dir` fuera del proyecto) con OneDrive cerrado: el usuario lo pausó y no arranca con Windows, y no había ningún proceso `OneDrive`.
+- **Arranque:** `next dev` reiniciado con `.next/dev` borrado (`✓ Ready in 1094ms`). `/acceso` (7,8 s) y `/home` (8,5 s) respondieron `200` antes del guion. Una pestaña del MCP que seguía abierta en `/home` se reconectó al reiniciar (un `GET /home` de más antes del guion); se limpió el perfil y se cerró antes de empezar.
+
+| Métrica                               | Guion (20 acciones) | Capturas (3 + 3 esperas de 5 s) |
+| ------------------------------------- | ------------------- | ------------------------------- |
+| Líneas `Compiled in`                  | **0**               | **0**                           |
+| `[Fast Refresh] rebuilding`           | **0**               | **3**                           |
+| Archivos nuevos en `.playwright-mcp/` | **0** (360 → 360)   | **0** (360 → 360)               |
+
+- **Rebuilds por carga:** 0 en las 10. C cumple el umbral.
+- **Capturas:** igual que en B, exactamente 1 rebuild por captura (a los 16,3 s, 27,2 s y 39,2 s), y ninguno en las esperas. Sin OneDrive siguen ahí, así que los provoca el vigilante de Turbopack al ver el PNG nuevo dentro del proyecto, no OneDrive.
+- **Terminal:** solo `GET` de `/acceso`, `/home` y `/manifest.webmanifest`, todos `200`.
+- **Límite:** C se midió una vez. El rebuild suelto de B apareció en las dos mediciones de B y en ninguna de C, lo que encaja con OneDrive, pero es un evento aislado y no se ha repetido C para descartar el azar.
 
 ## Conclusión
 
-_Pendiente (paso 4)._
+| Escenario                         | `Compiled in` | Rebuilds en el guion | Archivos en `.playwright-mcp/` | Rebuilds por captura |
+| --------------------------------- | ------------- | -------------------- | ------------------------------ | -------------------- |
+| A — actual                        | 0             | 36                   | 20                             | 28 (84 / 3)          |
+| B — `--output-dir`                | 0             | 1 (y 1 al repetir)   | 0                              | 1                    |
+| C — `--output-dir` + sin OneDrive | 0             | 0                    | 0                              | 1                    |
+
+- **Causa, según la tabla de la spec:** «B falla y C cumple», así que la causa que cierra el umbral es **OneDrive**. Pero casi todo el efecto venía de las **escrituras del MCP**: sacar su salida del proyecto bajó los rebuilds del guion de 36 a 1 y eliminó la realimentación (el registro de consola dentro del proyecto disparaba un rebuild, que escribía otra línea en el registro). OneDrive explica como mucho el rebuild suelto que queda.
+- **Configuración que se queda:** `--output-dir C:\Users\franc\AppData\Local\Temp\playwright-mcp-arcade-vault` en `~/.claude.json`, porque B redujo los eventos respecto a A (36 → 1). OneDrive no se mueve ni se cambia: para una sesión de pruebas sin ningún rebuild, se pausa mientras se usa `next dev` con Playwright.
+- **`.next/dev` obsoleto:** descartado para los rebuilds de Fast Refresh (A los tiene con `.next/dev` recién borrado). El bucle de `✓ Compiled` en la terminal visto en la SPEC 24 no se reprodujo en ningún escenario: queda como síntoma de un bundle obsoleto, como ya recoge `CLAUDE.md`.
+- **Capturas:** cada `browser_take_screenshot` en `.playwright-screenshots/` provoca **1 rebuild** de Fast Refresh (~100–560 ms), con OneDrive o sin él, y 0 `Compiled in`. Es un coste pequeño y acotado, sin bucle. No se mueven (fuera del alcance de la SPEC 25).
