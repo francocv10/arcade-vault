@@ -1,6 +1,6 @@
 # SPEC 25 — Bucle de Fast Refresh al usar Playwright con `next dev`
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 17 (método de medición con Playwright y registro en `references/`)
 > **Date:** 2026-11-08
 > **Objective:** Medir por qué `next dev` recompila en bucle mientras se usa el MCP de Playwright y corregir solo la causa confirmada, para que una sesión de pruebas no recargue la app sin cambios de código.
@@ -124,18 +124,18 @@ Cómo se decide la causa:
 
 ## Criterios de aceptación
 
-- [ ] `references/dev-server-review.md` describe el protocolo y tiene las cuatro métricas de los escenarios A y B.
-- [ ] El registro tiene las métricas del escenario C, o dice que no se midió porque B cumplió el umbral.
-- [ ] El registro nombra la causa confirmada, o dice que no está entre los tres sospechosos.
-- [ ] El registro dice si las capturas en `.playwright-screenshots/` provocan rebuilds.
-- [ ] Si la causa son las escrituras del MCP, `~/.claude.json` tiene `--output-dir` fuera del proyecto y de OneDrive, y un `browser_snapshot` deja su archivo allí y ninguno en `.playwright-mcp/`.
-- [ ] Si la causa son las escrituras del MCP, repetir el guion con la configuración final da 0 líneas `Compiled in` y 0 `[Fast Refresh] rebuilding`.
-- [ ] Si la causa es OneDrive, `CLAUDE.md` recoge la pauta de pausarlo mientras se usa `next dev` con Playwright.
-- [ ] `.mcp.json`, `next.config.ts` y los archivos de `app/` no cambian.
-- [ ] En `.playwright-mcp/` solo quedan `.gitkeep` y `audit/`.
-- [ ] Si se quedó el `--output-dir`, `browser_run_code_unsafe` con `filename` sigue cargando un script de `.playwright-mcp/audit/`.
-- [ ] `CLAUDE.md` y la memoria `playwright-review-workflow` mencionan `references/dev-server-review.md` y dicen a dónde va la salida automática del MCP.
-- [ ] `next dev` está detenido al terminar, y OneDrive vuelve a estar activo si se pausó.
+- [x] `references/dev-server-review.md` describe el protocolo y tiene las cuatro métricas de los escenarios A y B.
+- [x] El registro tiene las métricas del escenario C, o dice que no se midió porque B cumplió el umbral.
+- [x] El registro nombra la causa confirmada, o dice que no está entre los tres sospechosos.
+- [x] El registro dice si las capturas en `.playwright-screenshots/` provocan rebuilds.
+- [x] Si la causa son las escrituras del MCP, `~/.claude.json` tiene `--output-dir` fuera del proyecto y de OneDrive, y un `browser_snapshot` deja su archivo allí y ninguno en `.playwright-mcp/`.
+- [ ] Si la causa son las escrituras del MCP, repetir el guion con la configuración final da 0 líneas `Compiled in` y 0 `[Fast Refresh] rebuilding`. _Sin marcar: con OneDrive activo, las dos mediciones de B dieron 0 `Compiled in` y 1 rebuild (36 en A). Solo C, con OneDrive en pausa, dio 0, y se midió una vez._
+- [x] Si la causa es OneDrive, `CLAUDE.md` recoge la pauta de pausarlo mientras se usa `next dev` con Playwright.
+- [x] `.mcp.json`, `next.config.ts` y los archivos de `app/` no cambian.
+- [x] En `.playwright-mcp/` solo quedan `.gitkeep` y `audit/`.
+- [x] Si se quedó el `--output-dir`, `browser_run_code_unsafe` con `filename` sigue cargando un script de `.playwright-mcp/audit/`. _Con `acceso-desktop.txt`, que no escribe archivos: `acceso-audit.txt` habría sobrescrito capturas de `mobile-porter`._
+- [x] `CLAUDE.md` y la memoria `playwright-review-workflow` mencionan `references/dev-server-review.md` y dicen a dónde va la salida automática del MCP.
+- [ ] `next dev` está detenido al terminar, y OneDrive vuelve a estar activo si se pausó. _Sin marcar: `next dev` está detenido, pero OneDrive sigue en pausa por decisión del usuario, que no lo inicia con Windows. Hay que reanudarlo a mano._
 
 ---
 
