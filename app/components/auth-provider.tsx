@@ -8,11 +8,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { tieneUsuario } from "@/app/acceso/auth-schema";
 import type { PuntuacionGuardada, Usuario } from "@/app/data";
+import { asegurarNombre } from "@/app/lib/jugadores/actions";
 import { createClient } from "@/app/lib/supabase/client";
 // Clave de la sesión simulada anterior: solo se usa para borrarla.
 const USER_KEY_ANTIGUA = "av_user";
@@ -72,6 +74,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, []);
+  // Nombres únicos (spec 24): una vez por cuenta al abrir sesión, el servidor
+  // reserva el nombre de los metadatos o vuelve a copiar el de `jugadores`.
+  // También cubre la sesión abierta con contraseña, que no pasa por el
+  // callback. Si cambió los metadatos, se refresca la sesión para que el nuevo
+  // `user` llegue por onAuthStateChange. Al cerrar sesión se olvida la cuenta.
+  const cuentaComprobadaRef = useRef<string | null>(null);
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) {
+      cuentaComprobadaRef.current = null;
+      return;
+    }
+    if (cuentaComprobadaRef.current === userId) return;
+    cuentaComprobadaRef.current = userId;
+    asegurarNombre()
+      .then(({ metadatosCambiados }) => {
+        if (metadatosCambiados) return createClient().auth.refreshSession();
+      })
+      .catch((error: unknown) => {
+        // La app funciona igual; se reintenta en la siguiente carga.
+        console.error("asegurarNombre: fallo", error);
+      });
+  }, [userId]);
   const logout = useCallback(async () => {
     await createClient().auth.signOut();
   }, []);
