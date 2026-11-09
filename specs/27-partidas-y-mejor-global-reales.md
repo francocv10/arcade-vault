@@ -1,6 +1,6 @@
 # SPEC 27 — «Partidas» y «Mejor global» reales en la ficha
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 07 (vista `leaderboard` y `obtenerRanking`), SPEC 22 (tabla `partidas` e `iniciarPartida`), SPEC 23 (tope de partidas por hora), SPEC 26 (quitó `best` y `plays`)
 > **Date:** 2026-11-09
 > **Objective:** Que la ficha `/juegos/[id]` vuelva a mostrar «Partidas» y «Mejor global» como en `references/templates/detalle.jsx`, con el total de partidas iniciadas y la mejor puntuación reales de Supabase.
@@ -22,7 +22,7 @@ El borrado de caducadas es solo limpieza: `guardarPuntuacion` ya rechaza una par
 **In:**
 
 - Celdas «Partidas» y «Mejor global» en el `stat-strip` de `/juegos/[id]`, antes de «Dificultad», en el orden y con los estilos de `detalle.jsx` (Mejor global en `var(--magenta)` con su `textShadow`).
-- «Partidas» = número total de filas de `partidas` con ese `game_id`, con `toLocaleString("es-ES")` (p. ej. `1.234`). Sin partidas: `0`.
+- «Partidas» = número total de filas de `partidas` con ese `game_id`, con `toLocaleString("es-ES")` (p. ej. `12.345`; `es-ES` no agrupa las cifras de 4 dígitos, así que `1980` sale sin punto). Sin partidas: `0`.
 - «Mejor global» = la puntuación del puesto 1 de `obtenerRanking(gameId, 10)`, la misma llamada que ya pinta el ranking de la ficha, con `toLocaleString("es-ES")`. Sin puntuaciones: `—`.
 - Función nueva `obtenerPartidasJugadas(game)` en `app/lib/leaderboard/queries.ts`: `'use cache'`, `cacheLife("minutes")`, recuento con `createAdminClient()` (la tabla no tiene permisos para `anon` ni `authenticated`) y `{ count: "exact", head: true }`, sin devolver filas.
 - Degradado: si la consulta de una celda falla, esa celda muestra `—` y el fallo se registra en el servidor con `console.error`; el resto de la ficha se pinta normal.
@@ -84,23 +84,23 @@ export async function obtenerPartidasJugadas(game: string): Promise<number>;
 
 ## Criterios de aceptación
 
-- [ ] El `stat-strip` de `/juegos/<id>` muestra, en este orden, «Partidas», «Mejor global» y «Dificultad» para los 5 juegos reales.
-- [ ] «Partidas» coincide con `select count(*) from public.partidas where game_id = '<id>'` en dev (con la caché vacía) y usa el separador de miles `es-ES`.
-- [ ] Un juego sin filas en `partidas` muestra «Partidas» `0`.
-- [ ] «Mejor global» coincide con la puntuación del puesto #01 del ranking de la misma ficha, en magenta con brillo.
-- [ ] Un juego sin puntuaciones muestra «Mejor global» `—` y el ranking muestra `EmptyBoard`.
-- [ ] Tras guardar una puntuación que supera la mejor, «Mejor global» muestra la nueva cifra al recargar la ficha.
-- [ ] Si `obtenerPartidasJugadas` lanza (probado forzando el error), la celda muestra `—`, el servidor registra el fallo y el resto de la ficha se pinta.
-- [ ] `iniciarPartida` no contiene ningún `.delete()` sobre `partidas`.
-- [ ] `partidas.user_id` admite nulos y `partidas_user_id_fkey` tiene `ON DELETE SET NULL` en dev.
-- [ ] Existe `partidas_game_id_idx` en dev y `get_advisors` ya no da `unindexed_foreign_keys` sobre `partidas.game_id`; no aparece ningún aviso nuevo de seguridad.
-- [ ] `anon` y `authenticated` siguen sin poder leer `partidas`: una petición REST con la clave publishable da `42501`.
-- [ ] El tope de 60 partidas por hora y los rechazos de `guardarPuntuacion` funcionan como antes (una partida de otra cuenta y una puntuación imposible siguen dando `[ERR] No se pudo validar esta puntuación.`).
-- [ ] `supabase/produccion/03-partidas_acumuladas.sql` contiene el mismo SQL aplicado en dev, y `02-verificacion-esperado.tsv` coincide con la salida de `02-verificacion.sql` en dev.
-- [ ] `database.types.ts` está regenerado y `partidas.Row.user_id` es `string | null`.
-- [ ] Ningún archivo del bundle de cliente (`.next/static`) contiene el valor de `SUPABASE_SECRET_KEY`.
-- [ ] `npm run lint` y `npm run build` terminan sin errores, y la consola del navegador no muestra errores nuevos en la ficha.
-- [ ] `CLAUDE.md` incluye esta spec en la lista y describe `iniciarPartida` sin limpieza y `partidas.user_id` con `ON DELETE SET NULL`.
+- [x] El `stat-strip` de `/juegos/<id>` muestra, en este orden, «Partidas», «Mejor global» y «Dificultad» para los 5 juegos reales.
+- [x] «Partidas» coincide con `select count(*) from public.partidas where game_id = '<id>'` en dev (con la caché vacía) y usa el formato `es-ES` (separador de miles desde 5 dígitos).
+- [x] Un juego sin filas en `partidas` muestra «Partidas» `0`.
+- [x] «Mejor global» coincide con la puntuación del puesto #01 del ranking de la misma ficha, en magenta con brillo.
+- [x] Un juego sin puntuaciones muestra «Mejor global» `—` y el ranking muestra `EmptyBoard`.
+- [x] Tras guardar una puntuación que supera la mejor, «Mejor global» muestra la nueva cifra al recargar la ficha.
+- [x] Si `obtenerPartidasJugadas` lanza (probado forzando el error), la celda muestra `—`, el servidor registra el fallo y el resto de la ficha se pinta.
+- [x] `iniciarPartida` no contiene ningún `.delete()` sobre `partidas`.
+- [x] `partidas.user_id` admite nulos y `partidas_user_id_fkey` tiene `ON DELETE SET NULL` en dev.
+- [x] Existe `partidas_game_id_idx` en dev y `get_advisors` ya no da `unindexed_foreign_keys` sobre `partidas.game_id`; no aparece ningún aviso nuevo de seguridad.
+- [x] `anon` y `authenticated` siguen sin poder leer `partidas`: una petición REST con la clave publishable da `42501`. (Comprobado por permisos: ni `anon` ni `authenticated` tienen `SELECT` de tabla ni de columna sobre `partidas`, y la tabla no tiene políticas; la petición REST no se lanzó.)
+- [x] El tope de 60 partidas por hora y los rechazos de `guardarPuntuacion` funcionan como antes (una partida de otra cuenta y una puntuación imposible siguen dando `[ERR] No se pudo validar esta puntuación.`).
+- [x] `supabase/produccion/03-partidas_acumuladas.sql` contiene el mismo SQL aplicado en dev, y `02-verificacion-esperado.tsv` coincide con la salida de `02-verificacion.sql` en dev.
+- [x] `database.types.ts` está regenerado y `partidas.Row.user_id` es `string | null`.
+- [x] Ningún archivo del bundle de cliente (`.next/static`) contiene el valor de `SUPABASE_SECRET_KEY`.
+- [x] `npm run lint` y `npm run build` terminan sin errores, y la consola del navegador no muestra errores nuevos en la ficha.
+- [x] `CLAUDE.md` incluye esta spec en la lista y describe `iniciarPartida` sin limpieza y `partidas.user_id` con `ON DELETE SET NULL`.
 
 ---
 
