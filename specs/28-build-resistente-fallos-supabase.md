@@ -1,6 +1,6 @@
 # SPEC 28 — Build resistente a los fallos de Supabase
 
-> **Status:** Aprobado
+> **Status:** Implementado
 > **Depends on:** SPEC 07 (`obtenerRanking`, `obtenerActividadReciente` y `obtenerTopDelDia`), SPEC 22 (`createAdminClient` y `SUPABASE_SECRET_KEY`), SPEC 27 (`obtenerPartidasJugadas`, `CeldaPartidas` y `CeldaMejorGlobal`)
 > **Date:** 2026-11-09
 > **Objective:** Que un fallo de Supabase, o la falta de `SUPABASE_SECRET_KEY`, durante el prerender no tumbe `next build`, y que cada página afectada muestre un estado de «no disponible» que se recupera solo.
@@ -86,19 +86,19 @@ type RankingJuego = PuntuacionRanking[] | null; // props asteroides, tetris, ark
 
 ## Criterios de aceptación
 
-- [ ] `SUPABASE_SECRET_KEY= npm run build` termina con código 0, y el log del build muestra el `console.error` de `obtenerPartidasJugadas`.
-- [ ] `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9 npm run build` termina con código 0 y no muestra `Error occurred prerendering page`.
-- [ ] Tras el build sin clave, `npm run start` con `.env.local` completo muestra «Partidas» con la cifra real en las 5 fichas al recargar, sin volver a compilar.
-- [ ] Con `obtenerRanking` forzado a fallar en `next dev`, la ficha muestra «Mejor global» `—` y `UnavailableBoard` en lugar del ranking, y el resto de la ficha se pinta.
-- [ ] Con `obtenerRanking` forzado a fallar para un solo juego, `/salon` muestra `UnavailableBoard` en esa pestaña y el podio normal en las demás.
-- [ ] Con `obtenerActividadReciente` y `obtenerTopDelDia` forzadas a fallar, las dos tarjetas de actividad de `/home` muestran `UnavailableBoard` y el resto del Home se pinta.
-- [ ] `UnavailableBoard` muestra «DATOS NO DISPONIBLES — VUELVE EN UN MOMENTO», tiene `role="status"` y no tiene botón ni cursor parpadeante.
-- [ ] Un juego sin puntuaciones sigue mostrando `EmptyBoard` («SIN PUNTUACIONES — SÉ EL PRIMERO»), no `UnavailableBoard`.
-- [ ] Ninguna de las cuatro consultas contiene un `throw`, y cada invocación llama a `cacheLife` una sola vez.
-- [ ] Ningún `console.error` de las consultas incluye el valor de una clave ni datos de una cuenta.
-- [ ] Con la configuración normal, las 5 fichas, `/salon` y `/home` muestran los mismos datos que antes de esta spec, y `guardarPuntuacion` sigue invalidando el ranking y «Mejor global» al recargar.
-- [ ] `npm run lint` y `npm run build` terminan sin errores, y la consola del navegador no muestra errores nuevos en las tres rutas.
-- [ ] `CLAUDE.md` describe el contrato `null` de `queries.ts` y `UnavailableBoard`, y `references/produccion-supabase.md` indica que `SUPABASE_SECRET_KEY` hace falta en el build de Production y de Preview.
+- [x] `SUPABASE_SECRET_KEY= npm run build` termina con código 0, y el log del build muestra el `console.error` de `obtenerPartidasJugadas`.
+- [x] `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9 npm run build` termina con código 0 y no muestra `Error occurred prerendering page`.
+- [x] Tras el build sin clave, `npm run start` con `.env.local` completo muestra «Partidas» con la cifra real en las 5 fichas al recargar, sin volver a compilar.
+- [x] Con `obtenerRanking` forzado a fallar en `next dev`, la ficha muestra «Mejor global» `—` y `UnavailableBoard` en lugar del ranking, y el resto de la ficha se pinta.
+- [x] Con `obtenerRanking` forzado a fallar para un solo juego, `/salon` muestra `UnavailableBoard` en esa pestaña y el podio normal en las demás.
+- [x] Con `obtenerActividadReciente` y `obtenerTopDelDia` forzadas a fallar, las dos tarjetas de actividad de `/home` muestran `UnavailableBoard` y el resto del Home se pinta.
+- [x] `UnavailableBoard` muestra «DATOS NO DISPONIBLES — VUELVE EN UN MOMENTO», tiene `role="status"` y no tiene botón ni cursor parpadeante.
+- [x] Un juego sin puntuaciones sigue mostrando `EmptyBoard` («SIN PUNTUACIONES — SÉ EL PRIMERO»), no `UnavailableBoard`.
+- [x] Ninguna de las cuatro consultas contiene un `throw`, y cada invocación llama a `cacheLife` una sola vez.
+- [x] Ningún `console.error` de las consultas incluye el valor de una clave ni datos de una cuenta.
+- [x] Con la configuración normal, las 5 fichas, `/salon` y `/home` muestran los mismos datos que antes de esta spec, y `guardarPuntuacion` sigue invalidando el ranking y «Mejor global» al recargar.
+- [x] `npm run lint` y `npm run build` terminan sin errores, y la consola del navegador no muestra errores nuevos en las tres rutas.
+- [x] `CLAUDE.md` describe el contrato `null` de `queries.ts` y `UnavailableBoard`, y `references/produccion-supabase.md` indica que `SUPABASE_SECRET_KEY` hace falta en el build de Production y de Preview.
 
 ---
 
