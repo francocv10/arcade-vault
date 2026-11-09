@@ -7,7 +7,8 @@ Cómo llevar a producción la estructura y la configuración del proyecto de des
 - **Archivos** (en `supabase/produccion/`):
   - `01-esquema.sql`: esquema completo, idempotente y en una transacción.
   - `02-verificacion.sql`: consulta de solo lectura que describe el esquema.
-  - `02-verificacion-esperado.tsv`: su salida en dev (73 filas), para comparar.
+  - `02-verificacion-esperado.tsv`: su salida en dev (74 filas), para comparar. Refleja el esquema de dev **con** las migraciones `03-` en adelante, así que se compara después de aplicarlas.
+  - `03-partidas_acumuladas.sql` (SPEC 27): `partidas.user_id` admite nulos con `ON DELETE SET NULL` e índice `partidas_game_id_idx`.
 
 ## H. Antes de empezar: aislar producción de Claude
 
@@ -18,7 +19,8 @@ Cómo llevar a producción la estructura y la configuración del proyecto de des
 ## 1. Esquema (SQL Editor de producción)
 
 - [ ] Pegar `01-esquema.sql` entero y ejecutarlo. Debe terminar sin errores. Si falla a la mitad, no se aplica nada, porque va en una transacción.
-- [ ] Pegar `02-verificacion.sql`, ejecutarlo y comparar el resultado con `02-verificacion-esperado.tsv`: deben salir las mismas 73 filas. Diferencias que hay que investigar:
+- [ ] Pegar y ejecutar, en orden, cada `NN-<nombre>.sql` desde `03-` (tabla de «Cambios futuros del esquema»).
+- [ ] Pegar `02-verificacion.sql`, ejecutarlo y comparar el resultado con `02-verificacion-esperado.tsv`: deben salir las mismas 74 filas. Diferencias que hay que investigar:
   - Una fila `7 permiso` con `SELECT` en `scores`: los permisos por columna dejarían de servir.
   - Una tabla con `rls=false`.
   - `rls_auto_enable` ejecutable por `anon` o `authenticated`.
@@ -80,7 +82,7 @@ El correo integrado de Supabase solo entrega a los miembros del equipo del proye
 ## G. Comprobación final
 
 - [ ] `02-verificacion.sql` coincide con `02-verificacion-esperado.tsv`.
-- [ ] En **Advisors > Security** y **Performance** solo aparecen los avisos aceptados en dev: `auth_leaked_password_protection` (si no es Pro), `rls_enabled_no_policy` en `partidas` y `jugadores` y, cuando haya datos, `unused_index` en `scores_user_id_idx`. `unindexed_foreign_keys` en `partidas.game_id` también está aceptado.
+- [ ] En **Advisors > Security** y **Performance** solo aparecen los avisos aceptados en dev: `auth_leaked_password_protection` (si no es Pro), `rls_enabled_no_policy` en `partidas` y `jugadores` y `unused_index` (INFO) en `scores_user_id_idx` y `partidas_game_id_idx` mientras no se usen. `unindexed_foreign_keys` en `partidas.game_id` ya no debe salir: lo cierra `03-partidas_acumuladas.sql`.
 
 ## Al desplegar en Vercel (pendiente)
 
@@ -107,6 +109,6 @@ Cada migración se guarda también, con el mismo SQL y el mismo nombre, como `su
 
 Los cambios del panel (Auth, proveedores, Rate Limits, plantillas) no son SQL: se añaden a las listas de este archivo.
 
-| Archivo           | Migración de dev | Aplicada en producción |
-| ----------------- | ---------------- | ---------------------- |
-| (ninguna todavía) |                  |                        |
+| Archivo                      | Migración de dev                | Aplicada en producción |
+| ---------------------------- | ------------------------------- | ---------------------- |
+| `03-partidas_acumuladas.sql` | `partidas_acumuladas` (SPEC 27) | No                     |
