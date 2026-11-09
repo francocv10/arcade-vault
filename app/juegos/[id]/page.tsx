@@ -3,12 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyBoard } from "@/app/components/empty-board";
-import {
-  GAMES,
-  getGame,
-  seededScores,
-  type PuntuacionRanking,
-} from "@/app/data";
+import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
 import { obtenerRanking } from "@/app/lib/leaderboard/queries";
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
@@ -76,19 +71,11 @@ async function GameDetail({
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
-          {game.id === "asteroides" ||
-          game.id === "tetris" ||
-          game.id === "arkanoid" ||
-          game.id === "snake" ||
-          game.id === "frogger" ? (
-            <Suspense
-              fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
-            >
-              <RankingReal gameId={game.id} />
-            </Suspense>
-          ) : (
-            <FilasRanking scores={seededScores(id.length * 17 + 3, 10)} />
-          )}
+          <Suspense
+            fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
+          >
+            <RankingReal gameId={game.id} />
+          </Suspense>
         </div>
       </aside>
     </div>

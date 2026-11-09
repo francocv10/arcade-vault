@@ -1,12 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  GAMES,
-  getGame,
-  seededScores,
-  type PuntuacionRanking,
-} from "@/app/data";
+import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
 import { obtenerMejorMarca } from "@/app/lib/leaderboard/actions";
 import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { useAuth } from "./auth-provider";
@@ -32,11 +27,7 @@ export function HallOfFame({
     () => ({ asteroides, tetris, arkanoid, snake, frogger }),
     [asteroides, tetris, arkanoid, snake, frogger],
   );
-  const esReal = tab in reales;
-  const rows = useMemo(
-    () => reales[tab] ?? seededScores(tab.length * 23 + 7, 12),
-    [tab, reales],
-  );
+  const rows = reales[tab] ?? [];
   const game = getGame(tab) ?? GAMES[0];
   const nombreUsuario = user?.name ?? null;
   // «TU MEJOR MARCA» de un juego real: se pide a la base por el nombre de la sesión local.
@@ -46,7 +37,7 @@ export function HallOfFame({
     datos: MejorMarca | null;
   } | null>(null);
   useEffect(() => {
-    if (!esReal || !nombreUsuario) return;
+    if (!nombreUsuario) return;
     let activo = true;
     obtenerMejorMarca(tab, nombreUsuario)
       .then(
@@ -61,13 +52,9 @@ export function HallOfFame({
     return () => {
       activo = false;
     };
-  }, [esReal, tab, nombreUsuario]);
+  }, [tab, nombreUsuario]);
   const mejorMarca: MejorMarca | null =
-    esReal && marca?.juego === tab && marca.nombre === nombreUsuario
-      ? marca.datos
-      : null;
-  const youRank = user ? Math.floor(8 + (tab.length % 4)) : null;
-  const youScore = user ? rows[5]?.score - 2400 : null;
+    marca?.juego === tab && marca.nombre === nombreUsuario ? marca.datos : null;
   const [r1, r2, r3] = rows;
   const puntos = (n: number) => n.toLocaleString("es-ES");
   return (
@@ -155,7 +142,7 @@ export function HallOfFame({
                 <div className="dt">{r.date}</div>
               </div>
             ))}
-            {user && (!esReal || mejorMarca) && (
+            {user && mejorMarca && (
               <>
                 <div className="tr you-label">
                   ▸ TU MEJOR MARCA EN {game.title}
@@ -165,7 +152,7 @@ export function HallOfFame({
                   style={{ animationDelay: `${rows.length * 50 + 50}ms` }}
                 >
                   <div className="rk" style={{ color: "var(--yellow)" }}>
-                    #{String(mejorMarca?.rank ?? youRank).padStart(2, "0")}
+                    #{String(mejorMarca.rank).padStart(2, "0")}
                   </div>
                   <div className="pl" style={{ color: "var(--yellow)" }}>
                     {nombreDeCuenta(user.name)}
@@ -177,9 +164,9 @@ export function HallOfFame({
                       textShadow: "0 0 6px rgba(245,255,0,0.5)",
                     }}
                   >
-                    {puntos(mejorMarca?.score ?? (youScore || 9999))}
+                    {puntos(mejorMarca.score)}
                   </div>
-                  <div className="dt">{mejorMarca?.date ?? "11/05/2026"}</div>
+                  <div className="dt">{mejorMarca.date}</div>
                 </div>
               </>
             )}
