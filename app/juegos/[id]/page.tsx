@@ -51,22 +51,6 @@ async function GameDetail({
           <p>{game.long}</p>
           <div className="stat-strip">
             <div>
-              <div className="l">Partidas</div>
-              <div className="v">{game.plays}</div>
-            </div>
-            <div>
-              <div className="l">Mejor global</div>
-              <div
-                className="v"
-                style={{
-                  color: "var(--magenta)",
-                  textShadow: "0 0 6px rgba(255,0,110,0.5)",
-                }}
-              >
-                {game.best.toLocaleString("es-ES")}
-              </div>
-            </div>
-            <div>
               <div className="l">Dificultad</div>
               <div
                 className="v"
