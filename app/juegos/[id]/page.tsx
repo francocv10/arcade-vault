@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyBoard } from "@/app/components/empty-board";
 import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
-import { obtenerRanking } from "@/app/lib/leaderboard/queries";
+import {
+  obtenerPartidasJugadas,
+  obtenerRanking,
+} from "@/app/lib/leaderboard/queries";
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
@@ -46,6 +49,24 @@ async function GameDetail({
           <p>{game.long}</p>
           <div className="stat-strip">
             <div>
+              <div className="l">Partidas</div>
+              <Suspense fallback={<div className="v">…</div>}>
+                <CeldaPartidas gameId={game.id} />
+              </Suspense>
+            </div>
+            <div>
+              <div className="l">Mejor global</div>
+              <Suspense
+                fallback={
+                  <div className="v" style={ESTILO_MEJOR_GLOBAL}>
+                    …
+                  </div>
+                }
+              >
+                <CeldaMejorGlobal gameId={game.id} />
+              </Suspense>
+            </div>
+            <div>
               <div className="l">Dificultad</div>
               <div
                 className="v"
@@ -78,6 +99,38 @@ async function GameDetail({
           </Suspense>
         </div>
       </aside>
+    </div>
+  );
+}
+const ESTILO_MEJOR_GLOBAL = {
+  color: "var(--magenta)",
+  textShadow: "0 0 6px rgba(255,0,110,0.5)",
+} as const;
+// «Partidas» (spec 27): total de partidas iniciadas. Un fallo no tumba la
+// ficha: se registra y la celda muestra «—».
+async function CeldaPartidas({ gameId }: { gameId: string }) {
+  let valor = "—";
+  try {
+    valor = (await obtenerPartidasJugadas(gameId)).toLocaleString("es-ES");
+  } catch (error) {
+    console.error("CeldaPartidas: no se pudo leer el total", error);
+  }
+  return <div className="v">{valor}</div>;
+}
+// «Mejor global» (spec 27): el puesto 1 del mismo ranking que pinta la ficha
+// (misma llamada, misma caché). Sin puntuaciones o con fallo, «—».
+async function CeldaMejorGlobal({ gameId }: { gameId: string }) {
+  let valor = "—";
+  try {
+    const scores = await obtenerRanking(gameId, 10);
+    const mejor = scores[0]?.score;
+    if (mejor !== undefined) valor = mejor.toLocaleString("es-ES");
+  } catch (error) {
+    console.error("CeldaMejorGlobal: no se pudo leer el ranking", error);
+  }
+  return (
+    <div className="v" style={ESTILO_MEJOR_GLOBAL}>
+      {valor}
     </div>
   );
 }
