@@ -4,7 +4,7 @@ Registro del agente `game-planner`. `[ ]` pendiente, `[x]` implementado.
 
 ## Pendientes
 
-- [ ] **INVASORES** (`invasores`, SHOOTER, green, M) — Space Invaders: ningún juego real es verde y es la maqueta SHOOTER más reconocible; motor propio sin assets obligatorios · sugerido 2026-10-28 (recomendado)
+- [ ] **INVASORES** (`invasores`, SHOOTER, green, M) — Space Invaders: ningún juego real es verde y era la maqueta SHOOTER más reconocible (las maquetas se eliminaron en la spec 26); motor propio sin assets obligatorios · sugerido 2026-10-28 (recomendado)
 - [ ] **RANARIA** (`ranaria`, ARCADE, green, M) — Frogger: color verde sin representar, mecánica de cruce distinta a las existentes; exige carriles, troncos y colisiones por zona · sugerido 2026-10-28
 - [ ] **GLOTÓN** (`gloton`, ARCADE, yellow, L) — Pac-Man: laberinto e IA de fantasmas; alto coste, ARCADE ya tiene dos reales · sugerido 2026-10-28
 
@@ -34,8 +34,10 @@ Registro del agente `game-planner`. `[ ]` pendiente, `[x]` implementado.
 
 ### VERSUS (contra la CPU)
 
+La spec 26 quitó `VERSUS` de `Categoria` y `CATS` porque no tenía ningún juego real: el primero de esta lista tendrá que volver a añadirla.
+
 - [ ] **HOCKEY DE AIRE** (`hockey-aire`, VERSUS, cyan, M) — disco y mazo contra la CPU, física 2D distinta a Pong · sugerido 2026-10-28 (recomendado de la categoría)
-- [ ] **PONG CPU** (`pong-cpu`, VERSUS, magenta, S) — Pong contra IA falible; se solapa en concepto con la maqueta `duelo-pixel` · sugerido 2026-10-28
+- [ ] **PONG CPU** (`pong-cpu`, VERSUS, magenta, S) — Pong contra IA falible; se solapaba en concepto con la maqueta `duelo-pixel`, eliminada en la spec 26 · sugerido 2026-10-28
 - [ ] **BOXEO PIXEL** (`boxeo-pixel`, VERSUS, yellow, L) — combate por rondas con rivales de patrón propio; puede requerir dividir la spec · sugerido 2026-10-28
 - [ ] **FUTBOLÍN NEÓN** (`futbolin-neon`, VERSUS, green, M) — varillas en bloque contra la CPU; control por teclado poco intuitivo · sugerido 2026-10-28
 - [ ] **DUELO DE TANQUES** (`duelo-tanques`, VERSUS, magenta, M) — arena con muros y proyectiles que rebotan contra un tanque CPU · sugerido 2026-10-28
