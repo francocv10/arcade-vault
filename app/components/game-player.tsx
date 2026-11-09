@@ -42,16 +42,13 @@ export function GamePlayer({
   gameId: string;
   title: string;
 }) {
-  const { user, saveScore } = useAuth();
+  const { user } = useAuth();
   const esAsteroides = gameId === "asteroides";
   const esTetris = gameId === "tetris";
   const esArkanoid = gameId === "arkanoid";
   const esSnake = gameId === "snake";
-  // Juegos con motor de canvas y ranking en Supabase; el resto son maquetas.
   const esFrogger = gameId === "frogger";
-  const esReal = esAsteroides || esTetris || esArkanoid || esSnake || esFrogger;
-  const [fakeScore, setScore] = useState(0);
-  // Snapshot que envía el motor de canvas (solo en los juegos reales).
+  // Snapshot que envía el motor de canvas.
   const [snap, setSnap] = useState<
     | SnapshotAsteroides
     | SnapshotTetris
@@ -74,10 +71,7 @@ export function GamePlayer({
   const [restartKey, setRestartKey] = useState(0);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  // null = sin editar: se usa el usuario de la sesión (que carga tras hidratar) o INVITADO.
-  const [editedName, setEditedName] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  // Asteroides, Tetris, Arkanoid y Snake guardan en Supabase; el resto de juegos sigue en localStorage.
   const [saving, setSaving] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const finRef = useRef<HTMLButtonElement>(null);
@@ -91,21 +85,19 @@ export function GamePlayer({
   const errorPartidaRef = useRef<string | null>(null);
   const userId = user?.id;
   const titleId = useId();
-  // En los juegos reales el modal también se abre solo al terminar la partida
-  // (`win` solo existe en Arkanoid).
+  // El modal se abre con FIN o solo al terminar la partida (`win` solo existe
+  // en Arkanoid).
   const gameOver =
-    over || (esReal && (snap?.status === "gameover" || snap?.status === "win"));
+    over || snap?.status === "gameover" || snap?.status === "win";
   // Escape no cierra el modal: sin él no queda un estado coherente (partida terminada, sin HUD).
   const modalRef = useDialog<HTMLDivElement>(gameOver, {
     initialFocus: "input",
     returnFocus: () => finRef.current,
   });
-  const name = user ? nombreDeCuenta(user.name) : (editedName ?? "INVITADO");
-  const score = esReal ? (snap?.score ?? 0) : fakeScore;
-  const lives = esReal
-    ? (snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES))
-    : LIVES;
-  const level = esReal ? (snap?.level ?? 1) : 1 + Math.floor(score / 2500);
+  const name = user ? nombreDeCuenta(user.name) : "INVITADO";
+  const score = snap?.score ?? 0;
+  const lives = snap?.lives ?? (esTetris || esSnake ? UNA_VIDA : LIVES);
+  const level = snap?.level ?? 1;
   // Lee el tema guardado tras hidratar; con localStorage bloqueado o un valor raro queda oscuro.
   useEffect(() => {
     if (!esTetris) return;
@@ -215,14 +207,14 @@ export function GamePlayer({
   useEffect(() => {
     if (errorGuardado) saveRef.current?.focus();
   }, [errorGuardado]);
-  // Cada partida real con sesión abre una partida en el servidor: al montar, al
+  // Cada partida con sesión abre una partida en el servidor: al montar, al
   // reiniciar y al cambiar de cuenta. Los invitados no la piden. Si falla, se
   // juega igual y el error aparece al guardar. Una respuesta que llega tras la
   // limpieza (reinicio, Strict Mode) se ignora y esa fila caduca sola.
   useEffect(() => {
     partidaRef.current = null;
     errorPartidaRef.current = null;
-    if (!esReal || !userId) return;
+    if (!userId) return;
     let vigente = true;
     iniciarPartida(gameId)
       .then((res) => {
@@ -236,17 +228,8 @@ export function GamePlayer({
     return () => {
       vigente = false;
     };
-  }, [esReal, userId, restartKey, gameId]);
-  useEffect(() => {
-    if (esReal || gameOver || paused) return;
-    const t = setInterval(
-      () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
-      220,
-    );
-    return () => clearInterval(t);
-  }, [esReal, gameOver, paused]);
+  }, [userId, restartKey, gameId]);
   const restart = () => {
-    setScore(0);
     // Descarta el snapshot "gameover" para que el modal no reaparezca antes del primero nuevo.
     setSnap(null);
     setPaused(false);
@@ -256,11 +239,6 @@ export function GamePlayer({
     setRestartKey((k) => k + 1);
   };
   const guardar = async () => {
-    if (!esReal) {
-      saveScore({ game: gameId, score, name });
-      setSaved(true);
-      return;
-    }
     // Tope de partidas por hora (spec 23): el servidor ya dijo por qué no hay
     // partida, así que no se llama a `guardarPuntuacion`.
     if (!partidaRef.current && errorPartidaRef.current) {
@@ -382,21 +360,13 @@ export function GamePlayer({
               restartKey={restartKey}
               skin={skinSnake}
             />
-          ) : esFrogger ? (
+          ) : (
             <FroggerCanvas
               onChange={setSnap}
               paused={paused || gameOver}
               restartKey={restartKey}
               skin={skinFrogger}
             />
-          ) : (
-            <div className="game-arena">
-              <div className="grid-floor"></div>
-              <div className="enemy e1"></div>
-              <div className="enemy e2"></div>
-              <div className="enemy e3"></div>
-              <div className="player-ship"></div>
-            </div>
           )}
           {paused && (
             <div
@@ -441,8 +411,8 @@ export function GamePlayer({
             <h2 id={titleId}>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {esReal && !user ? (
-              // Invitado en un juego real (spec 22): solo las cuentas publican.
+            {!user ? (
+              // Invitado (spec 22): solo las cuentas publican.
               // Sin input, useDialog enfoca el primer enlace: va antes de JUGAR DE NUEVO.
               <div className="ranking-lock">
                 <p className="ranking-lock-msg">
@@ -457,15 +427,7 @@ export function GamePlayer({
               </div>
             ) : !saved ? (
               <div className="input-row">
-                <input
-                  aria-label="Iniciales"
-                  value={name}
-                  readOnly={!!user}
-                  onChange={(e) =>
-                    setEditedName(e.target.value.toUpperCase().slice(0, 10))
-                  }
-                  placeholder="TUS INICIALES"
-                />
+                <input aria-label="Iniciales" value={name} readOnly />
                 <button
                   ref={saveRef}
                   className="btn yellow"

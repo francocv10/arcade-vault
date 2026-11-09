@@ -3,12 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyBoard } from "@/app/components/empty-board";
-import {
-  GAMES,
-  getGame,
-  seededScores,
-  type PuntuacionRanking,
-} from "@/app/data";
+import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
 import { obtenerRanking } from "@/app/lib/leaderboard/queries";
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
@@ -51,22 +46,6 @@ async function GameDetail({
           <p>{game.long}</p>
           <div className="stat-strip">
             <div>
-              <div className="l">Partidas</div>
-              <div className="v">{game.plays}</div>
-            </div>
-            <div>
-              <div className="l">Mejor global</div>
-              <div
-                className="v"
-                style={{
-                  color: "var(--magenta)",
-                  textShadow: "0 0 6px rgba(255,0,110,0.5)",
-                }}
-              >
-                {game.best.toLocaleString("es-ES")}
-              </div>
-            </div>
-            <div>
               <div className="l">Dificultad</div>
               <div
                 className="v"
@@ -92,25 +71,17 @@ async function GameDetail({
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
-          {game.id === "asteroides" ||
-          game.id === "tetris" ||
-          game.id === "arkanoid" ||
-          game.id === "snake" ||
-          game.id === "frogger" ? (
-            <Suspense
-              fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
-            >
-              <RankingReal gameId={game.id} />
-            </Suspense>
-          ) : (
-            <FilasRanking scores={seededScores(id.length * 17 + 3, 10)} />
-          )}
+          <Suspense
+            fallback={<div aria-busy="true" style={{ minHeight: 120 }} />}
+          >
+            <RankingReal gameId={game.id} />
+          </Suspense>
         </div>
       </aside>
     </div>
   );
 }
-// Top 10 real (Supabase) con estado vacío; los demás juegos usan datos falsos.
+// Top 10 real (Supabase) con estado vacío.
 async function RankingReal({ gameId }: { gameId: string }) {
   const scores = await obtenerRanking(gameId, 10);
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;
