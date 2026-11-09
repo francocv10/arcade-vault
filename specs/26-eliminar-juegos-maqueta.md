@@ -1,6 +1,6 @@
 # SPEC 26 — Eliminar los juegos de maqueta
 
-> **Status:** Borrador
+> **Status:** Aprobado
 > **Depends on:** SPEC 01 (catálogo y maquetas), SPEC 07 (ranking real y `JUEGOS_CON_RANKING`), SPEC 22 (modal de fin de juego y `.ranking-lock`), SPEC 24 (`NOMBRES_RESERVADOS`)
 > **Date:** 2026-11-09
 > **Objective:** Que Arcade Vault solo muestre y sirva los 5 juegos reales (Asteroides, Tetris, Arkanoid, Snake y Frogger), eliminando las 8 maquetas y todo el código y los datos falsos que solo existían para ellas.
