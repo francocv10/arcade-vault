@@ -2321,6 +2321,15 @@ body:has(.av-player) .av-bg::before {
     animation: none;
   }
 }
+/* Estado «no disponible» (app/components/unavailable-board.tsx, spec 28):
+   mismo bloque que .empty-board, en magenta y sin cursor ni botón. */
+.empty-board.unavailable .eb-title {
+  color: var(--magenta);
+  text-shadow: 0 0 8px rgba(255, 0, 110, 0.5);
+}
+.empty-board.unavailable .eb-caret {
+  display: none;
+}
 .leaderboard .empty-board,
 .activity-card .empty-board {
   border: 0;
