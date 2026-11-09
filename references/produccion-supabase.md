@@ -98,6 +98,7 @@ El correo integrado de Supabase solo entrega a los miembros del equipo del proye
   - `RESEND_API_KEY`, `CONTACT_TO_EMAIL` y `CONTACT_FROM_EMAIL`
   - `SUPABASE_DB_PASSWORD` no hace falta: la app no la usa.
   - Preview y Development, con los valores de dev.
+- [ ] **`SUPABASE_SECRET_KEY` es obligatoria también en el build**, en **Production** y en **Preview** (spec 28): el prerender de las fichas `/juegos/<id>` cuenta las partidas con ella. Desde la spec 28 su ausencia **ya no tumba el build**: compila, el log muestra `[queries] obtenerPartidasJugadas falló: Falta la variable de entorno SUPABASE_SECRET_KEY…`, «Partidas» sale como `—` y `guardarPuntuacion` no puede publicar. Revisa ese log tras cada despliegue; si aparece, define la variable y vuelve a desplegar.
 - [ ] HSTS lleva `includeSubDomains`: comprobar que todos los subdominios de `TU-DOMINIO` sirven HTTPS (ver `security-checklist.md`).
 - [ ] Prueba de humo: entrar con Google o GitHub, elegir nombre en `/acceso/nombre`, jugar una partida, guardarla y verla en `/salon`. Probar también un registro por correo, si ya hay SMTP.
 
