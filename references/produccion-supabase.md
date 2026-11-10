@@ -123,12 +123,12 @@ Si cambia el slug del equipo de Vercel, cambia también el patrón de dev. Supab
 - [x] Variables de Production con las tres de producción y de Preview con las tres de dev (2026-11-10).
 - [x] Producción y dev muestran datos distintos en `/juegos/snake` (2026-11-10).
 - [x] Proveedores de producción: Email, GitHub y Google activos; el resto, desactivados.
-- [ ] Site URL y Redirect URLs de producción como en la tabla.
+- [x] Site URL y Redirect URLs de producción como en la tabla.
 - [ ] `https://*-vikingcoding.vercel.app/**` en las Redirect URLs de dev, y un Redeploy del último Preview sin la caché del build.
-- [ ] **Google Cloud:** origen JavaScript autorizado `https://arcade-vault-lime.vercel.app` y pantalla de consentimiento **publicada** (en modo de prueba solo entran los usuarios de prueba).
-- [ ] **GitHub:** Homepage URL de la OAuth App de producción = `https://arcade-vault-lime.vercel.app`.
+- [x] **Google Cloud:** origen JavaScript autorizado `https://arcade-vault-lime.vercel.app` y pantalla de consentimiento **publicada** (en modo de prueba solo entran los usuarios de prueba).
+- [x] **GitHub:** Homepage URL de la OAuth App de producción = `https://arcade-vault-lime.vercel.app`.
 - [ ] HSTS lleva `includeSubDomains`: con un dominio `*.vercel.app` no hay subdominios propios que revisar; al pasar a un dominio propio, comprobar que todos sus subdominios sirven HTTPS (ver `security-checklist.md`).
-- [ ] Prueba de humo en incógnito: entrar con Google y con GitHub, elegir nombre en `/acceso/nombre`, jugar una partida, guardarla y verla en la ficha y en `/salon`. Probar también un registro por correo, si ya hay SMTP.
+- [x] Prueba de humo en incógnito (2026-11-10): entrar con Google y con GitHub, elegir nombre en `/acceso/nombre`, jugar una partida, guardarla y verla en la ficha y en `/salon`. Pendiente: probar un registro por correo cuando haya SMTP.
 
 ## Cambios futuros del esquema
 
@@ -140,4 +140,4 @@ Los cambios del panel (Auth, proveedores, Rate Limits, plantillas) no son SQL: s
 
 | Archivo                      | Migración de dev                | Aplicada en producción |
 | ---------------------------- | ------------------------------- | ---------------------- |
-| `03-partidas_acumuladas.sql` | `partidas_acumuladas` (SPEC 27) | No                     |
+| `03-partidas_acumuladas.sql` | `partidas_acumuladas` (SPEC 27) | Sí (2026-11-10)        |
