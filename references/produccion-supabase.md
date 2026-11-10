@@ -3,7 +3,7 @@
 Cómo llevar a producción la estructura y la configuración del proyecto de desarrollo (`zlsnmrbgsdxzvpoxlghx`). Claude no tiene acceso a producción: prepara los archivos y tú los aplicas. Preparado el 2026-11-09.
 
 - **Datos:** solo la estructura y el catálogo de `games`. Producción arranca sin usuarios, partidas, puntuaciones ni nombres de jugador.
-- **Despliegue en Vercel:** todavía no. Lo que depende de la URL final está al final, en «Al desplegar en Vercel».
+- **Despliegue en Vercel:** desde el 2026-11-10 en `https://arcade-vault-lime.vercel.app`, conectado a la base de producción. La configuración está al final, en «Despliegue en Vercel».
 - **Archivos** (en `supabase/produccion/`):
   - `01-esquema.sql`: esquema completo, idempotente y en una transacción.
   - `02-verificacion.sql`: consulta de solo lectura que describe el esquema.
@@ -84,23 +84,51 @@ El correo integrado de Supabase solo entrega a los miembros del equipo del proye
 - [ ] `02-verificacion.sql` coincide con `02-verificacion-esperado.tsv`.
 - [ ] En **Advisors > Security** y **Performance** solo aparecen los avisos aceptados en dev: `auth_leaked_password_protection` (si no es Pro), `rls_enabled_no_policy` en `partidas` y `jugadores` y `unused_index` (INFO) en `scores_user_id_idx` y `partidas_game_id_idx` mientras no se usen. `unindexed_foreign_keys` en `partidas.game_id` ya no debe salir: lo cierra `03-partidas_acumuladas.sql`.
 
-## Al desplegar en Vercel (pendiente)
+## Despliegue en Vercel
 
-`https://TU-DOMINIO` es la URL de producción, todavía sin decidir.
+URL de producción: `https://arcade-vault-lime.vercel.app`. El equipo de Vercel es `vikingcoding`, así que las URL automáticas de cada despliegue siguen el patrón `arcade-vault-<rama-o-id>-vikingcoding.vercel.app`. La URL que se comparte es solo `arcade-vault-lime.vercel.app`: una URL con id es un despliegue fijo, que puede ser anterior a un cambio de variables, y una de un PR es un Preview, que usa dev.
 
-- [ ] **Authentication > URL Configuration**: Site URL `https://TU-DOMINIO` y Redirect URLs `https://TU-DOMINIO/**`. Hasta entonces, la Site URL que trae el proyecto no importa, porque nadie usa producción.
-- [ ] **Google Cloud:** añadir el origen JavaScript autorizado `https://TU-DOMINIO` y **publicar** la pantalla de consentimiento (en modo de prueba solo entran los usuarios de prueba).
-- [ ] **GitHub:** cambiar la Homepage URL de la OAuth App a `https://TU-DOMINIO`.
-- [ ] **Vercel > Environment Variables**, solo en **Production**:
-  - `NEXT_PUBLIC_SUPABASE_URL` = `https://<REF-PROD>.supabase.co`
-  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = la `sb_publishable_…` de producción
-  - `SUPABASE_SECRET_KEY` = la `sb_secret_…` de producción, marcada como **Sensitive**
-  - `RESEND_API_KEY`, `CONTACT_TO_EMAIL` y `CONTACT_FROM_EMAIL`
-  - `SUPABASE_DB_PASSWORD` no hace falta: la app no la usa.
-  - Preview y Development, con los valores de dev.
-- [ ] **`SUPABASE_SECRET_KEY` es obligatoria también en el build**, en **Production** y en **Preview** (spec 28): el prerender de las fichas `/juegos/<id>` cuenta las partidas con ella. Desde la spec 28 su ausencia **ya no tumba el build**: compila, el log muestra `[queries] obtenerPartidasJugadas falló: Falta la variable de entorno SUPABASE_SECRET_KEY…`, «Partidas» sale como `—` y `guardarPuntuacion` no puede publicar. Revisa ese log tras cada despliegue; si aparece, define la variable y vuelve a desplegar.
-- [ ] HSTS lleva `includeSubDomains`: comprobar que todos los subdominios de `TU-DOMINIO` sirven HTTPS (ver `security-checklist.md`).
-- [ ] Prueba de humo: entrar con Google o GitHub, elegir nombre en `/acceso/nombre`, jugar una partida, guardarla y verla en `/salon`. Probar también un registro por correo, si ya hay SMTP.
+### Variables de entorno
+
+Regla: **las tres variables de Supabase de un entorno son del mismo proyecto.** Una URL de un proyecto con la clave secreta de otro no tumba el build (spec 28), pero Supabase rechaza la clave: «Partidas» sale como `—` y no se puede guardar ninguna puntuación ni elegir nombre.
+
+| Variable                                                   | Production                          | Preview (y Development)                    | Tipo en Vercel |
+| ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------ | -------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                                 | `https://<REF-PROD>.supabase.co`    | `https://zlsnmrbgsdxzvpoxlghx.supabase.co` | **Config**     |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`                     | la `sb_publishable_…` de producción | la `sb_publishable_…` de dev               | **Config**     |
+| `SUPABASE_SECRET_KEY`                                      | la `sb_secret_…` de producción      | la `sb_secret_…` de dev                    | **Secret**     |
+| `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | las de Resend                       | las de Resend                              | **Secret**     |
+
+- `SUPABASE_DB_PASSWORD` no hace falta: la app no la usa.
+- **Preview usa dev**, no producción. Así lo recomienda Supabase («Keep Vercel preview deployments off your production database»): lo que se prueba en un PR (cuentas, nombres que quedan reservados para siempre, partidas y puntuaciones) no llega al ranking real, y un PR con una migración nueva no falla contra un esquema de producción que aún no la tiene. Dev y producción no se sincronizan: cada dato existe solo en la base del entorno donde se generó, y lo único que se lleva a producción es el esquema, con los `NN-*.sql` de este directorio.
+- **Development** solo lo usan `vercel dev` y `vercel env pull`, no los despliegues. Marcar solo Development deja a los Preview sin variables.
+- Las `NEXT_PUBLIC_*` van como **Config**: Next.js las incrusta en el JavaScript del navegador, así que no son secretas, y Vercel no deja guardarlas como Secret («Remove the public framework prefix…»). Al guardar la clave publishable, Vercel avisa de que el nombre lleva `NEXT_PUBLIC_` y `KEY`: se pulsa **Mark as Safe** solo si el valor empieza por `sb_publishable_`. Una variable Secret no se puede pasar a Config: hay que borrarla y crearla de nuevo.
+- `SUPABASE_SECRET_KEY` va como **Secret** y nunca con prefijo `NEXT_PUBLIC_`: salta la RLS.
+- Las `NEXT_PUBLIC_*` se fijan al compilar: tras cambiarlas, **Redeploy** con «Use existing Build Cache» desmarcado. Las variables sin prefijo se leen al ejecutar, pero un Redeploy es la forma segura de aplicarlas.
+- **`SUPABASE_SECRET_KEY` es obligatoria también en el build** (spec 28): el prerender de las fichas `/juegos/<id>` cuenta las partidas con ella. Su ausencia ya no tumba el build: compila, el log muestra `[queries] obtenerPartidasJugadas falló: Falta la variable de entorno SUPABASE_SECRET_KEY…`, «Partidas» sale como `—` y `guardarPuntuacion` no puede publicar. Tras cada despliegue, busca `[queries]` en el log del build; si aparece, corrige la variable y vuelve a desplegar.
+
+Cómo comprobar a qué base apunta cada entorno: abre `/juegos/snake` en la URL de producción y en la de un Preview (o en `localhost:3000`). Cada una debe mostrar los datos de su base, y jugar en una no cambia la otra. Comprobado el 2026-11-10: dev con 6 partidas y 220, producción con 4 partidas y 230. Si producción muestra los datos de dev, recarga sin caché o en incógnito antes de tocar nada.
+
+### URLs de retorno (Supabase > Authentication > URL Configuration)
+
+| Proyecto   | Site URL                               | Redirect URLs                                                                                            |
+| ---------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Producción | `https://arcade-vault-lime.vercel.app` | `https://arcade-vault-lime.vercel.app/**`                                                                |
+| Dev        | `http://localhost:3000`                | `http://localhost:3000/**` y `https://*-vikingcoding.vercel.app/**` (para iniciar sesión en los Preview) |
+
+Si cambia el slug del equipo de Vercel, cambia también el patrón de dev. Supabase recomienda la ruta exacta en producción y deja `**` para local y Preview.
+
+### Lista
+
+- [x] Variables de Production con las tres de producción y de Preview con las tres de dev (2026-11-10).
+- [x] Producción y dev muestran datos distintos en `/juegos/snake` (2026-11-10).
+- [x] Proveedores de producción: Email, GitHub y Google activos; el resto, desactivados.
+- [ ] Site URL y Redirect URLs de producción como en la tabla.
+- [ ] `https://*-vikingcoding.vercel.app/**` en las Redirect URLs de dev, y un Redeploy del último Preview sin la caché del build.
+- [ ] **Google Cloud:** origen JavaScript autorizado `https://arcade-vault-lime.vercel.app` y pantalla de consentimiento **publicada** (en modo de prueba solo entran los usuarios de prueba).
+- [ ] **GitHub:** Homepage URL de la OAuth App de producción = `https://arcade-vault-lime.vercel.app`.
+- [ ] HSTS lleva `includeSubDomains`: con un dominio `*.vercel.app` no hay subdominios propios que revisar; al pasar a un dominio propio, comprobar que todos sus subdominios sirven HTTPS (ver `security-checklist.md`).
+- [ ] Prueba de humo en incógnito: entrar con Google y con GitHub, elegir nombre en `/acceso/nombre`, jugar una partida, guardarla y verla en la ficha y en `/salon`. Probar también un registro por correo, si ya hay SMTP.
 
 ## Cambios futuros del esquema
 
