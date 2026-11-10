@@ -12,6 +12,8 @@ export default function SalonPage() {
 }
 // HallOfFame es un Client Component y no puede consultar la base: los datos
 // reales de Asteroides, Tetris, Arkanoid, Snake y Frogger se leen aquí y se le pasan como props.
+// Cada ranking puede llegar como `null` (no se pudo leer, spec 28): HallOfFame
+// pinta `UnavailableBoard` solo en esa pestaña.
 async function SalonConDatos() {
   const [asteroides, tetris, arkanoid, snake, frogger] = await Promise.all([
     obtenerRanking("asteroides", 12),

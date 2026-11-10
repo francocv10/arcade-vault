@@ -12,7 +12,6 @@ import {
 import {
   JUEGOS_CON_RANKING,
   normalizarNombre,
-  PARTIDA_MAX_SEGUNDOS,
   PARTIDAS_POR_HORA,
   puntuacionPosible,
 } from "./schema";
@@ -36,6 +35,9 @@ function rechazar(motivo: string): { ok: false; error: string } {
 // sale de las cookies, nunca de un parámetro, y el juego se valida aquí. Solo
 // devuelve el id; `guardarPuntuacion` lo exige para publicar. Solo el tope de
 // PARTIDAS_POR_HORA (spec 23) devuelve `error`: los demás fallos van sin texto.
+// Las partidas se acumulan (spec 27): no se borran las caducadas, porque su
+// total alimenta «Partidas» en la ficha, y `puntuacionPosible` ya impide
+// publicar una de más de PARTIDA_MAX_SEGUNDOS.
 export async function iniciarPartida(
   game: string,
 ): Promise<{ ok: boolean; partidaId?: string; error?: string }> {
@@ -50,22 +52,6 @@ export async function iniciarPartida(
     const userId = data.user?.id;
     if (!userId) return { ok: false };
     const admin = createAdminClient();
-    // Partidas de esta cuenta que ya no podrían publicar. Las abiertas en otras
-    // pestañas siguen vivas: no se invalida la partida anterior.
-    const caducidad = new Date(
-      Date.now() - PARTIDA_MAX_SEGUNDOS * 1000,
-    ).toISOString();
-    const { error: errorLimpieza } = await admin
-      .from("partidas")
-      .delete()
-      .eq("user_id", userId)
-      .lt("iniciada_en", caducidad);
-    if (errorLimpieza) {
-      console.warn(
-        "iniciarPartida: no se limpiaron las caducadas",
-        errorLimpieza.message,
-      );
-    }
     // Tope por hora (spec 23): cuentan todas las filas de esa hora. Si el
     // recuento falla se inserta igual, para no dejar sin ranking a nadie.
     const haceUnaHora = new Date(Date.now() - 60 * 60 * 1000).toISOString();

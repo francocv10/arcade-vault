@@ -3,8 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyBoard } from "@/app/components/empty-board";
+import { UnavailableBoard } from "@/app/components/unavailable-board";
 import { GAMES, getGame, type PuntuacionRanking } from "@/app/data";
-import { obtenerRanking } from "@/app/lib/leaderboard/queries";
+import {
+  obtenerPartidasJugadas,
+  obtenerRanking,
+} from "@/app/lib/leaderboard/queries";
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
 }
@@ -46,6 +50,24 @@ async function GameDetail({
           <p>{game.long}</p>
           <div className="stat-strip">
             <div>
+              <div className="l">Partidas</div>
+              <Suspense fallback={<div className="v">…</div>}>
+                <CeldaPartidas gameId={game.id} />
+              </Suspense>
+            </div>
+            <div>
+              <div className="l">Mejor global</div>
+              <Suspense
+                fallback={
+                  <div className="v" style={ESTILO_MEJOR_GLOBAL}>
+                    …
+                  </div>
+                }
+              >
+                <CeldaMejorGlobal gameId={game.id} />
+              </Suspense>
+            </div>
+            <div>
               <div className="l">Dificultad</div>
               <div
                 className="v"
@@ -81,9 +103,34 @@ async function GameDetail({
     </div>
   );
 }
-// Top 10 real (Supabase) con estado vacío.
+const ESTILO_MEJOR_GLOBAL = {
+  color: "var(--magenta)",
+  textShadow: "0 0 6px rgba(255,0,110,0.5)",
+} as const;
+// «Partidas» (spec 27): total de partidas iniciadas. Con `null` (la consulta
+// no pudo leer, spec 28; ya registró el fallo) la celda muestra «—».
+async function CeldaPartidas({ gameId }: { gameId: string }) {
+  const total = await obtenerPartidasJugadas(gameId);
+  const valor = total === null ? "—" : total.toLocaleString("es-ES");
+  return <div className="v">{valor}</div>;
+}
+// «Mejor global» (spec 27): el puesto 1 del mismo ranking que pinta la ficha
+// (misma llamada, misma caché). Sin puntuaciones o con `null`, «—».
+async function CeldaMejorGlobal({ gameId }: { gameId: string }) {
+  const scores = await obtenerRanking(gameId, 10);
+  const mejor = scores?.[0]?.score;
+  const valor = mejor === undefined ? "—" : mejor.toLocaleString("es-ES");
+  return (
+    <div className="v" style={ESTILO_MEJOR_GLOBAL}>
+      {valor}
+    </div>
+  );
+}
+// Top 10 real (Supabase): `UnavailableBoard` si no se pudo leer (spec 28) y
+// `EmptyBoard` si no hay puntuaciones.
 async function RankingReal({ gameId }: { gameId: string }) {
   const scores = await obtenerRanking(gameId, 10);
+  if (scores === null) return <UnavailableBoard />;
   if (scores.length === 0) return <EmptyBoard gameId={gameId} />;
   return <FilasRanking scores={scores} />;
 }

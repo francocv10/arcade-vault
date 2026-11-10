@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { GAMES, HOME_STATS } from "@/app/data";
 import { EmptyBoard } from "@/app/components/empty-board";
+import { UnavailableBoard } from "@/app/components/unavailable-board";
 import { HomeSilhouettes } from "@/app/components/home-silhouettes";
 import {
   HomeFeatureIcon,
@@ -14,13 +15,11 @@ import {
   obtenerActividadReciente,
   obtenerTopDelDia,
 } from "@/app/lib/leaderboard/queries";
-
 export const metadata: Metadata = {
   title: "Inicio · Arcade Vault",
   description:
     "Juega los mejores clásicos del arcade directamente en tu navegador. Sin descargas, sin costo y con ranking global.",
 };
-
 const FEATURES: { i: FeatureIconKind; t: string; d: string; c: string }[] = [
   {
     i: "GAMEPAD",
@@ -47,7 +46,6 @@ const FEATURES: { i: FeatureIconKind; t: string; d: string; c: string }[] = [
     c: "green",
   },
 ];
-
 const PRICE_PERKS = [
   "Acceso a todos los juegos",
   "Ranking global y salón de la fama",
@@ -56,7 +54,6 @@ const PRICE_PERKS = [
   "Nuevos juegos cada mes",
   "Funciona en cualquier navegador",
 ];
-
 const FAQ = [
   {
     q: "¿REALMENTE ES GRATIS?",
@@ -71,12 +68,10 @@ const FAQ = [
     a: "Es un proyecto comunitario. Si te gusta, compártelo. Esa es toda la moneda que aceptamos.",
   },
 ];
-
 export default function HomePage() {
   return (
     <div className="home fade-in">
       <RevealObserver />
-
       {/* HERO */}
       <section className="home-hero">
         <HomeSilhouettes />
@@ -108,7 +103,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* WHY */}
       <section className="home-section reveal">
         <div className="section-head">
@@ -130,7 +124,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
       {/* GAMES PREVIEW */}
       <section className="home-section reveal">
         <div className="section-head">
@@ -149,7 +142,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
       {/* STATS */}
       <section className="home-stats reveal">
         <div className="stats-inner">
@@ -166,7 +158,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
       {/* RECENT ACTIVITY / LEADERBOARD */}
       <section className="home-section reveal">
         <div className="section-head">
@@ -183,7 +174,6 @@ export default function HomePage() {
               <UltimasPuntuaciones />
             </Suspense>
           </div>
-
           <div className="activity-card">
             <div className="ac-head">
               <div className="ac-title pixel neon-magenta">
@@ -199,7 +189,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* PRICING */}
       <section className="home-section reveal">
         <div className="section-head">
@@ -235,7 +224,6 @@ export default function HomePage() {
               PLAY
             </div>
           </div>
-
           <div className="pricing-faq">
             {FAQ.map((f) => (
               <div key={f.q} className="faq-item">
@@ -246,7 +234,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* FINAL CTA */}
       <section className="home-final reveal">
         <h2 className="final-title pixel">¿LISTO PARA JUGAR?</h2>
@@ -260,11 +247,12 @@ export default function HomePage() {
     </div>
   );
 }
-
 // Las dos tarjetas de «ACTIVIDAD EN VIVO» leen de la base de datos (solo Asteroides
 // tiene ranking real) dentro de su propio Suspense: el resto del Home no espera.
 async function UltimasPuntuaciones() {
+  // `null`: no se pudo leer (spec 28).
   const actividad = await obtenerActividadReciente(7);
+  if (actividad === null) return <UnavailableBoard />;
   if (actividad.length === 0) return <EmptyBoard gameId="asteroides" />;
   return (
     <div className="ticker">
@@ -283,9 +271,9 @@ async function UltimasPuntuaciones() {
     </div>
   );
 }
-
 async function TopJugadoresHoy() {
   const top = await obtenerTopDelDia(5);
+  if (top === null) return <UnavailableBoard />;
   if (top.length === 0) return <EmptyBoard gameId="asteroides" />;
   return (
     <div className="top-list">
@@ -299,7 +287,10 @@ async function TopJugadoresHoy() {
         >
           <span className="tp-rk">#{String(r.r).padStart(2, "0")}</span>
           <span className="tp-bar">
-            <span className="tp-fill" style={{ width: 100 - i * 16 + "%" }}></span>
+            <span
+              className="tp-fill"
+              style={{ width: 100 - i * 16 + "%" }}
+            ></span>
           </span>
           <span className="tp-p">{r.p}</span>
           <span className="tp-s">{r.s.toLocaleString("es-ES")}</span>

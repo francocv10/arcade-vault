@@ -6,7 +6,10 @@ import { obtenerMejorMarca } from "@/app/lib/leaderboard/actions";
 import { nombreDeCuenta } from "@/app/lib/leaderboard/schema";
 import { useAuth } from "./auth-provider";
 import { EmptyBoard } from "./empty-board";
+import { UnavailableBoard } from "./unavailable-board";
 type MejorMarca = { rank: number; score: number; date: string };
+// Ranking de un juego: `null` si no se pudo leer de Supabase (spec 28).
+type RankingJuego = PuntuacionRanking[] | null;
 export function HallOfFame({
   asteroides,
   tetris,
@@ -14,19 +17,21 @@ export function HallOfFame({
   snake,
   frogger,
 }: {
-  asteroides: PuntuacionRanking[];
-  tetris: PuntuacionRanking[];
-  arkanoid: PuntuacionRanking[];
-  snake: PuntuacionRanking[];
-  frogger: PuntuacionRanking[];
+  asteroides: RankingJuego;
+  tetris: RankingJuego;
+  arkanoid: RankingJuego;
+  snake: RankingJuego;
+  frogger: RankingJuego;
 }) {
   const { user } = useAuth();
   const [tab, setTab] = useState(GAMES[0].id);
   // Ranking de Supabase de cada juego, indexado por id.
-  const reales = useMemo<Record<string, PuntuacionRanking[]>>(
+  const reales = useMemo<Record<string, RankingJuego>>(
     () => ({ asteroides, tetris, arkanoid, snake, frogger }),
     [asteroides, tetris, arkanoid, snake, frogger],
   );
+  // `null`: no se pudo leer (UnavailableBoard solo en esta pestaña).
+  const disponible = reales[tab] !== null;
   const rows = reales[tab] ?? [];
   const game = getGame(tab) ?? GAMES[0];
   const nombreUsuario = user?.name ?? null;
@@ -76,7 +81,9 @@ export function HallOfFame({
           </button>
         ))}
       </div>
-      {rows.length === 0 ? (
+      {!disponible ? (
+        <UnavailableBoard />
+      ) : rows.length === 0 ? (
         <EmptyBoard gameId={tab} />
       ) : (
         <>

@@ -60,19 +60,19 @@ export type Database = {
           game_id: string;
           id: string;
           iniciada_en: string;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           game_id: string;
           id?: string;
           iniciada_en?: string;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           game_id?: string;
           id?: string;
           iniciada_en?: string;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
